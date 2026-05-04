@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ScreenPact</string>
+    <string name="monitor_notification_channel">Monitoreo</string>
+    <string name="monitor_notification_title">ScreenPact activo</string>
+    <string name="monitor_notification_text">Monitoreando el uso de tus apps</string>
+</resources>
