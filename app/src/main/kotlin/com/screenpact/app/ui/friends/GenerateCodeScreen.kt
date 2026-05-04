@@ -31,6 +31,7 @@ import androidx.compose.ui.unit.sp
 import com.screenpact.app.data.crypto.TOTPManager
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Friend
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -50,7 +51,7 @@ fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
         while (true) {
             code = TOTPManager.currentCode(f.secret)
             seconds = TOTPManager.secondsRemaining()
-            kotlinx.coroutines.delay(1000)
+            delay(1000)
         }
     }
 

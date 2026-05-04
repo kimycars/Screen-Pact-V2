@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.util.UsageStatsHelper
+import kotlinx.coroutines.delay
 
 @Composable
 fun HomeScreen(onOpenFriends: () -> Unit, onOpenLimits: () -> Unit) {
@@ -41,7 +42,7 @@ fun HomeScreen(onOpenFriends: () -> Unit, onOpenLimits: () -> Unit) {
     LaunchedEffect(Unit) {
         while (true) {
             usage = UsageStatsHelper.foregroundTimeTodayMs(context)
-            kotlinx.coroutines.delay(5_000)
+            delay(5_000)
         }
     }
 

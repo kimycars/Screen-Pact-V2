@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.apps
 
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -200,7 +201,7 @@ private fun AppPickerDialog(
                                 runCatching { app.icon?.toBitmap(64, 64) }.getOrNull()
                             }
                             if (bmp != null) {
-                                androidx.compose.foundation.Image(
+                                Image(
                                     bitmap = bmp.asImageBitmap(),
                                     contentDescription = null,
                                     modifier = Modifier.size(28.dp)

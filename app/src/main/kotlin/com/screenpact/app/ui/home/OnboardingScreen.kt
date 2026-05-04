@@ -27,6 +27,7 @@ import com.screenpact.app.data.Prefs
 import com.screenpact.app.services.UsageMonitorService
 import com.screenpact.app.util.PermissionsHelper
 import com.screenpact.app.util.UsageStatsHelper
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -44,7 +45,7 @@ fun OnboardingScreen(onContinue: () -> Unit) {
     // Re-evalúa permisos cuando se recompone (al volver de Ajustes).
     LaunchedEffect(Unit) {
         while (true) {
-            kotlinx.coroutines.delay(800)
+            delay(800)
             hasUsage = UsageStatsHelper.hasUsageAccess(context)
             hasOverlay = PermissionsHelper.canDrawOverlays(context)
         }

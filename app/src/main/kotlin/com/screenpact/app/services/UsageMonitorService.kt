@@ -38,7 +38,11 @@ class UsageMonitorService : Service() {
     override fun onCreate() {
         super.onCreate()
         ensureChannel()
-        startForeground(NOTIF_ID, buildNotification(), foregroundType())
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            startForeground(NOTIF_ID, buildNotification(), foregroundType())
+        } else {
+            startForeground(NOTIF_ID, buildNotification())
+        }
         loop = scope.launch { runLoop() }
     }
 
@@ -86,10 +90,13 @@ class UsageMonitorService : Service() {
         }
     }
 
-    private fun foregroundType(): Int =
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+    private fun foregroundType(): Int = when {
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE ->   // API 34+
             ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
-        } else 0
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ->                  // API 29-33
+            ServiceInfo.FOREGROUND_SERVICE_TYPE_DATA_SYNC
+        else -> 0
+    }
 
     private fun ensureChannel() {
         val nm = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
