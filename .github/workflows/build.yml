@@ -34,11 +34,11 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Build debug APK
-        run: |
-          echo "Java version:"; java -version 2>&1
-          echo "---"
-          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
-          exit ${PIPESTATUS[0]}
+        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
+
+      - name: Print build log on failure
+        if: failure()
+        run: cat build.log || echo "(no build.log found)"
 
       - name: Upload build log (always)
         if: always()
@@ -46,6 +46,7 @@ jobs:
         with:
           name: build-log
           path: build.log
+          if-no-files-found: ignore
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
