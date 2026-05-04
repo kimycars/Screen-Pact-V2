@@ -40,8 +40,10 @@ jobs:
           gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
           STATUS=${PIPESTATUS[0]}
           if [ $STATUS -ne 0 ]; then
-            echo "::error::Build failed — last 80 lines of log:"
-            tail -80 build.log | while IFS= read -r line; do echo "::error::$line"; done
+            echo "::error::=== KOTLIN/BUILD ERRORS ==="
+            grep -E "^(e|w)\s|error:|Unresolved reference|Cannot find|None of the following|Required:|Overload|Type mismatch|Expecting|FAILURE|What went wrong" build.log | head -60 | while IFS= read -r line; do echo "::error::$line"; done
+            echo "::error::=== LAST 30 LINES ==="
+            tail -30 build.log | while IFS= read -r line; do echo "::error::$line"; done
           fi
           exit $STATUS
 
