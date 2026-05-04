@@ -16,37 +16,27 @@ jobs:
         with:
           distribution: 'temurin'
           java-version: '17'
-          cache: 'gradle'
 
-      - name: Verify and set Android SDK
+      - name: Setup Gradle 8.5
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
+          cache-disabled: true
+
+      - name: Install Android SDK components
         run: |
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          SDK_PATH="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
-          echo "Using SDK: $SDK_PATH"
-          ls "$SDK_PATH/platforms/" 2>/dev/null || echo "platforms dir not found"
-          ls "$SDK_PATH/build-tools/" 2>/dev/null || echo "build-tools dir not found"
-          echo "sdk.dir=$SDK_PATH" > local.properties
-          echo "local.properties written:"
+          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/local/lib/android/sdk}}"
+          echo "Android SDK at: $SDK"
+          echo "sdk.dir=$SDK" > local.properties
           cat local.properties
-
-      - name: Make gradlew executable
-        run: chmod +x ./gradlew
+          # Accept licenses and install required components
+          yes | "$SDK/cmdline-tools/latest/bin/sdkmanager" --licenses > /dev/null 2>&1 || true
+          "$SDK/cmdline-tools/latest/bin/sdkmanager" "platforms;android-34" "build-tools;34.0.0" > /dev/null 2>&1 || true
+          echo "Installed platforms:"; ls "$SDK/platforms/" 2>/dev/null || true
+          echo "Installed build-tools:"; ls "$SDK/build-tools/" 2>/dev/null || true
 
       - name: Build debug APK
-        run: ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log; exit ${PIPESTATUS[0]}
-
-      - name: Print build log on failure
-        if: failure()
-        run: cat build.log || echo "(no build.log found)"
-
-      - name: Upload build log (always)
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: build-log
-          path: build.log
-          if-no-files-found: ignore
+        run: gradle assembleDebug --no-daemon --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
