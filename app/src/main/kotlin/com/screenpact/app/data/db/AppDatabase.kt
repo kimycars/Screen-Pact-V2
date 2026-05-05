@@ -7,7 +7,7 @@ import androidx.room.RoomDatabase
 
 @Database(
     entities = [Friend::class, AppLimit::class, UnlockGrant::class],
-    version = 1,
+    version = 2,          // bumped: Friend.secret → generateKey + verifyKey (directional secrets)
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -24,7 +24,11 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "screenpact.db"
-                ).build().also { INSTANCE = it }
+                )
+                    // Old single-secret rows cannot be safely split into two directional keys,
+                    // so we wipe and let users re-pair. Acceptable at this stage of development.
+                    .fallbackToDestructiveMigration()
+                    .build().also { INSTANCE = it }
             }
         }
     }

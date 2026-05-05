@@ -8,6 +8,13 @@ import org.json.JSONObject
  *   { "v": 1, "name": "Carla", "secret": "<base64 url-safe>" }
  *
  * No hay servidor: el secreto se intercambia físicamente al escanear.
+ *
+ * Semántica del campo `secret` (diseño de secretos direccionales):
+ *   El emisor del QR generó este secreto aleatoriamente. Lo usará en su overlay para VERIFICAR
+ *   los códigos que el receptor le envíe. El receptor lo almacena como `generateKey`, con el que
+ *   producirá los códigos que el overlay del emisor aceptará.
+ *   Así, cada sentido del emparejamiento usa un secreto independiente y el usuario NO puede
+ *   generar desde su propio móvil los códigos que desbloquearían su propio overlay.
  */
 data class PairingPayload(
     val name: String,

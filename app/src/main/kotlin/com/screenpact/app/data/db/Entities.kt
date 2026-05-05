@@ -7,19 +7,33 @@ import androidx.room.PrimaryKey
 data class Friend(
     @PrimaryKey(autoGenerate = true) val id: Long = 0,
     val name: String,
-    /** Secreto compartido (HMAC-SHA1 key). Almacenado tal cual; idealmente lo reforzaríamos con EncryptedFile. */
-    val secret: ByteArray,
+    /**
+     * Key the friend gave us. We use it to generate codes that THEIR overlay verifies.
+     * Only the friend's phone generated this key, so codes derived from it cannot unlock our own overlay.
+     */
+    val generateKey: ByteArray,
+    /**
+     * Key we generated and gave to the friend. Our overlay verifies codes against this.
+     * Only we have this in our DB; it is not readable through any in-app "generate" screen.
+     */
+    val verifyKey: ByteArray,
     val addedAt: Long = System.currentTimeMillis()
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is Friend) return false
-        return id == other.id && name == other.name && secret.contentEquals(other.secret) && addedAt == other.addedAt
+        return id == other.id &&
+            name == other.name &&
+            generateKey.contentEquals(other.generateKey) &&
+            verifyKey.contentEquals(other.verifyKey) &&
+            addedAt == other.addedAt
     }
+
     override fun hashCode(): Int {
         var r = id.hashCode()
         r = 31 * r + name.hashCode()
-        r = 31 * r + secret.contentHashCode()
+        r = 31 * r + generateKey.contentHashCode()
+        r = 31 * r + verifyKey.contentHashCode()
         r = 31 * r + addedAt.hashCode()
         return r
     }

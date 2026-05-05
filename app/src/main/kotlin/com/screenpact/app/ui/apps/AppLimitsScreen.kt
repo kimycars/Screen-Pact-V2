@@ -204,7 +204,7 @@ fun AppLimitsScreen(onBack: () -> Unit) {
                                 showUnlockDialog = false
                                 return@launch
                             }
-                            val match = friends.firstOrNull { TOTPManager.verifyCode(it.secret, unlockCode) }
+                            val match = friends.firstOrNull { TOTPManager.verifyCode(it.verifyKey, unlockCode) }
                             if (match != null) {
                                 sessionUnlocked = true
                                 showUnlockDialog = false

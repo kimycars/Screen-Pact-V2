@@ -49,7 +49,7 @@ fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
     LaunchedEffect(friend) {
         val f = friend ?: return@LaunchedEffect
         while (true) {
-            code = TOTPManager.currentCode(f.secret)
+            code = TOTPManager.currentCode(f.generateKey)
             seconds = TOTPManager.secondsRemaining()
             delay(1000)
         }

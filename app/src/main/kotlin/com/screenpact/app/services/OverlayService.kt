@@ -135,7 +135,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         scope.launch {
             val db = AppDatabase.get(applicationContext)
             val friends = db.friendDao().getAll()
-            val match = friends.firstOrNull { TOTPManager.verifyCode(it.secret, code) }
+            val match = friends.firstOrNull { TOTPManager.verifyCode(it.verifyKey, code) }
             if (match != null) {
                 db.unlockGrantDao().upsert(
                     UnlockGrant(
