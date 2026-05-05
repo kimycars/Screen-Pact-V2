@@ -14,15 +14,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -42,9 +46,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.screenpact.app.data.crypto.TOTPManager
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.AppLimit
 import com.screenpact.app.util.AppListHelper
@@ -61,21 +67,78 @@ fun AppLimitsScreen(onBack: () -> Unit) {
     val scope = rememberCoroutineScope()
     val limits by db.appLimitDao().observeAll().collectAsState(initial = emptyList())
 
+    // Settings are locked by default so a friend's TOTP is required to change them.
+    // Auto-unlocked when there are no paired friends (nothing to protect against yet).
+    var sessionUnlocked by remember { mutableStateOf(false) }
+    var showUnlockDialog by remember { mutableStateOf(false) }
     var showPicker by remember { mutableStateOf(false) }
+
+    // If no friends are paired yet, unlock immediately — there's no one to generate a code.
+    LaunchedEffect(Unit) {
+        val hasFriends = db.friendDao().getAll().isNotEmpty()
+        if (!hasFriends) sessionUnlocked = true
+    }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Apps & límites") },
-                navigationIcon = { IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) } }
+                navigationIcon = {
+                    IconButton(onClick = onBack) { Icon(Icons.Default.ArrowBack, null) }
+                },
+                actions = {
+                    // Lock/unlock icon in the top bar.
+                    IconButton(onClick = {
+                        if (sessionUnlocked) {
+                            // Re-lock manually.
+                            sessionUnlocked = false
+                        } else {
+                            showUnlockDialog = true
+                        }
+                    }) {
+                        Icon(
+                            imageVector = if (sessionUnlocked) Icons.Default.LockOpen else Icons.Default.Lock,
+                            contentDescription = if (sessionUnlocked) "Bloquear ajustes" else "Desbloquear ajustes"
+                        )
+                    }
+                }
             )
         }
     ) { padding ->
         Column(Modifier.fillMaxSize().padding(padding).padding(16.dp)) {
-            Button(onClick = { showPicker = true }, modifier = Modifier.fillMaxWidth()) {
-                Text("Añadir app")
+
+            if (!sessionUnlocked) {
+                // Locked state banner.
+                Card(modifier = Modifier.fillMaxWidth()) {
+                    Column(Modifier.padding(16.dp)) {
+                        Text(
+                            "Ajustes bloqueados",
+                            fontWeight = FontWeight.SemiBold,
+                            fontSize = 15.sp
+                        )
+                        Spacer(Modifier.height(4.dp))
+                        Text(
+                            "Pídele a un amigo emparejado el código de 6 dígitos para poder editar los límites.",
+                            fontSize = 13.sp
+                        )
+                        Spacer(Modifier.height(10.dp))
+                        Button(
+                            onClick = { showUnlockDialog = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) { Text("Desbloquear con código de amigo") }
+                    }
+                }
+                Spacer(Modifier.height(16.dp))
             }
+
+            Button(
+                onClick = { showPicker = true },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = sessionUnlocked
+            ) { Text("Añadir app") }
+
             Spacer(Modifier.height(16.dp))
+
             if (limits.isEmpty()) {
                 Text("Sin apps. Añade una para empezar a monitorizar.", fontSize = 14.sp)
             } else {
@@ -83,8 +146,9 @@ fun AppLimitsScreen(onBack: () -> Unit) {
                     items(limits, key = { it.packageName }) { l ->
                         LimitCard(
                             limit = l,
-                            onToggle = { enabled ->
-                                scope.launch { db.appLimitDao().upsert(l.copy(enabled = enabled)) }
+                            enabled = sessionUnlocked,
+                            onToggle = { active ->
+                                scope.launch { db.appLimitDao().upsert(l.copy(enabled = active)) }
                             },
                             onChange = { newMin ->
                                 scope.launch { db.appLimitDao().upsert(l.copy(dailyLimitMinutes = newMin)) }
@@ -95,6 +159,67 @@ fun AppLimitsScreen(onBack: () -> Unit) {
                 }
             }
         }
+    }
+
+    // TOTP unlock dialog.
+    if (showUnlockDialog) {
+        var unlockCode by remember { mutableStateOf("") }
+        var unlockError by remember { mutableStateOf<String?>(null) }
+
+        AlertDialog(
+            onDismissRequest = { showUnlockDialog = false },
+            title = { Text("Verificar amigo") },
+            text = {
+                Column {
+                    Text("Introduce el código de 6 dígitos generado por un amigo emparejado.")
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = unlockCode,
+                        onValueChange = { v ->
+                            if (v.length <= 6 && v.all { it.isDigit() }) {
+                                unlockCode = v
+                                unlockError = null
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                        singleLine = true,
+                        label = { Text("Código de 6 dígitos") },
+                        isError = unlockError != null,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    if (unlockError != null) {
+                        Spacer(Modifier.height(4.dp))
+                        Text(unlockError!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        scope.launch {
+                            val friends = db.friendDao().getAll()
+                            if (friends.isEmpty()) {
+                                // No friends → always unlock (safety net).
+                                sessionUnlocked = true
+                                showUnlockDialog = false
+                                return@launch
+                            }
+                            val match = friends.firstOrNull { TOTPManager.verifyCode(it.secret, unlockCode) }
+                            if (match != null) {
+                                sessionUnlocked = true
+                                showUnlockDialog = false
+                            } else {
+                                unlockError = "Código inválido. Prueba de nuevo."
+                            }
+                        }
+                    },
+                    enabled = unlockCode.length == 6
+                ) { Text("Verificar") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUnlockDialog = false }) { Text("Cancelar") }
+            }
+        )
     }
 
     if (showPicker) {
@@ -121,6 +246,7 @@ fun AppLimitsScreen(onBack: () -> Unit) {
 @Composable
 private fun LimitCard(
     limit: AppLimit,
+    enabled: Boolean,
     onToggle: (Boolean) -> Unit,
     onChange: (Int) -> Unit,
     onDelete: () -> Unit
@@ -132,12 +258,18 @@ private fun LimitCard(
         Column(Modifier.padding(12.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(limit.appName, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
-                Switch(checked = limit.enabled, onCheckedChange = onToggle)
-                IconButton(onClick = onDelete) { Icon(Icons.Default.Delete, null) }
+                Switch(
+                    checked = limit.enabled,
+                    onCheckedChange = { if (enabled) onToggle(it) },
+                    enabled = enabled
+                )
+                IconButton(onClick = { if (enabled) onDelete() }, enabled = enabled) {
+                    Icon(Icons.Default.Delete, null)
+                }
             }
             Spacer(Modifier.height(4.dp))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                if (editing) {
+                if (editing && enabled) {
                     OutlinedTextField(
                         value = draft,
                         onValueChange = { v -> if (v.all { it.isDigit() } && v.length <= 4) draft = v },
@@ -153,7 +285,10 @@ private fun LimitCard(
                     }) { Text("OK") }
                 } else {
                     Text("${limit.dailyLimitMinutes} min/día", modifier = Modifier.weight(1f))
-                    TextButton(onClick = { editing = true }) { Text("Cambiar") }
+                    TextButton(
+                        onClick = { if (enabled) editing = true },
+                        enabled = enabled
+                    ) { Text("Cambiar") }
                 }
             }
         }
@@ -194,7 +329,10 @@ private fun AppPickerDialog(
                 LazyColumn(modifier = Modifier.fillMaxWidth().height(360.dp)) {
                     items(filtered, key = { it.packageName }) { app ->
                         Row(
-                            Modifier.fillMaxWidth().clickable { onPick(app) }.padding(vertical = 8.dp),
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { onPick(app) }
+                                .padding(vertical = 8.dp),
                             verticalAlignment = Alignment.CenterVertically
                         ) {
                             val bmp = remember(app.packageName) {

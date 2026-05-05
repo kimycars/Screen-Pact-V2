@@ -37,9 +37,17 @@ fun OnboardingScreen(onContinue: () -> Unit) {
     var name by remember { mutableStateOf("") }
     var hasUsage by remember { mutableStateOf(UsageStatsHelper.hasUsageAccess(context)) }
     var hasOverlay by remember { mutableStateOf(PermissionsHelper.canDrawOverlays(context)) }
+    // True while we are still reading DataStore; avoids flashing the form if setup is done.
+    var checkingSetup by remember { mutableStateOf(true) }
 
+    // Skip onboarding if the user has already completed it.
     LaunchedEffect(Unit) {
+        if (Prefs.isSetupDone(context)) {
+            onContinue()
+            return@LaunchedEffect
+        }
         name = Prefs.getOwnName(context)
+        checkingSetup = false
     }
 
     // Re-evalúa permisos cuando se recompone (al volver de Ajustes).
@@ -50,6 +58,9 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             hasOverlay = PermissionsHelper.canDrawOverlays(context)
         }
     }
+
+    // Render nothing while we check whether setup was already done.
+    if (checkingSetup) return
 
     Column(
         Modifier
@@ -101,6 +112,7 @@ fun OnboardingScreen(onContinue: () -> Unit) {
             onClick = {
                 scope.launch {
                     Prefs.setOwnName(context, name.trim().ifEmpty { "Yo" })
+                    Prefs.setSetupDone(context)
                     if (hasUsage && hasOverlay) UsageMonitorService.start(context)
                     onContinue()
                 }

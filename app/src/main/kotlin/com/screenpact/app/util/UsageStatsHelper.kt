@@ -30,14 +30,13 @@ object UsageStatsHelper {
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        val stats = usm.queryUsageStats(UsageStatsManager.INTERVAL_DAILY, startOfDay, now)
-            ?: return emptyMap()
-        val map = HashMap<String, Long>()
-        for (s in stats) {
-            if (s.totalTimeInForeground <= 0) continue
-            map.merge(s.packageName, s.totalTimeInForeground) { a, b -> a + b }
-        }
-        return map
+        // queryAndAggregateUsageStats already merges duplicate entries for the same
+        // package and always measures from the exact startOfDay timestamp, so it does
+        // not suffer from the stale-daily-bucket bug of queryUsageStats(INTERVAL_DAILY).
+        val stats = usm.queryAndAggregateUsageStats(startOfDay, now)
+        return stats
+            .mapValues { it.value.totalTimeInForeground }
+            .filter { it.value > 0 }
     }
 
     /** Paquete actualmente en primer plano (basado en eventos recientes). Null si desconocido. */

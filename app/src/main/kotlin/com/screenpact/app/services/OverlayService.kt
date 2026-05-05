@@ -33,6 +33,12 @@ import kotlinx.coroutines.launch
 /**
  * Servicio que dibuja una capa por encima de cualquier app cuando se excede el límite.
  * El usuario solo puede salir si introduce un TOTP válido generado por algún amigo emparejado.
+ *
+ * Diseño de ciclo de vida:
+ *  - El servicio se inicia cuando hay que mostrar el overlay (ACTION_SHOW).
+ *  - Cuando el overlay se oculta (ACTION_HIDE o tras unlock exitoso) el servicio llama stopSelf().
+ *  - UsageMonitorService solo manda ACTION_HIDE si isShowing == true, evitando reiniciar el
+ *    servicio innecesariamente (lo que causaba el destello rojo en la pantalla principal).
  */
 class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStateRegistryOwner {
 
@@ -71,14 +77,14 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 showOverlay(pkg, appName, usedMs, limitMin)
             }
             ACTION_HIDE -> {
-                hideOverlay()
-                stopSelf()
+                hideOverlayAndStop()
             }
         }
         return START_NOT_STICKY
     }
 
     private fun showOverlay(pkg: String, appName: String, usedMs: Long, limitMin: Int) {
+        // Already showing — do not recreate the view (avoids flicker on repeated calls from UsageMonitorService).
         if (rootView != null) return
 
         val params = WindowManager.LayoutParams().apply {
@@ -89,8 +95,10 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             flags = WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON or
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
-                WindowManager.LayoutParams.FLAG_LAYOUT_INSET_DECOR or
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
+            // SOFT_INPUT_ADJUST_RESIZE allows the keyboard to push up the text field.
+            softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
             format = PixelFormat.OPAQUE
             width = WindowManager.LayoutParams.MATCH_PARENT
             height = WindowManager.LayoutParams.MATCH_PARENT
@@ -115,6 +123,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         }
 
         rootView = view
+        isShowing = true
         wm.addView(view, params)
     }
 
@@ -134,17 +143,25 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                         expiresAt = System.currentTimeMillis() + GRACE_PERIOD_MS
                     )
                 )
-                hideOverlay()
-                stopSelf()
+                // Hide the view and stop the service.
+                // Do NOT call stopSelf() before hideOverlay() — the service must remain alive
+                // long enough to remove the window, otherwise the WindowManager view leaks.
+                hideOverlayAndStop()
             } else {
                 errorState.value = "Código inválido"
             }
         }
     }
 
+    private fun hideOverlayAndStop() {
+        hideOverlay()
+        stopSelf()
+    }
+
     private fun hideOverlay() {
         rootView?.let { runCatching { wm.removeView(it) } }
         rootView = null
+        isShowing = false
     }
 
     override fun onDestroy() {
@@ -166,6 +183,14 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
         const val GRACE_PERIOD_MS = 5 * 60_000L
 
+        /**
+         * True while the blocking overlay is visible on screen.
+         * Read by UsageMonitorService to avoid starting OverlayService just to hide nothing
+         * (which was causing brief red flashes when the user navigated away).
+         */
+        @Volatile var isShowing: Boolean = false
+            private set
+
         fun show(context: Context, pkg: String, appName: String, usedMs: Long, limitMin: Int) {
             val i = Intent(context, OverlayService::class.java).apply {
                 action = ACTION_SHOW
@@ -178,6 +203,9 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         }
 
         fun hide(context: Context) {
+            // Only send hide if the overlay is actually on screen — prevents restarting
+            // the service unnecessarily and causing spurious overlay flashes.
+            if (!isShowing) return
             val i = Intent(context, OverlayService::class.java).apply { action = ACTION_HIDE }
             context.startService(i)
         }
