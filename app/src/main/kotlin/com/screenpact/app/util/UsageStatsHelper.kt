@@ -73,20 +73,46 @@ object UsageStatsHelper {
         return totals
     }
 
-    /** Paquete actualmente en primer plano (basado en eventos recientes). Null si desconocido. */
+    /**
+     * Paquete actualmente en primer plano, usando una máquina de estados FG/BG sobre
+     * todos los eventos del día.
+     *
+     * El enfoque anterior usaba solo una ventana de 60 segundos, lo que hacía que
+     * devolviera null cuando el usuario llevaba más de 60 s en la misma app
+     * (el evento MOVE_TO_FOREGROUND salía de la ventana). Consecuencias:
+     *   • El overlay no reaparecía tras expirar el grace period mientras el usuario
+     *     permanecía en la app (UsageMonitorService recibía current=null y omitía la comprobación).
+     *   • Al salir y volver, el nuevo MOVE_TO_FOREGROUND sí caía en la ventana y el
+     *     overlay reaparecía de inmediato, aunque el grace period aún fuera válido.
+     *
+     * La solución es iterar todos los eventos desde startOfDay y hacer tracking de estado:
+     * FOREGROUND establece el paquete activo; BACKGROUND lo limpia si coincide.
+     * El valor final refleja qué app está ahora mismo en primer plano.
+     */
     fun currentForegroundPackage(context: Context): String? {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val now = System.currentTimeMillis()
-        val events = usm.queryEvents(now - 60_000L, now)
-        val ev = android.app.usage.UsageEvents.Event()
-        var lastPkg: String? = null
+        val startOfDay = Calendar.getInstance().apply {
+            timeInMillis = now
+            set(Calendar.HOUR_OF_DAY, 0)
+            set(Calendar.MINUTE, 0)
+            set(Calendar.SECOND, 0)
+            set(Calendar.MILLISECOND, 0)
+        }.timeInMillis
+
+        val events = usm.queryEvents(startOfDay, now)
+        val ev = UsageEvents.Event()
+        var fg: String? = null
+
         while (events.hasNextEvent()) {
             events.getNextEvent(ev)
-            if (ev.eventType == android.app.usage.UsageEvents.Event.MOVE_TO_FOREGROUND ||
-                ev.eventType == android.app.usage.UsageEvents.Event.ACTIVITY_RESUMED) {
-                lastPkg = ev.packageName
+            @Suppress("DEPRECATION")
+            when (ev.eventType) {
+                UsageEvents.Event.MOVE_TO_FOREGROUND -> fg = ev.packageName   // == ACTIVITY_RESUMED (misma constante)
+                UsageEvents.Event.MOVE_TO_BACKGROUND ->                        // == ACTIVITY_PAUSED
+                    if (fg == ev.packageName) fg = null
             }
         }
-        return lastPkg
+        return fg
     }
 }
