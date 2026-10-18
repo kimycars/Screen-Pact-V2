@@ -1,10 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!-- Icono "candado de dos" (A2): tú en amarillo, tu amigo en blanco. Dibujado en 120x120 y
+     encajado en la zona segura de 66dp del icono adaptativo. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
     android:viewportHeight="108">
-    <path
-        android:fillColor="#FFFFFF"
-        android:pathData="M54,30 m-14,0 a14,14 0 1,0 28,0 a14,14 0 1,0 -28,0 M54,52 c-12,0 -22,8 -22,20 v8 h44 v-8 c0,-12 -10,-20 -22,-20 z" />
+    <group android:translateX="21" android:translateY="19" android:scaleX="0.55" android:scaleY="0.55">
+        <path android:strokeColor="#171A33" android:strokeWidth="11" android:strokeLineCap="round" android:fillColor="#00000000" android:pathData="M38,50 V40 A22,22 0 0,1 82,40 V50" />
+        <path android:fillColor="#171A33" android:pathData="M36,46 H84 A16,16 0 0,1 100,62 V92 A16,16 0 0,1 84,108 H36 A16,16 0 0,1 20,92 V62 A16,16 0 0,1 36,46 Z" />
+        <path android:fillColor="#FFC23D" android:pathData="M35.5,67 a9.5,9.5 0 1,0 19,0 a9.5,9.5 0 1,0 -19,0 Z M29,99 a16,16 0 0,1 32,0 Z" />
+        <path android:fillColor="#F4F5FA" android:pathData="M65.5,67 a9.5,9.5 0 1,0 19,0 a9.5,9.5 0 1,0 -19,0 Z M59,99 a16,16 0 0,1 32,0 Z" />
+    </group>
 </vector>

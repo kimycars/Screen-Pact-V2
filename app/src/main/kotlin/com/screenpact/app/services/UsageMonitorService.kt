@@ -13,6 +13,7 @@ import androidx.core.app.NotificationCompat
 import com.screenpact.app.MainActivity
 import com.screenpact.app.R
 import com.screenpact.app.data.db.AppDatabase
+import com.screenpact.app.util.TamperGuard
 import com.screenpact.app.util.UsageStatsHelper
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,34 +61,65 @@ class UsageMonitorService : Service() {
         val db = AppDatabase.get(applicationContext)
         while (true) {
             try {
+                val hasFriends = db.friendDao().getAll().isNotEmpty()
+                // Se evalúa siempre, también sin permisos, para registrar latido y trampas.
+                val tamper = TamperGuard.evaluate(this, hasFriends)
+                var shouldBlock = false
+                var blockedPkg: String? = null
                 if (UsageStatsHelper.hasUsageAccess(this)) {
                     val now = System.currentTimeMillis()
                     db.unlockGrantDao().cleanExpired(now)
 
-                    val current = UsageStatsHelper.currentForegroundPackage(this)
-                    var shouldBlock = false
+                    val snap = UsageStatsHelper.snapshot(this)
+                    val current = snap.foreground
                     if (current != null && current != packageName) {
                         val limit = db.appLimitDao().get(current)
                         if (limit != null && limit.enabled) {
-                            val grant = db.unlockGrantDao().get(current)
-                            val grantActive = grant != null && grant.expiresAt > now
-                            if (!grantActive) {
-                                val totals = UsageStatsHelper.foregroundTimeTodayMs(this)
-                                val usedMs = totals[current] ?: 0L
-                                if (usedMs >= limit.dailyLimitMinutes * 60_000L) {
+                            val usedMs = snap.todayMs[current] ?: 0L
+                            if (tamper != null) {
+                                // Con trampa activa se bloquean todas las apps limitadas, sin gracia.
+                                shouldBlock = true
+                                blockedPkg = current
+                                OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, tamper)
+                            } else {
+                                val grant = db.unlockGrantDao().get(current)
+                                val grantActive = grant != null && grant.expiresAt > now
+                                if (!grantActive && usedMs >= limit.dailyLimitMinutes * 60_000L) {
                                     shouldBlock = true
-                                    OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes)
+                                    blockedPkg = current
+                                    OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, null)
                                 }
                             }
                         }
                     }
-                    if (!shouldBlock) {
-                        OverlayService.hide(this)
-                    }
+                }
+                if (!shouldBlock) {
+                    OverlayService.hide(this)
+                } else if (blockedPkg != null && watchForExit(blockedPkg)) {
+                    // Ya se ha ido de la app bloqueada: no esperar a la siguiente vuelta.
+                    OverlayService.hide(this)
+                    continue
                 }
             } catch (_: Throwable) { /* swallow & continue */ }
             delay(POLL_INTERVAL_MS)
         }
+    }
+
+    /**
+     * Mientras la pantalla de bloqueo está visible, mira cada poco si el usuario ha salido de la
+     * app (gesto de inicio, otra app, pantalla apagada) para quitarla al momento. Devuelve true
+     * si ha salido antes de que toque la siguiente vuelta normal del bucle.
+     */
+    private suspend fun watchForExit(blockedPkg: String): Boolean {
+        var since = System.currentTimeMillis() - EXIT_CHECK_MS
+        val until = since + POLL_INTERVAL_MS
+        while (System.currentTimeMillis() < until) {
+            delay(EXIT_CHECK_MS)
+            val now = System.currentTimeMillis()
+            if (UsageStatsHelper.leftApp(this, blockedPkg, since)) return true
+            since = now - EXIT_CHECK_MS
+        }
+        return false
     }
 
     private fun foregroundType(): Int = when {
@@ -118,7 +150,7 @@ class UsageMonitorService : Service() {
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
         )
         return NotificationCompat.Builder(this, CHANNEL_ID)
-            .setSmallIcon(android.R.drawable.ic_lock_lock)
+            .setSmallIcon(R.drawable.ic_notification)
             .setContentTitle(getString(R.string.monitor_notification_title))
             .setContentText(getString(R.string.monitor_notification_text))
             .setOngoing(true)
@@ -128,7 +160,8 @@ class UsageMonitorService : Service() {
     }
 
     companion object {
-        private const val POLL_INTERVAL_MS = 5_000L
+        private const val POLL_INTERVAL_MS = 2_000L
+        private const val EXIT_CHECK_MS = 300L
         private const val NOTIF_ID = 1001
         private const val CHANNEL_ID = "screenpact_monitor"
 

@@ -18,3 +18,4 @@ out/
 release/
 .kotlin/
 local.properties
+/app/build

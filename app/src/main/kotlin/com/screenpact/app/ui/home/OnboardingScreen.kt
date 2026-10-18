@@ -1,152 +1,206 @@
 package com.screenpact.app.ui.home
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.OutlinedTextField
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import com.screenpact.app.data.Prefs
+import com.screenpact.app.ui.common.PermissionCards
+import com.screenpact.app.ui.common.rememberPermissionState
 import com.screenpact.app.services.UsageMonitorService
-import com.screenpact.app.util.PermissionsHelper
-import com.screenpact.app.util.UsageStatsHelper
-import kotlinx.coroutines.delay
+import com.screenpact.app.ui.components.LogoTile
+import com.screenpact.app.ui.components.PrimaryButton
+import com.screenpact.app.ui.components.QuietButton
+import com.screenpact.app.ui.components.SpCard
+import com.screenpact.app.ui.components.SpTextField
+import com.screenpact.app.ui.theme.Sp
 import kotlinx.coroutines.launch
+import com.screenpact.app.ui.theme.Space
+import com.screenpact.app.ui.theme.Sizes
+import com.screenpact.app.ui.theme.Shapes
 
+/**
+ * Bienvenida en tres pasos: presentación, nombre y permisos. Termina proponiendo el primer
+ * pacto, que es el momento en que la app empieza a tener sentido.
+ */
 @Composable
-fun OnboardingScreen(onContinue: () -> Unit) {
+fun OnboardingScreen(onFinished: (pairNow: Boolean) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var name by remember { mutableStateOf("") }
-    var hasUsage by remember { mutableStateOf(UsageStatsHelper.hasUsageAccess(context)) }
-    var hasOverlay by remember { mutableStateOf(PermissionsHelper.canDrawOverlays(context)) }
-    // True while we are still reading DataStore; avoids flashing the form if setup is done.
     var checkingSetup by remember { mutableStateOf(true) }
+    var step by remember { mutableIntStateOf(0) }
+    var name by remember { mutableStateOf("") }
 
-    // Skip onboarding if the user has already completed it.
     LaunchedEffect(Unit) {
         if (Prefs.isSetupDone(context)) {
-            onContinue()
+            onFinished(false)
             return@LaunchedEffect
         }
         name = Prefs.getOwnName(context)
         checkingSetup = false
     }
+    if (checkingSetup) return
 
-    // Re-evalúa permisos cuando se recompone (al volver de Ajustes).
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(800)
-            hasUsage = UsageStatsHelper.hasUsageAccess(context)
-            hasOverlay = PermissionsHelper.canDrawOverlays(context)
+    BackHandler(enabled = step > 0) { step-- }
+
+    fun finish(pairNow: Boolean) {
+        scope.launch {
+            Prefs.setOwnName(context, name.trim().ifEmpty { "Yo" })
+            Prefs.setSetupDone(context)
+            UsageMonitorService.start(context)
+            onFinished(pairNow)
         }
     }
 
-    // Render nothing while we check whether setup was already done.
-    if (checkingSetup) return
-
-    Column(
-        Modifier
-            .fillMaxSize()
-            .padding(24.dp),
-        verticalArrangement = Arrangement.Center
-    ) {
-        Text("ScreenPact", fontSize = 32.sp, fontWeight = FontWeight.Bold)
-        Text("Tú solo no puedes desbloquearte.", fontSize = 16.sp)
-        Spacer(Modifier.height(24.dp))
-
-        Card {
-            Column(Modifier.padding(16.dp)) {
-                Text("1. Tu nombre", fontWeight = FontWeight.SemiBold)
-                Spacer(Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    modifier = Modifier.fillMaxWidth(),
-                    placeholder = { Text("Cómo te verán tus amigos") },
-                    singleLine = true
-                )
-            }
-        }
-        Spacer(Modifier.height(12.dp))
-
-        PermissionRow(
-            title = "2. Acceso a uso de apps",
-            granted = hasUsage,
-            onAction = { PermissionsHelper.openUsageAccessSettings(context) }
-        )
-        Spacer(Modifier.height(8.dp))
-        PermissionRow(
-            title = "3. Dibujar sobre otras apps",
-            granted = hasOverlay,
-            onAction = { PermissionsHelper.openOverlaySettings(context) }
-        )
-        Spacer(Modifier.height(8.dp))
-        PermissionRow(
-            title = "4. Ignorar optimización de batería (recomendado)",
-            granted = false,
-            ctaText = "Abrir ajustes",
-            optional = true,
-            onAction = { PermissionsHelper.openBatteryOptimizationSettings(context) }
-        )
-
-        Spacer(Modifier.height(24.dp))
-        Button(
-            onClick = {
-                scope.launch {
-                    Prefs.setOwnName(context, name.trim().ifEmpty { "Yo" })
-                    Prefs.setSetupDone(context)
-                    if (hasUsage && hasOverlay) UsageMonitorService.start(context)
-                    onContinue()
-                }
-            },
-            enabled = name.isNotBlank() && hasUsage && hasOverlay,
-            modifier = Modifier.fillMaxWidth()
-        ) { Text("Continuar") }
+    when (step) {
+        0 -> WelcomeStep(onStart = { step = 1 })
+        1 -> NameStep(name = name, onName = { name = it }, onNext = { step = 2 })
+        2 -> PermissionsStep(onDone = { step = 3 })
+        else -> FirstPactStep(onPair = { finish(true) }, onLater = { finish(false) })
     }
 }
 
 @Composable
-private fun PermissionRow(
-    title: String,
-    granted: Boolean,
-    ctaText: String = "Conceder",
-    optional: Boolean = false,
-    onAction: () -> Unit
-) {
-    Card {
-        Column(Modifier.padding(16.dp)) {
-            Text(title, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(6.dp))
-            Text(
-                when {
-                    granted -> "Concedido"
-                    optional -> "Opcional, mejora la fiabilidad en background"
-                    else -> "Requerido"
-                },
-                fontSize = 12.sp
-            )
-            if (!granted) {
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = onAction) { Text(ctaText) }
-            }
+private fun WelcomeStep(onStart: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = Space.xl).padding(top = Space.huge, bottom = Space.xl)) {
+        LogoTile(Sizes.logoHero)
+        Spacer(Modifier.height(Space.xxxl))
+        Text(
+            buildAnnotatedString {
+                append("Tu amigo tiene la ")
+                withStyle(SpanStyle(color = Sp.Llave)) { append("llave") }
+                append(".")
+            },
+            style = MaterialTheme.typography.displayLarge
+        )
+        Spacer(Modifier.height(Space.l))
+        Text(
+            "Ponle límite a TikTok, Instagram o lo que te robe horas. Cuando te pases, solo tu amigo puede darte más tiempo.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.xxxl))
+        StepLine(1, "Dinos cómo te llamas")
+        StepLine(2, "Da dos permisos (te explicamos por qué)")
+        StepLine(3, "Sella tu primer pacto con un amigo")
+        Spacer(Modifier.weight(1f))
+        PrimaryButton("Empezar", onStart)
+        Row(
+            Modifier.fillMaxWidth().padding(top = Space.m),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Lock, null, tint = Sp.TextoSuave, modifier = Modifier.size(Sizes.iconS))
+            Spacer(Modifier.width(Space.xs))
+            Text("Sin cuenta. Nada sale de tu móvil.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
         }
+    }
+}
+
+@Composable
+private fun StepLine(n: Int, text: String) {
+    Row(Modifier.padding(vertical = Space.xs), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(Sizes.stepBadge).clip(Shapes.field).background(Sp.Superficie),
+            contentAlignment = Alignment.Center
+        ) { Text("$n", style = MaterialTheme.typography.titleMedium, color = Sp.Llave) }
+        Spacer(Modifier.width(Space.m))
+        Text(text, style = MaterialTheme.typography.bodyMedium)
+    }
+}
+
+@Composable
+private fun NameStep(name: String, onName: (String) -> Unit, onNext: () -> Unit) {
+    Column(Modifier.fillMaxSize().padding(horizontal = Space.xl).padding(top = Space.huge, bottom = Space.xl)) {
+        Text("¿Cómo te llamas?", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(Space.xs))
+        Text(
+            "Es el nombre que verá tu amigo cuando le toque darte la llave.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.xxl))
+        SpTextField(value = name, onValueChange = { if (it.length <= 24) onName(it) }, label = "Tu nombre")
+        Spacer(Modifier.weight(1f))
+        PrimaryButton("Siguiente", onNext, enabled = name.isNotBlank())
+    }
+}
+
+@Composable
+private fun PermissionsStep(onDone: () -> Unit) {
+    val state = rememberPermissionState()
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Space.xl)
+            .padding(top = Space.huge, bottom = Space.xl)
+    ) {
+        Text("Dos permisos", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(Space.xs))
+        Text(
+            "Sin ellos ScreenPact no puede saber cuánto llevas ni pararte. Nada de esto sale de tu móvil.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.xl))
+        PermissionCards(state)
+        Spacer(Modifier.height(Space.xxl))
+        PrimaryButton("Siguiente", onDone, enabled = state.requiredOk)
+    }
+}
+
+@Composable
+private fun FirstPactStep(onPair: () -> Unit, onLater: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = Space.xl)
+            .padding(top = Space.huge, bottom = Space.xl)
+    ) {
+        Text("Ahora, tu primer pacto", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(Space.s))
+        Text(
+            "Queda con alguien de confianza que también tenga ScreenPact. Os escaneáis el QR y cada uno guarda la llave del otro.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.weight(1f))
+        PrimaryButton("Sellar el pacto ahora", onPair)
+        Spacer(Modifier.height(Space.xs))
+        QuietButton("Lo haré luego", onLater, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }

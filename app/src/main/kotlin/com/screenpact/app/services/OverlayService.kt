@@ -21,7 +21,8 @@ import androidx.savedstate.SavedStateRegistry
 import androidx.savedstate.SavedStateRegistryController
 import androidx.savedstate.SavedStateRegistryOwner
 import androidx.savedstate.setViewTreeSavedStateRegistryOwner
-import com.screenpact.app.data.crypto.TOTPManager
+import com.screenpact.app.data.FriendCodes
+import com.screenpact.app.util.TamperGuard
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.UnlockGrant
 import com.screenpact.app.ui.overlay.BlockedOverlayContent
@@ -50,6 +51,17 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     private val store = ViewModelStore()
     private val savedStateController = SavedStateRegistryController.create(this)
 
+    private data class OverlayInfo(
+        val pkg: String,
+        val appName: String,
+        val usedMs: Long,
+        val limitMin: Int,
+        val tamper: String?
+    )
+
+    private val current = mutableStateOf(OverlayInfo("", "", 0L, 0, null))
+    private val friendNames = mutableStateOf<List<String>>(emptyList())
+
     override val lifecycle: Lifecycle get() = lifecycleRegistry
     override val viewModelStore: ViewModelStore get() = store
     override val savedStateRegistry: SavedStateRegistry get() = savedStateController.savedStateRegistry
@@ -74,7 +86,8 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 val appName = intent.getStringExtra(EXTRA_APP_NAME) ?: pkg
                 val usedMs = intent.getLongExtra(EXTRA_USED_MS, 0L)
                 val limitMin = intent.getIntExtra(EXTRA_LIMIT_MIN, 0)
-                showOverlay(pkg, appName, usedMs, limitMin)
+                val tamper = intent.getStringExtra(EXTRA_TAMPER)
+                showOverlay(pkg, appName, usedMs, limitMin, tamper)
             }
             ACTION_HIDE -> {
                 hideOverlayAndStop()
@@ -83,9 +96,19 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         return START_NOT_STICKY
     }
 
-    private fun showOverlay(pkg: String, appName: String, usedMs: Long, limitMin: Int) {
-        // Already showing — do not recreate the view (avoids flicker on repeated calls from UsageMonitorService).
+    private fun showOverlay(pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String?) {
+        // Already showing: update the content in place instead of recreating the view
+        // (avoids flicker on repeated calls from UsageMonitorService).
+        val info = OverlayInfo(pkg, appName, usedMs, limitMin, tamper)
+        current.value = info
         if (rootView != null) return
+
+        // Nombres de los amigos que pueden dar la llave ahora mismo, para la pantalla.
+        scope.launch {
+            val db = AppDatabase.get(applicationContext)
+            val all = db.friendDao().getAll()
+            friendNames.value = all.sortedBy { it.addedAt }.filter { FriendCodes.canUnlock(it, all) }.map { it.name }
+        }
 
         val params = WindowManager.LayoutParams().apply {
             type = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
@@ -112,12 +135,15 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             setViewTreeViewModelStoreOwner(this@OverlayService)
             setViewTreeSavedStateRegistryOwner(this@OverlayService)
             setContent {
+                val shown = current.value
                 BlockedOverlayContent(
-                    appName = appName,
-                    usedMinutes = (usedMs / 60_000L).toInt(),
-                    limitMinutes = limitMin,
+                    appName = shown.appName,
+                    usedMinutes = (shown.usedMs / 60_000L).toInt(),
+                    limitMinutes = shown.limitMin,
+                    tamperReason = shown.tamper,
+                    friendNames = friendNames.value,
                     errorMessage = errorState.value,
-                    onSubmit = { code -> attemptUnlock(pkg, code, errorState) }
+                    onSubmit = { code -> attemptUnlock(current.value.pkg, code, errorState) }
                 )
             }
         }
@@ -134,9 +160,10 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     ) {
         scope.launch {
             val db = AppDatabase.get(applicationContext)
-            val friends = db.friendDao().getAll()
-            val match = friends.firstOrNull { TOTPManager.verifyCode(it.verifyKey, code) }
+            val match = FriendCodes.match(db, code)
             if (match != null) {
+                // El código de un amigo también perdona una trampa guardada (permisos, servicio parado).
+                TamperGuard.clear(applicationContext)
                 db.unlockGrantDao().upsert(
                     UnlockGrant(
                         packageName = pkg,
@@ -148,7 +175,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 // long enough to remove the window, otherwise the WindowManager view leaks.
                 hideOverlayAndStop()
             } else {
-                errorState.value = "Código inválido"
+                errorState.value = "Esa llave no vale. Puede que haya caducado: pide la que sale ahora."
             }
         }
     }
@@ -180,6 +207,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         const val EXTRA_APP_NAME = "app_name"
         const val EXTRA_USED_MS = "used_ms"
         const val EXTRA_LIMIT_MIN = "limit_min"
+        const val EXTRA_TAMPER = "tamper"
 
         const val GRACE_PERIOD_MS = 5 * 60_000L
 
@@ -191,13 +219,14 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         @Volatile var isShowing: Boolean = false
             private set
 
-        fun show(context: Context, pkg: String, appName: String, usedMs: Long, limitMin: Int) {
+        fun show(context: Context, pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String?) {
             val i = Intent(context, OverlayService::class.java).apply {
                 action = ACTION_SHOW
                 putExtra(EXTRA_PACKAGE, pkg)
                 putExtra(EXTRA_APP_NAME, appName)
                 putExtra(EXTRA_USED_MS, usedMs)
                 putExtra(EXTRA_LIMIT_MIN, limitMin)
+                putExtra(EXTRA_TAMPER, tamper)
             }
             context.startService(i)
         }

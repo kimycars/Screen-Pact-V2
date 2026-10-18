@@ -5,7 +5,7 @@ import org.json.JSONObject
 
 /**
  * Payload incrustado en el QR de emparejamiento. Texto JSON base64-url:
- *   { "v": 1, "name": "Carla", "secret": "<base64 url-safe>" }
+ *   { "v": 1, "name": "Carla", "id": "<uuid de instalación>", "secret": "<base64 url-safe>" }
  *
  * No hay servidor: el secreto se intercambia físicamente al escanear.
  *
@@ -18,12 +18,15 @@ import org.json.JSONObject
  */
 data class PairingPayload(
     val name: String,
-    val secret: ByteArray
+    val secret: ByteArray,
+    /** Id de la instalación que generó el QR (vacío en QRs antiguos). Sirve para detectar el QR propio. */
+    val installId: String = ""
 ) {
     fun encode(): String {
         val json = JSONObject().apply {
             put("v", 1)
             put("name", name)
+            put("id", installId)
             put("secret", Base64.encodeToString(secret, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING))
         }
         return "screenpact://pair?d=" + Base64.encodeToString(
@@ -44,14 +47,14 @@ data class PairingPayload(
                 json.getString("secret"),
                 Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
             )
-            PairingPayload(name, secret)
+            PairingPayload(name, secret, json.optString("id", ""))
         }.getOrNull()
     }
 
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
         if (other !is PairingPayload) return false
-        return name == other.name && secret.contentEquals(other.secret)
+        return name == other.name && secret.contentEquals(other.secret) && installId == other.installId
     }
 
     override fun hashCode(): Int = 31 * name.hashCode() + secret.contentHashCode()

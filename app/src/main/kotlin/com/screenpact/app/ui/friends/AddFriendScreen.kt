@@ -5,11 +5,18 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.size
+import androidx.compose.ui.draw.clip
+import com.screenpact.app.ui.components.BackButton
+import com.screenpact.app.ui.components.PrimaryButton
+import com.screenpact.app.ui.components.SpCard
+import com.screenpact.app.ui.theme.Sp
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -17,15 +24,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,9 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.content.ContextCompat
 import com.journeyapps.barcodescanner.BarcodeCallback
@@ -53,6 +54,9 @@ import com.screenpact.app.data.crypto.TOTPManager
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Friend
 import kotlinx.coroutines.launch
+import com.screenpact.app.ui.theme.Space
+import com.screenpact.app.ui.theme.Sizes
+import com.screenpact.app.ui.theme.Shapes
 
 /**
  * Pantalla de emparejamiento con secretos direccionales.
@@ -65,7 +69,6 @@ import kotlinx.coroutines.launch
  *   Paso 1 — Enseña TU QR al amigo (él lo escanea → obtiene tu verifyKey como su generateKey).
  *   Paso 2 — Escanea el QR del amigo (tú obtienes su verifyKey como tu generateKey).
  */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddFriendScreen(onDone: () -> Unit) {
     val context = LocalContext.current
@@ -77,14 +80,22 @@ fun AddFriendScreen(onDone: () -> Unit) {
     var myVerifyKey by remember { mutableStateOf<ByteArray?>(null) }
     var ownPayload by remember { mutableStateOf<PairingPayload?>(null) }
 
+    var myInstallId by remember { mutableStateOf<String?>(null) }
+
     // When true, shows the full-screen camera view for scanning the friend's QR.
     var scanning by remember { mutableStateOf(false) }
+    var scanError by remember { mutableStateOf<String?>(null) }
+    // Nombre del amigo cuyo QR ya escaneamos. La pantalla sigue abierta para que él pueda
+    // escanear el nuestro: si se cerrase, nuestro QR (y su clave) se perderían.
+    var pairedName by remember { mutableStateOf<String?>(null) }
 
     LaunchedEffect(Unit) {
         val key = TOTPManager.generateSecret()
+        val installId = Prefs.getInstallId(context)
         myVerifyKey = key
+        myInstallId = installId
         val name = Prefs.getOwnName(context).ifBlank { "Yo" }
-        ownPayload = PairingPayload(name = name, secret = key)
+        ownPayload = PairingPayload(name = name, secret = key, installId = installId)
     }
 
     // When scanning is active, render just the camera — no Scaffold (it takes the full screen).
@@ -93,8 +104,30 @@ fun AddFriendScreen(onDone: () -> Unit) {
             onResult = { text ->
                 val parsed = PairingPayload.decode(text)
                 val vk = myVerifyKey
-                if (parsed != null && vk != null) {
+                val ownId = myInstallId
+                if (parsed == null || vk == null || ownId == null) {
+                    scanError = "Ese QR no es un código de emparejamiento de ScreenPact."
+                    scanning = false
+                } else {
                     scope.launch {
+                        val existing = db.friendDao().getAll()
+                        // Emparejarse con uno mismo daría la misma clave para generar y verificar,
+                        // y los códigos de "Amigos" desbloquearían tu propio bloqueo.
+                        scanError = when {
+                            parsed.installId.isBlank() ->
+                                "Este QR es de una versión antigua. Pide a tu amigo que actualice ScreenPact."
+                            parsed.installId == ownId || parsed.secret.contentEquals(vk) ->
+                                "Ese es tu propio QR. Tienes que escanear el del móvil de tu amigo."
+                            existing.any { f ->
+                                parsed.secret.contentEquals(f.generateKey) || parsed.secret.contentEquals(f.verifyKey)
+                            } ->
+                                "Ya estás emparejado con ese QR. Pide a tu amigo que salga y vuelva a entrar en 'Sellar un pacto'."
+                            else -> null
+                        }
+                        if (scanError != null) {
+                            scanning = false
+                            return@launch
+                        }
                         db.friendDao().insert(
                             Friend(
                                 name = parsed.name,
@@ -102,7 +135,8 @@ fun AddFriendScreen(onDone: () -> Unit) {
                                 verifyKey = vk                // our secret → friend stores as their generateKey
                             )
                         )
-                        onDone()
+                        pairedName = parsed.name
+                        scanning = false
                     }
                 }
             },
@@ -111,69 +145,82 @@ fun AddFriendScreen(onDone: () -> Unit) {
         return
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Emparejar amigo") },
-                navigationIcon = {
-                    IconButton(onClick = onDone) { Icon(Icons.Default.ArrowBack, null) }
-                }
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(horizontal = Space.xl)
+            .padding(top = Space.xs, bottom = Space.xl),
+        verticalArrangement = Arrangement.spacedBy(Space.m)
+    ) {
+        BackButton(onDone)
+        Column {
+            Text("Sellad el pacto", style = MaterialTheme.typography.headlineLarge)
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                "Juntaos con los dos móviles. Cada uno escanea el QR del otro, en el orden que queráis.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = Sp.TextoSuave
             )
         }
-    ) { padding ->
-        Column(
-            Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(16.dp)
-                .verticalScroll(rememberScrollState()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            // Step 1: Show own QR
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Paso 1 — Enseña este QR a tu amigo", fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Tu amigo lo escanea desde su pantalla de 'Emparejar amigo'. " +
-                            "Esto le permite generarte códigos para desbloquearte.",
-                        fontSize = 13.sp
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    ownPayload?.let { payload ->
-                        val bitmap = remember(payload) { QrUtils.generate(payload.encode()) }
-                        Image(
-                            bitmap = bitmap.asImageBitmap(),
-                            contentDescription = "Mi QR de emparejamiento",
-                            modifier = Modifier.fillMaxWidth().aspectRatio(1f)
-                        )
-                    }
-                }
-            }
 
-            // Step 2: Scan friend's QR
-            Card(modifier = Modifier.fillMaxWidth()) {
-                Column(Modifier.padding(16.dp)) {
-                    Text("Paso 2 — Escanea el QR de tu amigo", fontWeight = FontWeight.SemiBold)
-                    Spacer(Modifier.height(4.dp))
-                    Text(
-                        "Tu amigo te muestra su QR (el que aparece en su Paso 1). " +
-                            "Esto te permite generarle códigos para desbloquearlo a él.",
-                        fontSize = 13.sp
-                    )
-                    Spacer(Modifier.height(12.dp))
-                    Button(
-                        onClick = { scanning = true },
-                        modifier = Modifier.fillMaxWidth()
-                    ) { Text("Escanear QR del amigo") }
-                }
-            }
-
+        SpCard {
+            Text("Enséñale tu QR", style = MaterialTheme.typography.titleMedium)
+            Spacer(Modifier.height(Space.xxs))
             Text(
-                "Ambas personas deben completar los dos pasos. " +
-                    "Los códigos que ves en 'Amigos' solo desbloquean al otro, no a ti mismo.",
-                fontSize = 12.sp
+                "Con él, tu amigo podrá darte la llave cuando te pases.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Sp.TextoSuave
             )
+            Spacer(Modifier.height(Space.m))
+            ownPayload?.let { payload ->
+                val bitmap = remember(payload) { QrUtils.generate(payload.encode()) }
+                Box(
+                    Modifier
+                        .align(Alignment.CenterHorizontally)
+                        .size(Sizes.qr)
+                        .clip(Shapes.field)
+                        .background(Sp.Niebla)
+                        .padding(Space.xs)
+                ) {
+                    Image(
+                        bitmap = bitmap.asImageBitmap(),
+                        contentDescription = "Tu QR de emparejamiento",
+                        modifier = Modifier.fillMaxSize()
+                    )
+                }
+            }
+        }
+
+        SpCard {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text("Escanea el suyo", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                if (pairedName != null) Text("Hecho", style = MaterialTheme.typography.labelMedium, color = Sp.Pacto)
+            }
+            Spacer(Modifier.height(Space.xxs))
+            Text(
+                if (pairedName != null) "Ya tienes la llave de $pairedName."
+                else "Así tú también tendrás su llave. Sin este paso, el pacto solo va en un sentido.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Sp.TextoSuave
+            )
+            if (pairedName == null) {
+                Spacer(Modifier.height(Space.m))
+                PrimaryButton("Abrir la cámara", { scanError = null; scanning = true })
+            }
+        }
+
+        scanError?.let { msg ->
+            Text(msg, style = MaterialTheme.typography.bodyMedium, color = Sp.Aviso)
+        }
+
+        if (pairedName != null) {
+            Text(
+                "Antes de cerrar, comprueba que $pairedName también ha escaneado tu QR. Si sales de esta pantalla, tu QR cambia.",
+                style = MaterialTheme.typography.bodySmall,
+                color = Sp.TextoSuave
+            )
+            PrimaryButton("Listo", onDone)
         }
     }
 }
@@ -200,7 +247,7 @@ private fun ScanView(onResult: (String) -> Unit, onBack: () -> Unit) {
 
     if (!hasCamera) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-            Text("Concede permiso de cámara para escanear el QR.")
+            Text("Concede permiso de cámara para escanear el QR de tu amigo.", color = Sp.Niebla)
         }
         return
     }
@@ -229,9 +276,9 @@ private fun ScanView(onResult: (String) -> Unit, onBack: () -> Unit) {
         // Back button overlaid on top of the camera preview.
         IconButton(
             onClick = onBack,
-            modifier = Modifier.align(Alignment.TopStart).padding(8.dp)
+            modifier = Modifier.align(Alignment.TopStart).padding(Space.xs)
         ) {
-            Icon(Icons.Default.ArrowBack, contentDescription = "Cancelar", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancelar", tint = Color.White)
         }
     }
 }

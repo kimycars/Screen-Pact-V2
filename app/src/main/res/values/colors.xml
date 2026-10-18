@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="black">#FF000000</color>
-    <color name="white">#FFFFFFFF</color>
-    <color name="block_red">#FFD32F2F</color>
+    <!-- Espejo de ui/theme/Theme.kt para lo que no es Compose (ventana, barras del sistema). -->
+    <color name="sp_tinta">#FF171A33</color>
+    <color name="sp_llave">#FFFFC23D</color>
 </resources>

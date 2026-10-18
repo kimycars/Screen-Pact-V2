@@ -7,12 +7,27 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 private val Context.dataStore by preferencesDataStore(name = "screenpact_prefs")
 
 object Prefs {
     private val OWN_NAME   = stringPreferencesKey("own_name")
     private val SETUP_DONE = booleanPreferencesKey("setup_done")
+    private val INSTALL_ID = stringPreferencesKey("install_id")
+
+    /**
+     * Identificador aleatorio de esta instalación. Va dentro del QR de emparejamiento para que
+     * la app reconozca su propio QR y no deje emparejarse consigo misma.
+     */
+    suspend fun getInstallId(context: Context): String {
+        context.dataStore.data.map { it[INSTALL_ID] }.first()?.let { return it }
+        var id = ""
+        context.dataStore.edit { prefs ->
+            id = prefs[INSTALL_ID] ?: UUID.randomUUID().toString().also { prefs[INSTALL_ID] = it }
+        }
+        return id
+    }
 
     suspend fun setOwnName(context: Context, name: String) {
         context.dataStore.edit { it[OWN_NAME] = name }

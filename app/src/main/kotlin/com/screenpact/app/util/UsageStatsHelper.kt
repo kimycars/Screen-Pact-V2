@@ -19,16 +19,44 @@ object UsageStatsHelper {
         return mode == AppOpsManager.MODE_ALLOWED
     }
 
+    /** Lo que el servicio necesita en cada vuelta: app visible ahora y uso de hoy por paquete. */
+    data class Snapshot(val foreground: String?, val todayMs: Map<String, Long>)
+
+    // Constantes de UsageEvents.Event como literales: varias son de API 28/29 y minSdk es 26.
+    // En móviles antiguos esos eventos simplemente no llegan y la lógica sigue siendo válida.
+    private const val ACTIVITY_RESUMED = 1        // == MOVE_TO_FOREGROUND
+    private const val ACTIVITY_PAUSED = 2         // == MOVE_TO_BACKGROUND
+    private const val SCREEN_INTERACTIVE = 15
+    private const val SCREEN_NON_INTERACTIVE = 16
+    private const val KEYGUARD_SHOWN = 17
+    private const val KEYGUARD_HIDDEN = 18
+    private const val ACTIVITY_STOPPED = 23
+    private const val DEVICE_SHUTDOWN = 26
+    private const val DEVICE_STARTUP = 27
+
+    /** Margen antes de medianoche para saber qué estaba abierto al empezar el día. */
+    private const val LOOKBACK_MS = 6 * 60 * 60_000L
+
+    fun foregroundTimeTodayMs(context: Context): Map<String, Long> = snapshot(context).todayMs
+
+    fun currentForegroundPackage(context: Context): String? = snapshot(context).foreground
+
     /**
-     * Devuelve milisegundos *visibles* en primer plano de cada paquete desde la medianoche local.
+     * Reconstruye el uso de hoy con una máquina de estados sobre los eventos del sistema,
+     * con el mismo criterio que Bienestar Digital: solo cuenta el tiempo en que la app está
+     * en primer plano, la pantalla encendida y el móvil desbloqueado.
      *
-     * Implementación basada en eventos (FG/BG pairing) en lugar de
-     * [UsageStats.totalTimeInForeground], que sobre-estima ~2× el tiempo real
-     * porque incluye periodos en los que el proceso está en el bucket "foreground"
-     * del scheduler aunque la UI ya no sea visible. Este algoritmo es equivalente
-     * al que usa Digital Wellbeing del sistema.
+     * Por qué así (bug de ~8 min de más en el límite):
+     *  - El emparejado simple RESUMED/PAUSED por paquete seguía contando con la pantalla
+     *    apagada o en la pantalla de bloqueo si el sistema no emitía PAUSED (pasa con bloqueo
+     *    retardado, Smart Lock, vídeo, etc.).
+     *  - Si un PAUSED se perdía, la sesión quedaba abierta y se sumaba hasta "ahora".
+     *
+     * Modelo: hay como mucho una app en primer plano. Abrir otra app cierra la anterior,
+     * así que un PAUSED perdido ya no infla el total. Apagar pantalla o bloquear pausa el
+     * contador; encender/desbloquear lo reanuda si la app sigue arriba.
      */
-    fun foregroundTimeTodayMs(context: Context): Map<String, Long> {
+    fun snapshot(context: Context): Snapshot {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val now = System.currentTimeMillis()
         val startOfDay = Calendar.getInstance().apply {
@@ -39,80 +67,88 @@ object UsageStatsHelper {
             set(Calendar.MILLISECOND, 0)
         }.timeInMillis
 
-        val events = usm.queryEvents(startOfDay, now)
+        val events = usm.queryEvents(startOfDay - LOOKBACK_MS, now)
         val ev = UsageEvents.Event()
-        val openedAt = HashMap<String, Long>()  // pkg -> timestamp último MOVE_TO_FOREGROUND
-        val totals   = HashMap<String, Long>()  // pkg -> ms acumulados
+        val totals = HashMap<String, Long>()
+
+        var fgPkg: String? = null
+        val fgActivities = HashSet<String>()   // actividades de fgPkg en estado resumed
+        var screenOn = true
+        var locked = false
+        var segmentStart: Long? = null         // != null mientras se está contando
+
+        fun close(at: Long) {
+            val pkg = fgPkg
+            val from = segmentStart
+            if (pkg != null && from != null) {
+                // Solo cuenta la parte del tramo que cae dentro de hoy.
+                val delta = at - maxOf(from, startOfDay)
+                if (delta > 0) totals.merge(pkg, delta) { a, b -> a + b }
+            }
+            segmentStart = null
+        }
+
+        fun openIfVisible(at: Long) {
+            if (segmentStart == null && fgPkg != null && screenOn && !locked) segmentStart = at
+        }
 
         while (events.hasNextEvent()) {
             events.getNextEvent(ev)
-            val pkg = ev.packageName ?: continue
+            val t = ev.timeStamp
             when (ev.eventType) {
-                // MOVE_TO_FOREGROUND (=1) == ACTIVITY_RESUMED en API 29+ (mismo valor entero,
-                // disponible desde API 21). Usamos el nombre antiguo para soportar minSdk 26.
-                @Suppress("DEPRECATION")
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> {
-                    openedAt[pkg] = ev.timeStamp
+                ACTIVITY_RESUMED -> {
+                    val pkg = ev.packageName ?: continue
+                    if (pkg != fgPkg) {
+                        close(t)
+                        fgPkg = pkg
+                        fgActivities.clear()
+                    }
+                    fgActivities.add(ev.className ?: "")
+                    openIfVisible(t)
                 }
-                // MOVE_TO_BACKGROUND (=2) == ACTIVITY_PAUSED.
-                @Suppress("DEPRECATION")
-                UsageEvents.Event.MOVE_TO_BACKGROUND -> {
-                    val opened = openedAt.remove(pkg) ?: continue
-                    val delta = ev.timeStamp - opened
-                    if (delta > 0) totals.merge(pkg, delta) { a, b -> a + b }
+                ACTIVITY_PAUSED, ACTIVITY_STOPPED -> {
+                    if (ev.packageName != fgPkg) continue
+                    fgActivities.remove(ev.className ?: "")
+                    if (fgActivities.isEmpty()) {
+                        close(t)
+                        fgPkg = null
+                    }
+                }
+                SCREEN_NON_INTERACTIVE -> { close(t); screenOn = false }
+                SCREEN_INTERACTIVE -> { screenOn = true; openIfVisible(t) }
+                KEYGUARD_SHOWN -> { close(t); locked = true }
+                KEYGUARD_HIDDEN -> { locked = false; openIfVisible(t) }
+                DEVICE_SHUTDOWN, DEVICE_STARTUP -> {
+                    close(t)
+                    fgPkg = null
+                    fgActivities.clear()
+                    screenOn = true
+                    locked = false
                 }
             }
         }
 
-        // Cola: el usuario está justo ahora dentro de la app y no hay evento de cierre.
-        for ((pkg, opened) in openedAt) {
-            val delta = now - opened
-            if (delta > 0) totals.merge(pkg, delta) { a, b -> a + b }
-        }
-
-        return totals
+        val visible = segmentStart != null
+        close(now)
+        return Snapshot(foreground = if (visible) fgPkg else null, todayMs = totals)
     }
 
     /**
-     * Paquete actualmente en primer plano, usando una máquina de estados FG/BG sobre
-     * todos los eventos del día.
-     *
-     * El enfoque anterior usaba solo una ventana de 60 segundos, lo que hacía que
-     * devolviera null cuando el usuario llevaba más de 60 s en la misma app
-     * (el evento MOVE_TO_FOREGROUND salía de la ventana). Consecuencias:
-     *   • El overlay no reaparecía tras expirar el grace period mientras el usuario
-     *     permanecía en la app (UsageMonitorService recibía current=null y omitía la comprobación).
-     *   • Al salir y volver, el nuevo MOVE_TO_FOREGROUND sí caía en la ventana y el
-     *     overlay reaparecía de inmediato, aunque el grace period aún fuera válido.
-     *
-     * La solución es iterar todos los eventos desde startOfDay y hacer tracking de estado:
-     * FOREGROUND establece el paquete activo; BACKGROUND lo limpia si coincide.
-     * El valor final refleja qué app está ahora mismo en primer plano.
+     * True si desde [sinceMs] el usuario ha dejado [pkg]: otra app se ha puesto delante, o la
+     * pantalla se ha apagado o bloqueado. Solo lee los eventos de ese intervalo, así que es barato
+     * y se puede llamar varias veces por segundo mientras la pantalla de bloqueo está visible.
      */
-    fun currentForegroundPackage(context: Context): String? {
+    fun leftApp(context: Context, pkg: String, sinceMs: Long): Boolean {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
-        val now = System.currentTimeMillis()
-        val startOfDay = Calendar.getInstance().apply {
-            timeInMillis = now
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        val events = usm.queryEvents(startOfDay, now)
+        val events = usm.queryEvents(sinceMs, System.currentTimeMillis())
         val ev = UsageEvents.Event()
-        var fg: String? = null
-
         while (events.hasNextEvent()) {
             events.getNextEvent(ev)
-            @Suppress("DEPRECATION")
             when (ev.eventType) {
-                UsageEvents.Event.MOVE_TO_FOREGROUND -> fg = ev.packageName   // == ACTIVITY_RESUMED (misma constante)
-                UsageEvents.Event.MOVE_TO_BACKGROUND ->                        // == ACTIVITY_PAUSED
-                    if (fg == ev.packageName) fg = null
+                ACTIVITY_RESUMED -> if (ev.packageName != pkg && ev.packageName != context.packageName) return true
+                SCREEN_NON_INTERACTIVE, KEYGUARD_SHOWN -> return true
             }
         }
-        return fg
+        return false
     }
 }

@@ -1,0 +1,518 @@
+<title>ScreenPact de cero</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap">
+<style>
+/* Layout: índice fijo a la izquierda en escritorio, una sola columna de lectura (~68ch) a la derecha; en móvil el índice pasa arriba. */
+:root {
+  --bg: #171A33;        /* Tinta */
+  --surface: #22264A;   /* Superficie */
+  --line: #2C3160;
+  --fg: #F4F5FA;        /* Niebla */
+  --muted: #A9AEC9;
+  --accent: #FFC23D;    /* Llave */
+  --accent-text: #FFC23D;
+  --on-accent: #171A33;
+  --ok: #6FD9B8;        /* Pacto */
+  --warn: #FF7A6B;      /* Aviso */
+  --font-display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Figtree", "Segoe UI", system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+  color-scheme: dark;
+}
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]) {
+    --bg: #F4F5FA; --surface: #FFFFFF; --line: #DDE0EE; --fg: #171A33; --muted: #4E5373;
+    --accent: #FFC23D; --accent-text: #8A5A00; --on-accent: #171A33; --ok: #1E8A67; --warn: #C2412F;
+    color-scheme: light;
+  }
+}
+:root[data-theme="light"] {
+  --bg: #F4F5FA; --surface: #FFFFFF; --line: #DDE0EE; --fg: #171A33; --muted: #4E5373;
+  --accent: #FFC23D; --accent-text: #8A5A00; --on-accent: #171A33; --ok: #1E8A67; --warn: #C2412F;
+  color-scheme: light;
+}
+
+* { box-sizing: border-box; }
+body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16.5px; line-height: 1.6; }
+.wrap { max-width: 1180px; margin: 0 auto; padding-inline: 20px; padding-block: 40px 80px; display: grid; grid-template-columns: 230px minmax(0, 1fr); gap: 56px; }
+nav.toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 24px); align-self: start; max-height: calc(100vh - 48px); overflow-y: auto; font-size: 14px; }
+nav.toc p { margin: 0 0 10px; font-weight: 600; color: var(--muted); letter-spacing: .06em; text-transform: uppercase; font-size: 12px; }
+nav.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+nav.toc a { display: block; padding: 5px 10px; border-radius: 8px; color: var(--muted); text-decoration: none; }
+nav.toc a:hover, nav.toc a:focus-visible { color: var(--fg); background: var(--surface); outline: none; }
+main { min-width: 0; max-width: 72ch; }
+
+header.hero { display: grid; gap: 18px; padding-bottom: 36px; border-bottom: 1px solid var(--line); margin-bottom: 8px; }
+.brandrow { display: flex; align-items: center; gap: 14px; }
+.brandrow svg { flex-shrink: 0; }
+.kicker { font-size: 14px; color: var(--muted); }
+h1 { font-family: var(--font-display); font-weight: 800; font-size: clamp(36px, 6vw, 56px); line-height: 1.02; letter-spacing: -1.5px; margin: 0; text-wrap: balance; }
+h1 em { font-style: normal; color: var(--accent-text); }
+.lede { font-size: 19px; color: var(--muted); margin: 0; max-width: 60ch; }
+
+section { padding-top: 48px; scroll-margin-top: 16px; }
+h2 { font-family: var(--font-display); font-weight: 800; font-size: 30px; letter-spacing: -.5px; line-height: 1.15; margin: 0 0 14px; text-wrap: balance; }
+h3 { font-family: var(--font-display); font-weight: 600; font-size: 20px; margin: 28px 0 8px; }
+p { margin: 0 0 14px; }
+ul, ol { margin: 0 0 16px; padding-left: 22px; display: grid; gap: 6px; }
+a { color: var(--accent-text); }
+strong { font-weight: 600; }
+code { font-family: var(--font-mono); font-size: .86em; background: var(--surface); border: 1px solid var(--line); padding: 1px 6px; border-radius: 6px; overflow-wrap: anywhere; }
+pre { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px; overflow-x: auto; font-family: var(--font-mono); font-size: 13px; line-height: 1.55; margin: 0 0 16px; }
+pre code { background: none; border: 0; padding: 0; }
+
+.tablebox { overflow-x: auto; margin: 0 0 18px; border: 1px solid var(--line); border-radius: 12px; }
+table { width: 100%; border-collapse: collapse; font-size: 15px; }
+th, td { text-align: left; padding: 10px 14px; vertical-align: top; }
+th { font-weight: 600; color: var(--muted); font-size: 13px; letter-spacing: .03em; background: var(--surface); }
+tr + tr td { border-top: 1px solid var(--line); }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.pill { display: inline-block; font-size: 12.5px; font-weight: 600; padding: 2px 10px; border-radius: 999px; white-space: nowrap; }
+.pill.ok { color: var(--ok); border: 1px solid currentColor; }
+.pill.half { color: var(--accent-text); border: 1px solid currentColor; }
+.pill.no { color: var(--warn); border: 1px solid currentColor; }
+
+.callout { background: var(--surface); border-radius: 16px; padding: 18px 20px; margin: 0 0 18px; }
+.callout p:last-child { margin-bottom: 0; }
+
+.swatches { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; margin: 0 0 18px; }
+.swatch { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+.swatch div { height: 64px; }
+.swatch span { display: block; padding: 8px 12px 2px; font-weight: 600; font-size: 14px; }
+.swatch small { display: block; padding: 0 12px 10px; color: var(--muted); font-family: var(--font-mono); font-size: 12px; }
+
+.voice { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px; margin: 0 0 18px; }
+.voice div { border-radius: 12px; padding: 14px 16px; border: 1px solid var(--line); }
+.voice b { display: block; font-size: 13px; margin-bottom: 4px; }
+.voice .yes b { color: var(--ok); }
+.voice .no b { color: var(--warn); }
+
+.areas { display: grid; gap: 14px; }
+.area { background: var(--surface); border-radius: 16px; padding: 18px 20px; }
+.area h3 { margin-top: 0; }
+.area p:last-child, .area ul:last-child { margin-bottom: 0; }
+
+footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line); color: var(--muted); font-size: 14px; }
+
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: minmax(0, 1fr); gap: 24px; padding-block: 24px 64px; }
+  nav.toc { position: static; max-height: none; background: var(--surface); border-radius: 16px; padding: 16px; }
+  nav.toc ol { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .voice { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: no-preference) { html { scroll-behavior: smooth; } }
+</style>
+
+<div class="wrap">
+  <nav class="toc" aria-label="Índice">
+    <p>Índice</p>
+    <ol>
+      <li><a href="#que-es">Qué es</a></li>
+      <li><a href="#estado">Estado hoy</a></li>
+      <li><a href="#mercado">Mercado</a></li>
+      <li><a href="#publico">Público y mensaje</a></li>
+      <li><a href="#producto">Producto</a></li>
+      <li><a href="#trampas">Trampas</a></li>
+      <li><a href="#pantallas">Pantallas</a></li>
+      <li><a href="#marca">Marca</a></li>
+      <li><a href="#negocio">Negocio</a></li>
+      <li><a href="#lanzamiento">Lanzamiento</a></li>
+      <li><a href="#crecimiento">Crecimiento</a></li>
+      <li><a href="#metricas">Métricas</a></li>
+      <li><a href="#tecnologia">Tecnología</a></li>
+      <li><a href="#areas">Tu área</a></li>
+      <li><a href="#pendiente">Pendiente</a></li>
+      <li><a href="#decisiones">Decisiones</a></li>
+      <li><a href="#glosario">Glosario</a></li>
+      <li><a href="#donde">Dónde está todo</a></li>
+    </ol>
+  </nav>
+
+  <main>
+    <header class="hero">
+      <div class="brandrow">
+        <svg width="48" height="48" viewBox="0 0 120 120" role="img" aria-label="Icono de ScreenPact">
+          <rect width="120" height="120" rx="28" fill="#FFC23D"></rect>
+          <path d="M38 50 V40 a22 22 0 0 1 44 0 V50" fill="none" stroke="#171A33" stroke-width="11" stroke-linecap="round"></path>
+          <rect x="20" y="46" width="80" height="62" rx="16" fill="#171A33"></rect>
+          <circle cx="45" cy="67" r="9.5" fill="#FFC23D"></circle><path d="M29 99 a16 16 0 0 1 32 0 Z" fill="#FFC23D"></path>
+          <circle cx="75" cy="67" r="9.5" fill="#F4F5FA"></circle><path d="M59 99 a16 16 0 0 1 32 0 Z" fill="#F4F5FA"></path>
+        </svg>
+        <span class="kicker">Documento de entrada para el equipo · actualizado el 10 de octubre de 2026</span>
+      </div>
+      <h1>Tu amigo tiene <em>la llave</em>.</h1>
+      <p class="lede">Todo lo que necesitas saber de ScreenPact para empezar a trabajar en él, sea cual sea tu área: qué es, en qué punto está, cómo gana dinero, cómo se ve, cómo está hecho y qué falta.</p>
+    </header>
+
+    <section id="que-es">
+      <h2>Qué es ScreenPact</h2>
+      <p>ScreenPact es una app de Android para usar menos el móvil con ayuda de un amigo. Pones un límite diario a las apps que te roban tiempo y, cuando lo superas, la app se bloquea. Para desbloquearla necesitas una llave de 6 cifras que solo puede darte tu amigo desde su móvil.</p>
+      <p>La idea de fondo: los bloqueadores normales se saltan con un toque, porque quien pone el límite y quien lo quita es la misma persona. ScreenPact separa esos dos papeles. Pedirle la llave a alguien cuesta un poco de vergüenza, y esa pequeña fricción social es lo que hace que funcione.</p>
+      <h3>Cómo funciona, paso a paso</h3>
+      <ol>
+        <li>Tú y tu amigo os juntáis con los dos móviles y cada uno escanea el QR del otro. Así queda sellado el pacto.</li>
+        <li>Eliges las apps que quieres vigilar (TikTok, Instagram, YouTube…) y cuántos minutos al día les das.</li>
+        <li>Cuando te pasas, aparece una pantalla amarilla a pantalla completa que no se puede cerrar: <em>"Pídele la llave a Carla"</em>.</li>
+        <li>Carla abre ScreenPact, toca tu nombre y ve una llave de 6 cifras que cambia cada 30 segundos. Te la dice o te la manda por WhatsApp.</li>
+        <li>Con esa llave tienes 5 minutos más. Después, la pantalla vuelve.</li>
+      </ol>
+      <p>Todo ocurre en los dos móviles. No hay cuentas, no hay servidor y la llave se calcula sin conexión.</p>
+    </section>
+
+    <section id="estado">
+      <h2>En qué punto está</h2>
+      <p>La creó Kimy (fundador) porque no encontraba nada así para su Android. Hay un MVP que funciona y se usa a diario, y en octubre de 2026 se ha definido la versión pública: marca, pantallas, modelo de negocio y lanzamiento.</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>Área</th><th>Estado</th><th>Detalle</th></tr></thead>
+        <tbody>
+          <tr><td>MVP (bloqueo, pacto, llave)</td><td><span class="pill ok">Funciona</span></td><td>En uso real desde mayo de 2026.</td></tr>
+          <tr><td>Bugs del MVP (conteo de minutos, auto-emparejarse, editar límites)</td><td><span class="pill ok">Arreglados</span></td><td>1 de octubre de 2026.</td></tr>
+          <tr><td>Protección contra trampas</td><td><span class="pill ok">Hecha</span></td><td>Hora manual, permisos quitados, servicio parado, segundo móvil. Ver <a href="#trampas">Trampas</a>.</td></tr>
+          <tr><td>Marca e icono</td><td><span class="pill ok">Definidos</span></td><td>Colores, tipografía, voz e icono "candado de dos".</td></tr>
+          <tr><td>Rediseño de la app con la marca</td><td><span class="pill half">En código, sin probar</span></td><td>Compila, pero no se ha probado en un móvil real ni está commiteado.</td></tr>
+          <tr><td>Cobro de Pro (Stripe + licencia)</td><td><span class="pill no">Sin empezar</span></td><td>La pantalla Pro existe con el botón en "Muy pronto".</td></tr>
+          <tr><td>Funciones Pro (horarios, rachas, modo estricto)</td><td><span class="pill no">Sin empezar</span></td><td></td></tr>
+          <tr><td>APK firmado de release</td><td><span class="pill no">Sin empezar</span></td><td>Necesario para publicar en Zapstore.</td></tr>
+          <tr><td>Publicación</td><td><span class="pill no">Sin publicar</span></td><td>Primer destino: Zapstore y APK desde la web.</td></tr>
+          <tr><td>iOS</td><td><span class="pill no">No previsto aún</span></td><td>Solo cuando Pro genere ingresos.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="mercado">
+      <h2>Mercado y competencia</h2>
+      <p>La idea de "un amigo aprueba tu desbloqueo" ya existe, pero casi siempre en iPhone, con cuenta y con suscripción. En Android no había nada equivalente cuando Kimy lo buscó, y ese es el mercado de entrada.</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>App</th><th>Cómo desbloquea</th><th>Precio</th><th>Cuenta o servidor</th></tr></thead>
+        <tbody>
+          <tr><td>Opal</td><td>Sesiones; un amigo aprueba salir antes</td><td class="num">~60-100 $/año</td><td>Sí</td></tr>
+          <tr><td>one sec</td><td>Pausa con respiración antes de abrir</td><td class="num">39,99 $/año</td><td>Sí (premium)</td></tr>
+          <tr><td>ScreenZen</td><td>Pausa antes de abrir, tú solo</td><td>Gratis</td><td>No</td></tr>
+          <tr><td>Brick</td><td>Llavero NFC físico</td><td class="num">59 $ una vez</td><td>Sí</td></tr>
+          <tr><td>PeerPause, SelfBlock, Lock In, Sheppie, Screen Time Buddy</td><td>Un amigo aprueba desde su app</td><td>Suscripción</td><td>Sí, todas</td></tr>
+        </tbody>
+      </table></div>
+      <p>Datos de una búsqueda del 1 de octubre de 2026. Conviene revisarlos antes de usarlos en material público.</p>
+    </section>
+
+    <section id="publico">
+      <h2>Para quién es y qué decimos</h2>
+      <p><strong>Público principal:</strong> gente de 18 a 30 años que siente que pierde horas en redes y sabe que la fuerza de voluntad sola no le basta.</p>
+      <p><strong>Posicionamiento:</strong> para gente joven que quiere usar menos el móvil, ScreenPact es el pacto con un amigo en el que solo él puede darte más tiempo. A diferencia de los bloqueadores normales, no te lo puedes saltar tú solo. A diferencia de Opal o PeerPause, existe para Android y no pide cuenta.</p>
+      <h3>Los tres mensajes, por orden de peso</h3>
+      <ol>
+        <li><strong>Tu amigo tiene la llave.</strong> No puedes desbloquearte solo, de verdad. Es el gancho.</li>
+        <li><strong>Por fin en Android.</strong> Cuando exista la versión de iPhone pasará a ser "da igual qué móvil tenga tu amigo": las apps de iPhone que hacen esto solo funcionan entre iPhones.</li>
+        <li><strong>Sin cuenta.</strong> Nada sale de tu móvil. Da confianza, pero por sí solo no diferencia: no lo uses como titular.</li>
+      </ol>
+    </section>
+
+    <section id="producto">
+      <h2>El producto</h2>
+      <h3>Gratis y Pro</h3>
+      <div class="tablebox"><table>
+        <thead><tr><th>Función</th><th>Gratis</th><th>Pro</th></tr></thead>
+        <tbody>
+          <tr><td>Amigos emparejados</td><td>Ilimitados</td><td>Ilimitados</td></tr>
+          <tr><td>Apps con límite</td><td>3</td><td>Ilimitadas</td></tr>
+          <tr><td>Límite diario, pantalla de bloqueo y llave</td><td>Sí</td><td>Sí</td></tr>
+          <tr><td>Protección contra trampas</td><td>Sí</td><td>Sí</td></tr>
+          <tr><td>Horarios (por ejemplo, Instagram cerrado de 0 a 8 h)</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Historial y estadísticas de la semana</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Rachas del pacto (días seguidos cumpliendo)</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Modo estricto (desinstalar pide llave)</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Temas e icono alternativo</td><td>No</td><td>Sí</td></tr>
+        </tbody>
+      </table></div>
+      <p>Los amigos nunca se limitan porque cada amigo es una instalación nueva: es nuestro único canal de crecimiento gratuito. El límite de 3 apps cubre lo típico (TikTok, Instagram, YouTube); quien quiere controlar más ya está comprometido y paga.</p>
+
+      <h3>La regla de oro: endurecer es libre, aflojar pide llave</h3>
+      <p>Sin pedir nada a nadie puedes añadir apps, bajar un límite y reactivar una app en pausa. Para todo lo que afloja el control necesitas la llave de un amigo: subir un límite, pausar una app, quitarla de la lista o romper un pacto. Esta regla es el corazón del producto: cualquier función nueva tiene que respetarla.</p>
+      <p>Si todavía no tienes ningún amigo emparejado, todo es libre, porque no habría a quién pedir la llave.</p>
+
+      <h3>La llave</h3>
+      <p>Es un código de 6 cifras que cambia cada 30 segundos y abre 5 minutos de uso. Cada pacto tiene dos llaves, una por sentido: tú tienes la de tu amigo y él la tuya. Por eso los códigos que ves en tu propia app nunca te desbloquean a ti.</p>
+    </section>
+
+    <section id="trampas">
+      <h2>Trampas: qué está cerrado y qué no</h2>
+      <p>Un usuario motivado intentará saltarse su propio pacto. Esto es lo que la app ya impide:</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>Trampa</th><th>Qué hace la app</th></tr></thead>
+        <tbody>
+          <tr><td>Emparejarte con tu propio QR</td><td>Lo rechaza: cada instalación tiene un identificador propio dentro del QR.</td></tr>
+          <tr><td>Cambiar la fecha para reiniciar el contador</td><td>Con la hora en manual, todas las apps con límite quedan bloqueadas hasta volver a hora automática.</td></tr>
+          <tr><td>Quitar permisos a la app</td><td>Lo registra. Al volver, todas las apps con límite quedan bloqueadas hasta que un amigo dé su llave.</td></tr>
+          <tr><td>Parar ScreenPact (forzar detención)</td><td>Si se para más de 15 minutos sin reiniciar el móvil, cuenta como trampa, con el mismo bloqueo.</td></tr>
+          <tr><td>Emparejarte con un segundo móvil o una app clonada para desbloquearte</td><td>Un amigo nuevo no puede dar llaves hasta pasadas 24 horas (salvo el primero).</td></tr>
+          <tr><td>Borrar a todos tus amigos para quedarte sin protección</td><td>Romper un pacto también pide llave.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Lo que no se puede cerrar del todo, y conviene decirlo con claridad si alguien pregunta:</p>
+      <ul>
+        <li><strong>Desinstalar la app o borrar sus datos.</strong> Android no lo permite impedir sin ser administrador total del móvil, y eso exige restablecerlo de fábrica. El modo estricto de Pro añadirá pasos, pero quien quiera irse siempre podrá. Opal y el resto tienen el mismo límite.</li>
+        <li><strong>Que tu primer amigo sea otro móvil tuyo.</strong> Es una trampa contra uno mismo. Solo la evita alguien que quiere de verdad el pacto.</li>
+      </ul>
+    </section>
+
+    <section id="pantallas">
+      <h2>Pantallas</h2>
+      <p>El diseño de todas las pantallas está en el canvas de diseño (enlace en <a href="#donde">Dónde está todo</a>). La app ya las implementa así, pendiente de probar en móvil.</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>Pantalla</th><th>Para qué sirve</th></tr></thead>
+        <tbody>
+          <tr><td>Bienvenida</td><td>Tres pasos: presentación, tu nombre y los dos permisos (explicando por qué). Termina proponiendo sellar el primer pacto.</td></tr>
+          <tr><td>Sellar el pacto</td><td>Tu QR para que lo escanee tu amigo y el botón para escanear el suyo. Se queda abierta hasta que los dos habéis escaneado.</td></tr>
+          <tr><td>Hoy</td><td>Quién tiene tu llave y una barra por app con los minutos usados frente al límite. Las que están cerca del límite se ponen en amarillo.</td></tr>
+          <tr><td>Límites</td><td>Lista de apps con su límite, con la regla "bajar es libre, subir pide llave" a la vista.</td></tr>
+          <tr><td>Amigos</td><td>Tus pactos, el botón "Darle llave" y cuánto le falta a un amigo nuevo para poder desbloquearte.</td></tr>
+          <tr><td>Dar la llave</td><td>El código grande con una cuenta atrás circular de 30 segundos y un botón para copiarlo.</td></tr>
+          <tr><td>Bloqueo</td><td>Amarilla a pantalla completa: "Se acabó el TikTok por hoy. Pídele la llave a Carla". Es el elemento firma de la marca.</td></tr>
+          <tr><td>Pro</td><td>Ventajas y los dos precios. Aparece desde Límites, nunca durante la bienvenida, y siempre con un "Ahora no" visible.</td></tr>
+        </tbody>
+      </table></div>
+      <p>La pantalla de bloqueo es lo que la gente fotografiará y subirá a redes. Cuida que siempre se vea bien en una captura.</p>
+    </section>
+
+    <section id="marca">
+      <h2>Marca</h2>
+      <h3>Personalidad y voz</h3>
+      <p>Cómplice, directa, con algo de humor y nunca de sermón. ScreenPact habla como el amigo que te quita el móvil en la cena, no como un médico ni como un sistema.</p>
+      <div class="voice">
+        <div class="yes"><b>Así sí</b>"Te has comido tus 30 minutos de TikTok. Pídele la llave a Carla."</div>
+        <div class="no"><b>Así no</b>"Has superado tu límite de uso diario. Introduce el código de verificación."</div>
+      </div>
+      <h3>Vocabulario</h3>
+      <p>Usamos siempre las mismas palabras: <strong>pacto</strong> (la relación entre dos amigos), <strong>llave</strong> (el código de 6 cifras), <strong>sellar un pacto</strong> (emparejarse), <strong>darle la llave</strong> (enseñar el código a un amigo), <strong>romper el pacto</strong> (borrar a un amigo). Nunca "código TOTP", "verificación", "emparejamiento" ni "usuario" de cara al público.</p>
+
+      <h3>Metáfora e icono</h3>
+      <p>La metáfora son las dos llaves: cada uno guarda la del otro. El icono es un <strong>candado de dos</strong>: un candado oscuro sobre fondo amarillo cuya cerradura son dos personas, tú en amarillo y tu amigo en blanco. Se eligió esta versión porque a 24 píxeles todavía se leen dos personas distintas.</p>
+
+      <h3>Color</h3>
+      <div class="swatches">
+        <div class="swatch"><div style="background:#171A33"></div><span>Tinta</span><small>#171A33 · fondo</small></div>
+        <div class="swatch"><div style="background:#22264A"></div><span>Superficie</span><small>#22264A · tarjetas</small></div>
+        <div class="swatch"><div style="background:#F4F5FA"></div><span>Niebla</span><small>#F4F5FA · texto</small></div>
+        <div class="swatch"><div style="background:#FFC23D"></div><span>Llave</span><small>#FFC23D · acento</small></div>
+        <div class="swatch"><div style="background:#6FD9B8"></div><span>Pacto</span><small>#6FD9B8 · cumplido</small></div>
+        <div class="swatch"><div style="background:#FF7A6B"></div><span>Aviso</span><small>#FF7A6B · errores</small></div>
+      </div>
+      <p>Un único acento: el amarillo Llave. El verde Pacto solo indica que algo está bien y el coral Aviso solo errores o trampas. Se evitó a propósito el rojo de alarma, porque castiga, y el negro con un neón, porque es el tópico de las apps de productividad. La app es siempre oscura.</p>
+
+      <h3>Tipografía</h3>
+      <ul>
+        <li><strong style="font-family: var(--font-display)">Bricolage Grotesque</strong> para titulares y cifras grandes.</li>
+        <li><strong>Figtree</strong> para el texto y la interfaz.</li>
+        <li><strong style="font-family: var(--font-mono)">JetBrains Mono</strong> solo para la llave de 6 cifras, para que no se confunda el 1 con el 7.</li>
+      </ul>
+      <p>Las tres son gratuitas (licencia OFL) y van dentro de la app, así que funcionan también en móviles sin servicios de Google.</p>
+      <h3>Forma</h3>
+      <p>Esquinas de 16 en tarjetas, 12 en campos y botones en forma de píldora. Una sola escala en toda la app.</p>
+    </section>
+
+    <section id="negocio">
+      <h2>Negocio</h2>
+      <div class="callout"><p><strong>Principio:</strong> coste fijo cero. Solo se gasta dinero cuando alguien paga. Cualquier servicio que se añada tiene que cumplir esto.</p></div>
+      <h3>Precios</h3>
+      <div class="tablebox"><table>
+        <thead><tr><th>Producto</th><th>Precio</th><th>Por qué</th></tr></thead>
+        <tbody>
+          <tr><td>Pro de por vida</td><td class="num">7,99 €</td><td>Pago único. Sin costes recurrentes no hay nada que una suscripción deba cubrir, y al público joven le cansan las suscripciones.</td></tr>
+          <tr><td>Pack Pacto (dos licencias)</td><td class="num">11,99 €</td><td>Para que los dos amigos lo compren a medias.</td></tr>
+        </tbody>
+      </table></div>
+      <p>Referencias para defender el precio: Opal cuesta más de 60 $ al año y Brick 59 $.</p>
+      <h3>Cómo se cobra</h3>
+      <ol>
+        <li>"Hazte Pro" abre un enlace de pago de Stripe. Stripe aloja la página de pago, así que nunca tocamos datos de tarjeta.</li>
+        <li>Al completarse el pago, Stripe avisa a una pequeña función en un servicio gratuito (Vercel o Cloudflare) que genera una licencia firmada y se la da al comprador.</li>
+        <li>La app comprueba la licencia sin conexión.</li>
+      </ol>
+      <p>La función solo se ejecuta cuando entra un pago. En Play Store, Google obligará a usar su propio sistema de pago (se queda un 15 %); la licencia de Stripe seguirá valiendo para quien instale desde Zapstore o la web.</p>
+      <h3>Costes conocidos</h3>
+      <div class="tablebox"><table>
+        <thead><tr><th>Concepto</th><th>Coste</th><th>Cuándo</th></tr></thead>
+        <tbody>
+          <tr><td>Stripe</td><td class="num">~1,5 % + 0,25 € por venta</td><td>Por venta con tarjeta europea. Comprobar la tarifa vigente antes de lanzar.</td></tr>
+          <tr><td>Cuenta de Google Play</td><td class="num">25 $ una vez</td><td>Al pasar a Play Store.</td></tr>
+          <tr><td>Comisión de Google Play</td><td class="num">15 %</td><td>Por venta dentro de Play Store.</td></tr>
+          <tr><td>Cuenta de desarrollador de Apple</td><td class="num">99 $/año</td><td>Solo con iOS, que se pospone hasta tener ingresos.</td></tr>
+          <tr><td>Servidores</td><td class="num">0 €</td><td>No hay. La función de licencias corre en un plan gratuito.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="lanzamiento">
+      <h2>Lanzamiento y plataformas</h2>
+      <ol>
+        <li><strong>Zapstore y APK desde la web.</strong> Primer destino. No hay revisión de Google y su público (privacidad, nostr, bitcoin) encaja con el "nada sale de tu móvil".</li>
+        <li><strong>Google Play, cuando haya tracción.</strong> Habrá que justificar ante Google los permisos de acceso de uso, de mostrarse encima de otras apps y de ver la lista de apps instaladas. El argumento es que el propio usuario elige el control sobre su móvil.</li>
+        <li><strong>iPhone, solo con ingresos.</strong> Apple obliga a usar su sistema de Tiempo de uso, con un permiso especial, un Mac y 99 $ al año. Es casi otra app entera.</li>
+      </ol>
+    </section>
+
+    <section id="crecimiento">
+      <h2>Crecimiento y marketing</h2>
+      <p>El crecimiento viene del propio producto: nadie puede usar ScreenPact solo, así que cada persona que instala trae a otra. Por eso no hay programa de referidos con premios.</p>
+      <h3>Palancas</h3>
+      <ul>
+        <li><strong>La pantalla de bloqueo como anuncio.</strong> Amarilla, con el nombre del amigo y una frase con gracia: pensada para capturas en redes.</li>
+        <li><strong>El reto de 30 días.</strong> El pacto como formato de contenido para TikTok e Instagram: "30 días con Carla de guardiana".</li>
+        <li><strong>La comunidad de Zapstore.</strong> Gente que valora la privacidad y el software sin cuentas. Encaja con el pilar "sin cuenta".</li>
+      </ul>
+      <h3>Ideas para más adelante, sin coste fijo</h3>
+      <ul>
+        <li>Pedir la llave a distancia mediante mensajes cifrados por nostr, sin servidor propio.</li>
+        <li>Pago en bitcoin para el público de Zapstore.</li>
+      </ul>
+    </section>
+
+    <section id="metricas">
+      <h2>Métricas y objetivos</h2>
+      <p><strong>Métrica principal:</strong> pactos activos a los 7 días. Un pacto activo es una pareja de amigos emparejada, con al menos un límite activo, que sigue con la app instalada una semana después.</p>
+      <p><strong>Activación:</strong> emparejarse con alguien y poner el primer límite el mismo día. Todo el recorrido de la bienvenida empuja hacia ahí.</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>Objetivo a 90 días del lanzamiento</th><th>Meta</th></tr></thead>
+        <tbody>
+          <tr><td>Instalaciones</td><td class="num">500</td></tr>
+          <tr><td>De los que instalan, cuántos se emparejan</td><td class="num">40 %</td></tr>
+          <tr><td>Pactos que siguen activos a los 7 días</td><td class="num">30 %</td></tr>
+          <tr><td>Usuarios activos que compran Pro</td><td class="num">3-5 %</td></tr>
+        </tbody>
+      </table></div>
+      <p>Son orientativos y se revisarán con datos reales. No habrá analítica dentro de la app, porque contradiría el "nada sale de tu móvil". Se medirá con las descargas de Zapstore y de la web, los pagos de Stripe y una encuesta opcional que se abre como enlace externo.</p>
+    </section>
+
+    <section id="tecnologia">
+      <h2>Tecnología</h2>
+      <h3>Stack</h3>
+      <ul>
+        <li>Android nativo en Kotlin con Jetpack Compose y Material 3. Mínimo Android 8 (API 26), objetivo API 34.</li>
+        <li>Room para la base de datos local (amigos, límites, desbloqueos temporales) y DataStore para preferencias.</li>
+        <li>ZXing para generar y escanear los QR.</li>
+        <li>Llaves con TOTP estándar (RFC 6238): HMAC-SHA1, 6 cifras, periodo de 30 segundos y tolerancia de ±1 periodo.</li>
+      </ul>
+      <h3>Cómo encaja todo</h3>
+      <ul>
+        <li><code>UsageMonitorService</code> es un servicio en primer plano que cada 5 segundos mira qué app está delante y cuánto se ha usado hoy. Si toca bloquear, avisa a <code>OverlayService</code>.</li>
+        <li><code>OverlayService</code> dibuja la pantalla de bloqueo encima de cualquier app y comprueba la llave que se introduce.</li>
+        <li><code>UsageStatsHelper</code> reconstruye el uso del día a partir de los eventos del sistema. Solo cuenta tiempo con la app delante, la pantalla encendida y el móvil desbloqueado, igual que Bienestar Digital.</li>
+        <li><code>TamperGuard</code> detecta las trampas (hora manual, permisos quitados, servicio parado).</li>
+        <li><code>FriendCodes</code> es el único sitio que decide si una llave vale, incluida la espera de 24 horas de los amigos nuevos.</li>
+        <li><code>ui/theme/Theme.kt</code> y <code>ui/components/Components.kt</code> son la única fuente de colores, tipografías y piezas de interfaz. Ninguna pantalla debe escribir un color ni una fuente a mano.</li>
+      </ul>
+      <h3>Por qué cada pacto tiene dos secretos</h3>
+      <p>Con TOTP, quien tiene el secreto puede tanto generar como verificar códigos. Si los dos amigos compartieran uno solo, cada uno podría generarse su propia llave. Por eso cada lado crea un secreto para verificar y se lo da al otro en el QR: lo que tú generas para tu amigo sale de su secreto, y lo que tu bloqueo acepta sale del tuyo. Al escanear se rechaza el QR propio y los QR ya usados.</p>
+      <h3>Estructura del código</h3>
+<pre><code>app/src/main/kotlin/com/screenpact/app/
+  data/          base de datos, preferencias, criptografía (TOTP, QR) y FriendCodes
+  services/      UsageMonitorService, OverlayService, BootReceiver
+  util/          UsageStatsHelper, TamperGuard, permisos y lista de apps
+  ui/theme/      tokens de marca
+  ui/components/ piezas compartidas (botones, tarjetas, casillas de la llave...)
+  ui/            pantallas: home, apps, friends, overlay, pro, common
+app/src/main/res/font/   las tres tipografías
+docs/                    PRODUCTO.md y este documento</code></pre>
+      <h3>Compilar</h3>
+      <p>El <code>gradlew</code> del repositorio está roto (falta la clase del wrapper). En local se compila con Gradle 8.14.3 y JDK 17:</p>
+<pre><code>export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-17.0.18.8-hotspot"
+~/.gradle/wrapper/dists/gradle-8.14.3-all/*/gradle-8.14.3/bin/gradle assembleDebug
+# APK en app/build/outputs/apk/debug/app-debug.apk</code></pre>
+      <p>GitHub Actions compila un APK de depuración en cada push a <code>main</code>. La versión de depuración se instala con otro identificador (<code>com.screenpact.app.debug</code>), así que convive con la normal.</p>
+      <h3>Privacidad</h3>
+      <p>Toda la información se queda en el móvil: amigos, secretos, límites y uso. La app no pide permiso de Internet, así que no puede enviar nada aunque quisiera.</p>
+    </section>
+
+    <section id="areas">
+      <h2>Si entras en…</h2>
+      <div class="areas">
+        <div class="area">
+          <h3>Desarrollo Android</h3>
+          <p>Lee la sección de tecnología y después <code>docs/PRODUCTO.md</code>. Lo primero es probar el rediseño en un móvil real y hacer commit. Después vienen el APK firmado de release, arreglar <code>gradlew</code>, la licencia de Pro y las funciones Pro. Cualquier cambio en límites o amigos debe respetar la regla de oro, y toda la interfaz se construye con las piezas de <code>ui/components</code>.</p>
+        </div>
+        <div class="area">
+          <h3>Diseño</h3>
+          <p>El canvas de diseño tiene la marca, las alternativas de icono y las siete pantallas. Las pantallas que falten (historial, horarios, rachas, modo estricto) deben salir de los mismos tokens. Prioriza que la pantalla de bloqueo luzca en una captura y que el icono se lea a 24 px.</p>
+        </div>
+        <div class="area">
+          <h3>Marketing y redes</h3>
+          <p>Trabaja con los tres mensajes en su orden y con el vocabulario de la marca. El público es de 18 a 30 años. El formato estrella es el reto de 30 días y el material más compartible es la pantalla de bloqueo. Sin presupuesto de anuncios de partida: el crecimiento depende de que cada usuario traiga a su amigo.</p>
+        </div>
+        <div class="area">
+          <h3>Negocio y pagos</h3>
+          <p>Mantén el principio de coste fijo cero. Tareas abiertas: crear los enlaces de pago de Stripe para los dos productos, la función que firma licencias y la página de gracias. Revisa la tarifa real de Stripe antes de anunciar precios.</p>
+        </div>
+        <div class="area">
+          <h3>Comunidad y soporte</h3>
+          <p>Las dudas más probables: "no me cuenta bien los minutos" (revisar el permiso de acceso de uso y la batería), "se ha bloqueado todo" (casi siempre hora manual o permisos quitados), "perdí a mi amigo" (si no hay nadie con la llave, la única salida es reinstalar). Explica las trampas que no se pueden cerrar sin dramatizar.</p>
+        </div>
+        <div class="area">
+          <h3>iOS</h3>
+          <p>Todavía no toca. Cuando llegue, es una app nueva sobre el sistema de Tiempo de uso de Apple. La llave TOTP es estándar, así que un iPhone y un Android podrán compartir pacto: ese será el mensaje principal de la versión de iPhone.</p>
+        </div>
+      </div>
+    </section>
+
+    <section id="pendiente">
+      <h2>Lo que falta, por prioridad</h2>
+      <ol>
+        <li>Probar el rediseño en un móvil real, corregir lo que salga y hacer commit.</li>
+        <li>Arreglar <code>gradlew</code> y preparar el APK firmado de release.</li>
+        <li>Revisar los permisos de cara a Google Play (lista de apps instaladas y batería sin límite).</li>
+        <li>Cobro de Pro: enlaces de Stripe, función de licencias y comprobación en la app.</li>
+        <li>Aplicar el límite de 3 apps del plan gratis cuando Pro se pueda comprar.</li>
+        <li>Funciones Pro: horarios, historial, rachas y modo estricto.</li>
+        <li>Publicar en Zapstore y en la web.</li>
+        <li>Más adelante: Google Play, pedir la llave a distancia por nostr e iOS.</li>
+      </ol>
+    </section>
+
+    <section id="decisiones">
+      <h2>Decisiones ya tomadas</h2>
+      <p>Para no reabrirlas sin un motivo nuevo:</p>
+      <div class="tablebox"><table>
+        <thead><tr><th>Decisión</th><th>Motivo</th></tr></thead>
+        <tbody>
+          <tr><td>Sin cuentas ni servidor propio</td><td>Coste fijo cero y privacidad.</td></tr>
+          <tr><td>Pago único, no suscripción</td><td>No hay costes recurrentes que cubrir y el público rechaza suscripciones.</td></tr>
+          <tr><td>Cobro con Stripe</td><td>Solo comisión por venta y es estándar.</td></tr>
+          <tr><td>Amigos ilimitados en gratis</td><td>Cada amigo es una instalación nueva.</td></tr>
+          <tr><td>Primero Zapstore, luego Play, iOS al final</td><td>De menos a más coste y revisión.</td></tr>
+          <tr><td>App siempre en oscuro</td><td>La marca es oscura y la pantalla de bloqueo amarilla destaca sobre ella.</td></tr>
+          <tr><td>Icono "candado de dos" con figuras de dos colores</td><td>Se lee como dos personas incluso a tamaño pequeño.</td></tr>
+          <tr><td>Endurecer libre, aflojar con llave</td><td>Es lo que hace creíble el pacto.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="glosario">
+      <h2>Glosario</h2>
+      <div class="tablebox"><table>
+        <tbody>
+          <tr><td><strong>Pacto</strong></td><td>Relación entre dos amigos que se han escaneado el QR mutuamente.</td></tr>
+          <tr><td><strong>Llave</strong></td><td>Código de 6 cifras que cambia cada 30 segundos y abre 5 minutos de uso.</td></tr>
+          <tr><td><strong>Sellar un pacto</strong></td><td>Emparejarse escaneando los QR.</td></tr>
+          <tr><td><strong>Trampa</strong></td><td>Acción que intenta saltarse el pacto sin llave (hora manual, quitar permisos, parar la app).</td></tr>
+          <tr><td><strong>Pantalla de bloqueo</strong></td><td>La pantalla amarilla que aparece al pasarse del límite.</td></tr>
+          <tr><td><strong>TOTP</strong></td><td>Estándar de códigos temporales (el mismo que Google Authenticator). Término interno: no se usa de cara al público.</td></tr>
+          <tr><td><strong>Zapstore</strong></td><td>Tienda de apps alternativa ligada a nostr. Primer destino de publicación.</td></tr>
+          <tr><td><strong>Nostr</strong></td><td>Red abierta de mensajería sin servidor central. Posible vía para pedir la llave a distancia.</td></tr>
+        </tbody>
+      </table></div>
+    </section>
+
+    <section id="donde">
+      <h2>Dónde está cada cosa</h2>
+      <ul>
+        <li><strong>Código:</strong> repositorio <code>screenpact</code>, rama <code>main</code>.</li>
+        <li><strong>Definición de producto detallada:</strong> <code>docs/PRODUCTO.md</code>.</li>
+        <li><strong>Este documento:</strong> <code>docs/screenpact-resumen.html</code>.</li>
+        <li><strong>Marca, icono y pantallas:</strong> <a href="https://claude.ai/artifact/6TKM4Cz7NinTZzjkt1kfeU">canvas de diseño de ScreenPact</a> (pide acceso a Kimy).</li>
+        <li><strong>Dudas de producto o negocio:</strong> Kimy.</li>
+      </ul>
+    </section>
+
+    <footer>ScreenPact · documento interno · 10 de octubre de 2026. Si algo de aquí deja de ser cierto, actualízalo en el mismo cambio.</footer>
+  </main>
+</div>

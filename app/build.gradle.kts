@@ -87,3 +87,34 @@ dependencies {
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+/*
+ * Guardián del sistema de diseño: fuera de ui/theme no puede haber medidas (.dp/.sp) ni colores
+ * (Color(0x…)) escritos a mano. Todo sale de los tokens de ui/theme (Theme.kt y Tokens.kt) y de
+ * las piezas de ui/components. Corre antes de cada build; si encuentra algo, el build falla
+ * y dice el fichero y la línea.
+ */
+val checkDesignTokens by tasks.registering {
+    group = "verification"
+    description = "Falla si hay valores de diseño escritos a mano fuera de ui/theme."
+    val srcDir = file("src/main/kotlin")
+    inputs.dir(srcDir)
+    doLast {
+        val pattern = Regex("""\b\d+(\.\d+)?\.(dp|sp)\b|Color\(0x""")
+        val offenders = srcDir.walkTopDown()
+            .filter { it.isFile && it.extension == "kt" && !it.invariantSeparatorsPath.contains("/ui/theme/") }
+            .flatMap { f ->
+                f.readLines().mapIndexedNotNull { i, line ->
+                    if (pattern.containsMatchIn(line)) "${f.relativeTo(srcDir).invariantSeparatorsPath}:${i + 1}: ${line.trim()}" else null
+                }
+            }
+            .toList()
+        if (offenders.isNotEmpty()) {
+            throw GradleException(
+                "Valores de diseño escritos a mano. Usa los tokens de ui/theme (Sp, Space, Sizes, Strokes, Shapes, TextStyles):\n" +
+                    offenders.joinToString("\n")
+            )
+        }
+    }
+}
+tasks.named("preBuild") { dependsOn(checkDesignTokens) }
