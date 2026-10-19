@@ -41,7 +41,7 @@ Lectura: la idea de "un amigo aprueba" ya existe, pero casi siempre en iOS, con 
 Tres pilares de mensaje, por orden de peso:
 1. **Tu amigo tiene la llave.** No puedes desbloquearte solo, de verdad.
 2. **Por fin en Android** (y más adelante: da igual el móvil de tu amigo).
-3. **Sin cuenta.** Nada sale de tu móvil.
+3. **Sin cuenta.** Tus minutos, tus amigos y tus llaves no salen de tu móvil.
 
 ---
 
@@ -59,7 +59,7 @@ Objetivos de los primeros 90 días tras el lanzamiento (orientativos, a revisar 
 - 30 % de los pactos siguen activos a los 7 días.
 - 3-5 % de los usuarios activos compran Pro.
 
-Medición sin servidor: no habrá analítica dentro de la app (sería contradecir el pilar "sin cuenta"). Se medirá con las descargas de Zapstore y de la web, los pagos en Stripe y una encuesta opcional dentro de la app que abre un enlace externo.
+Medición (decidido el 19-10-2026): estadísticas anónimas opcionales dentro de la app, desactivadas por defecto y ofrecidas en la bienvenida y en Hoy. Una vez al día se envía a kimycars.com/api/sp-stats (Vercel Blob, sin coste): versión, fabricante, número de amigos y límites, qué apps se limitan y contadores de eventos (bienvenida terminada, pacto sellado, límite añadido, bloqueo, bloqueo por trampa, desbloqueo). Nunca nombres, llaves ni minutos. Con eso se calculan activación y pactos activos a 7 días. Además: descargas de Zapstore y de la web, pagos de Stripe y, en Play, su consola.
 
 ---
 
@@ -88,11 +88,18 @@ Por qué los amigos no se limitan: cada amigo es una instalación nueva. Cobrar 
 Por qué el límite está en 3 apps: casi todo el mundo empieza por TikTok, Instagram y YouTube. Con eso el gratis es útil de verdad, y el que quiere controlar más ya está comprometido y paga.
 
 ### Precio
-**Pro de por vida: 7,99 €.** Sin suscripción.
-- Nosotros no tenemos costes recurrentes, así que no hay nada que la suscripción deba cubrir.
-- A la gente de 18 a 30 años le cansan las suscripciones. "Pagas una vez" es un argumento en sí mismo.
-- Referencias: Opal cuesta más de 60 $ al año y Brick 59 $. Frente a eso, 7,99 € una vez parece regalado.
-- **Pack Pacto: 11,99 € por dos licencias**, para que la pareja de amigos lo compre a medias.
+Decidido el 19-10-2026 (antes era un pago único de 7,99 €; se cambió para tener ingresos recurrentes):
+
+| Plan | Precio | Por qué |
+|---|---|---|
+| Mensual | 2,99 €/mes | Para quien no quiere pagar mucho de golpe. Hace que el anual parezca la buena opción. |
+| Anual (por defecto) | 19,99 €/año | Sale a 1,67 €/mes. Es el plan recomendado y la base de ingresos recurrentes. |
+| De por vida | 49,99 € | Unos 2,5 años de anual, el criterio habitual. Para quien odia suscribirse. |
+| Pack Pacto | 29,99 €/año | El anual para los dos amigos del pacto. |
+
+- Referencia: Opal cuesta más de 60 $ al año. No se iguala porque su público es iPhone y EE. UU.; para 18-30 en España, 60 € de golpe frena. Se revisa con datos reales.
+- Costes fijos previstos: dominio propio (~15 €/año), Google Play (25 $ una vez) y Apple (99 $/año, solo con iOS). Comisiones: Google y Apple 15 % en suscripciones, Stripe ~1,5 % + 0,25 €. Con unas 7 suscripciones anuales al año se cubren.
+- En la app los precios viven en `data/Plans.kt`.
 
 ### Cómo se cobra sin servidor propio: Stripe
 Stripe no tiene cuota fija, solo comisión por venta (en la UE, alrededor de 1,5 % + 0,25 € por tarjeta europea; comprobar la tarifa vigente en stripe.com antes de lanzar).
@@ -109,7 +116,7 @@ Cuando la app esté en Play Store, Google obliga a cobrar dentro de la app con s
 
 ## 4. Plataformas y orden de lanzamiento
 
-1. **Zapstore + APK en web (lanzamiento).** Sin revisión de Google. El público de Zapstore (nostr, bitcoin, privacidad) encaja exactamente con el pilar "nada sale de tu móvil". Más adelante se puede añadir pago en bitcoin para ese público.
+1. **Zapstore + APK en web (lanzamiento).** Sin revisión de Google. El público de Zapstore (nostr, bitcoin, privacidad) encaja exactamente con el pilar "sin cuenta". Más adelante se puede añadir pago en bitcoin para ese público.
 2. **Play Store (cuando haya tracción).** La cuenta de desarrollador cuesta 25 $, una vez. Habrá que justificar ante Google el acceso de uso y la superposición de pantalla; el argumento es honesto: bienestar digital elegido por el propio usuario.
 3. **iOS (solo con ingresos).** Apple obliga a usar su API de Tiempo de uso (FamilyControls), que requiere un permiso especial, un Mac y 99 $ al año. Es casi otra app entera. Se aborda cuando Pro haya pagado esos costes.
 

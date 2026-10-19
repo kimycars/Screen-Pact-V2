@@ -57,6 +57,7 @@ import kotlinx.coroutines.launch
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Shapes
+import com.screenpact.app.data.Stats
 
 /**
  * Pantalla de emparejamiento con secretos direccionales.
@@ -136,6 +137,7 @@ fun AddFriendScreen(onDone: () -> Unit) {
                             )
                         )
                         pairedName = parsed.name
+                        Stats.count(context, Stats.Event.PACT_SEALED)
                         scanning = false
                     }
                 }

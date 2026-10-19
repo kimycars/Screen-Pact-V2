@@ -30,6 +30,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import com.screenpact.app.data.Stats
 
 /**
  * Servicio que dibuja una capa por encima de cualquier app cuando se excede el límite.
@@ -149,6 +150,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         }
 
         rootView = view
+        Stats.count(this, if (tamper != null) Stats.Event.TAMPER_BLOCK else Stats.Event.BLOCK_SHOWN)
         isShowing = true
         wm.addView(view, params)
     }
@@ -164,6 +166,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
             if (match != null) {
                 // El código de un amigo también perdona una trampa guardada (permisos, servicio parado).
                 TamperGuard.clear(applicationContext)
+                Stats.count(applicationContext, Stats.Event.UNLOCKED)
                 db.unlockGrantDao().upsert(
                     UnlockGrant(
                         packageName = pkg,

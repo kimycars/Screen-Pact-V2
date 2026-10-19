@@ -59,6 +59,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
+import com.screenpact.app.data.Stats
 
 /**
  * Reglas de edición (el objetivo es que solo se pueda endurecer sin ayuda):
@@ -200,6 +201,7 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
             onConfirm = { minutes ->
                 pickedApp = null
                 save(AppLimit(packageName = app.packageName, appName = app.label, dailyLimitMinutes = minutes, enabled = true))
+                Stats.count(context, Stats.Event.LIMIT_ADDED)
             }
         )
     }

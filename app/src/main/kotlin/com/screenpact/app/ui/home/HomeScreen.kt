@@ -43,6 +43,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.screenpact.app.ui.theme.Space
+import com.screenpact.app.ui.common.StatsConsentCard
 
 @Composable
 fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
@@ -143,6 +144,8 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
             val sorted = l.sortedByDescending { fractionOf(it, usage) }
             items(sorted, key = { it.packageName }) { app -> UsageRow(app, usage[app.packageName] ?: 0L) }
         }
+    
+        item { Spacer(Modifier.height(Space.xs)); StatsConsentCard() }
     }
 }
 

@@ -28,7 +28,7 @@ import androidx.compose.material3.RadioButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -47,6 +47,7 @@ import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Strokes
 import com.screenpact.app.ui.theme.Shapes
+import com.screenpact.app.data.Plans
 
 /**
  * Pantalla de Pro. El cobro (Stripe + licencia firmada) aún no está conectado: el botón queda
@@ -54,7 +55,7 @@ import com.screenpact.app.ui.theme.Shapes
  */
 @Composable
 fun ProScreen(onClose: () -> Unit) {
-    var plan by remember { mutableIntStateOf(0) }
+    var plan by remember { mutableStateOf(Plans.DEFAULT) }
 
     Column(
         Modifier
@@ -74,7 +75,7 @@ fun ProScreen(onClose: () -> Unit) {
             style = MaterialTheme.typography.headlineLarge
         )
         Spacer(Modifier.height(Space.s))
-        Text("Pagas una vez. Es tuyo para siempre.", style = MaterialTheme.typography.bodyMedium, color = Sp.TextoSuave)
+        Text("Mensual, anual o de por vida. Tú eliges.", style = MaterialTheme.typography.bodyMedium, color = Sp.TextoSuave)
 
         Spacer(Modifier.height(Space.xxl))
         listOf(
@@ -86,9 +87,10 @@ fun ProScreen(onClose: () -> Unit) {
 
         Spacer(Modifier.height(Space.xxxl))
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Space.s)) {
-            PlanOption("Pack Pacto", "Pro para ti y tu amigo", "11,99 €", plan == 0) { plan = 0 }
-            PlanOption("Solo para mí", "Pago único", "7,99 €", plan == 1) { plan = 1 }
+            Plans.all.forEach { p -> PlanOption(p.title, p.subtitle, p.price, plan == p.id) { plan = p.id } }
         }
+        Spacer(Modifier.height(Space.s))
+        Text(Plans.PACT_PACK, style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
         Spacer(Modifier.height(Space.l))
         PrimaryButton("Muy pronto", {}, enabled = false)
         QuietButton("Ahora no", onClose, modifier = Modifier.align(Alignment.CenterHorizontally))

@@ -20,7 +20,8 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md`. Visión genera
 - Endurecer es libre, aflojar pide llave: añadir apps, bajar límites y reactivar son libres; subir límites, pausar, quitar apps y romper pactos piden la llave de un amigo (`FriendCodeDialog`).
 - La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
-- Nada sale del móvil: la app no tiene permiso de Internet. No añadirlo sin hablarlo con Kimy.
+- Los datos de la persona no salen del móvil (minutos, amigos, llaves). La única conexión a Internet son las estadísticas anónimas opcionales de `data/Stats.kt`, desactivadas por defecto. Cualquier dato nuevo que se quiera enviar pasa por ahí, se añade a la política de privacidad de kimycars.com/legal y se habla antes con Kimy.
+- Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.
 
 ## Compilar
 

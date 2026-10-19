@@ -204,7 +204,7 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
       <ol>
         <li><strong>Tu amigo tiene la llave.</strong> No puedes desbloquearte solo, de verdad. Es el gancho.</li>
         <li><strong>Por fin en Android.</strong> Cuando exista la versión de iPhone pasará a ser "da igual qué móvil tenga tu amigo": las apps de iPhone que hacen esto solo funcionan entre iPhones.</li>
-        <li><strong>Sin cuenta.</strong> Nada sale de tu móvil. Da confianza, pero por sí solo no diferencia: no lo uses como titular.</li>
+        <li><strong>Sin cuenta.</strong> Tus minutos, tus amigos y tus llaves no salen de tu móvil. Da confianza, pero por sí solo no diferencia: no lo uses como titular.</li>
       </ol>
     </section>
 
@@ -318,8 +318,10 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
       <div class="tablebox"><table>
         <thead><tr><th>Producto</th><th>Precio</th><th>Por qué</th></tr></thead>
         <tbody>
-          <tr><td>Pro de por vida</td><td class="num">7,99 €</td><td>Pago único. Sin costes recurrentes no hay nada que una suscripción deba cubrir, y al público joven le cansan las suscripciones.</td></tr>
-          <tr><td>Pack Pacto (dos licencias)</td><td class="num">11,99 €</td><td>Para que los dos amigos lo compren a medias.</td></tr>
+          <tr><td>Mensual</td><td class="num">2,99 €/mes</td><td>Para quien no quiere pagar mucho de golpe.</td></tr>
+          <tr><td>Anual (por defecto)</td><td class="num">19,99 €/año</td><td>El plan recomendado: 1,67 € al mes y la base de ingresos recurrentes.</td></tr>
+          <tr><td>De por vida</td><td class="num">49,99 €</td><td>Unos 2,5 años de anual. Para quien odia suscribirse.</td></tr>
+          <tr><td>Pack Pacto</td><td class="num">29,99 €/año</td><td>El anual para los dos amigos del pacto.</td></tr>
         </tbody>
       </table></div>
       <p>Referencias para defender el precio: Opal cuesta más de 60 $ al año y Brick 59 $.</p>
@@ -346,7 +348,7 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
     <section id="lanzamiento">
       <h2>Lanzamiento y plataformas</h2>
       <ol>
-        <li><strong>Zapstore y APK desde la web.</strong> Primer destino. No hay revisión de Google y su público (privacidad, nostr, bitcoin) encaja con el "nada sale de tu móvil".</li>
+        <li><strong>Zapstore y APK desde la web.</strong> Primer destino. No hay revisión de Google y su público (privacidad, nostr, bitcoin) encaja con el "sin cuenta".</li>
         <li><strong>Google Play, cuando haya tracción.</strong> Habrá que justificar ante Google los permisos de acceso de uso, de mostrarse encima de otras apps y de ver la lista de apps instaladas. El argumento es que el propio usuario elige el control sobre su móvil.</li>
         <li><strong>iPhone, solo con ingresos.</strong> Apple obliga a usar su sistema de Tiempo de uso, con un permiso especial, un Mac y 99 $ al año. Es casi otra app entera.</li>
       </ol>
@@ -381,7 +383,7 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
           <tr><td>Usuarios activos que compran Pro</td><td class="num">3-5 %</td></tr>
         </tbody>
       </table></div>
-      <p>Son orientativos y se revisarán con datos reales. No habrá analítica dentro de la app, porque contradiría el "nada sale de tu móvil". Se medirá con las descargas de Zapstore y de la web, los pagos de Stripe y una encuesta opcional que se abre como enlace externo.</p>
+      <p>Son orientativos y se revisarán con datos reales. Se miden con estadísticas anónimas que el usuario elige activar en la app (una vez al día: número de pactos y límites, apps limitadas y contadores de eventos; nunca nombres, llaves ni minutos), más las descargas de Zapstore y de la web y los pagos de Stripe.</p>
     </section>
 
     <section id="tecnologia">
@@ -421,7 +423,7 @@ docs/                    PRODUCTO.md y este documento</code></pre>
 # APK en app/build/outputs/apk/debug/app-debug.apk</code></pre>
       <p>GitHub Actions compila un APK de depuración en cada push a <code>main</code>. La versión de depuración se instala con otro identificador (<code>com.screenpact.app.debug</code>), así que convive con la normal.</p>
       <h3>Privacidad</h3>
-      <p>Toda la información se queda en el móvil: amigos, secretos, límites y uso. La app no pide permiso de Internet, así que no puede enviar nada aunque quisiera.</p>
+      <p>Amigos, llaves, límites y minutos de uso se quedan en el móvil. La app solo se conecta a Internet para las estadísticas anónimas opcionales (<code>data/Stats.kt</code>), desactivadas por defecto y descritas en la política de privacidad de kimycars.com/legal.</p>
     </section>
 
     <section id="areas">
@@ -475,7 +477,8 @@ docs/                    PRODUCTO.md y este documento</code></pre>
         <thead><tr><th>Decisión</th><th>Motivo</th></tr></thead>
         <tbody>
           <tr><td>Sin cuentas ni servidor propio</td><td>Coste fijo cero y privacidad.</td></tr>
-          <tr><td>Pago único, no suscripción</td><td>No hay costes recurrentes que cubrir y el público rechaza suscripciones.</td></tr>
+          <tr><td>Mensual, anual y de por vida</td><td>Ingresos recurrentes sin obligar a nadie a suscribirse.</td></tr>
+          <tr><td>Estadísticas anónimas opcionales</td><td>Sin datos de activación y retención no se puede crecer; opcionales y anónimas para no romper la confianza.</td></tr>
           <tr><td>Cobro con Stripe</td><td>Solo comisión por venta y es estándar.</td></tr>
           <tr><td>Amigos ilimitados en gratis</td><td>Cada amigo es una instalación nueva.</td></tr>
           <tr><td>Primero Zapstore, luego Play, iOS al final</td><td>De menos a más coste y revisión.</td></tr>

@@ -51,6 +51,8 @@ import kotlinx.coroutines.launch
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Shapes
+import com.screenpact.app.ui.common.StatsConsentCard
+import com.screenpact.app.data.Stats
 
 /**
  * Bienvenida en tres pasos: presentación, nombre y permisos. Termina proponiendo el primer
@@ -80,6 +82,7 @@ fun OnboardingScreen(onFinished: (pairNow: Boolean) -> Unit) {
         scope.launch {
             Prefs.setOwnName(context, name.trim().ifEmpty { "Yo" })
             Prefs.setSetupDone(context)
+            Stats.count(context, Stats.Event.ONBOARDING_DONE)
             UsageMonitorService.start(context)
             onFinished(pairNow)
         }
@@ -178,6 +181,8 @@ private fun PermissionsStep(onDone: () -> Unit) {
         )
         Spacer(Modifier.height(Space.xl))
         PermissionCards(state)
+        Spacer(Modifier.height(Space.s))
+        StatsConsentCard()
         Spacer(Modifier.height(Space.xxl))
         PrimaryButton("Siguiente", onDone, enabled = state.requiredOk)
     }
