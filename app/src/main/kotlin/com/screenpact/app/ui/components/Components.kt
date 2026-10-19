@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -356,5 +358,41 @@ fun SpSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Bool
             uncheckedTrackColor = Sp.Superficie,
             uncheckedBorderColor = Sp.Borde
         )
+    )
+}
+
+/**
+ * Tarjeta que se elige de un grupo (planes de Pro, iconos…). Borde amarillo grueso si está
+ * elegida. Va dentro de un contenedor con `Modifier.selectableGroup()` para los lectores de pantalla.
+ */
+@Composable
+fun SelectableCard(
+    selected: Boolean,
+    onSelect: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(
+        modifier
+            .clip(Shapes.card)
+            .background(Sp.Superficie)
+            .border(BorderStroke(if (selected) Strokes.bold else Strokes.hairline, if (selected) Sp.Llave else Sp.Borde), Shapes.card)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(Space.m),
+        content = content
+    )
+}
+
+/** Etiqueta pequeña en píldora amarilla ("Recomendado"). */
+@Composable
+fun Tag(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text,
+        style = MaterialTheme.typography.labelSmall,
+        color = Sp.Tinta,
+        modifier = modifier
+            .clip(Shapes.pill)
+            .background(Sp.Llave)
+            .padding(horizontal = Space.xs, vertical = Space.xxs)
     )
 }

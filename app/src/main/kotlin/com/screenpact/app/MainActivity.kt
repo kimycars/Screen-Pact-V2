@@ -6,6 +6,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
+import com.screenpact.app.data.AppIcons
 import com.screenpact.app.data.Pro
 import com.screenpact.app.ui.MainNav
 import com.screenpact.app.ui.theme.ScreenPactTheme
@@ -19,6 +20,18 @@ class MainActivity : ComponentActivity() {
                 Surface { MainNav() }
             }
         }
+    }
+
+    // Al salir de la app (botón de inicio o recientes, o cerrándola) se pone el icono elegido en
+    // Ajustes. No se hace antes porque Android cerraría la app en ese momento (ver AppIcons).
+    override fun onUserLeaveHint() {
+        super.onUserLeaveHint()
+        AppIcons.applyPending(this)
+    }
+
+    override fun onDestroy() {
+        if (isFinishing) AppIcons.applyPending(this)
+        super.onDestroy()
     }
 
     override fun onNewIntent(intent: Intent) {

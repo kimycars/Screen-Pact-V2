@@ -59,7 +59,7 @@ Objetivos de los primeros 90 días tras el lanzamiento (orientativos, a revisar 
 - 30 % de los pactos siguen activos a los 7 días.
 - 3-5 % de los usuarios activos compran Pro.
 
-Medición (decidido el 19-10-2026): estadísticas anónimas opcionales dentro de la app, desactivadas por defecto y ofrecidas en la bienvenida y en Hoy. Una vez al día se envía a kimycars.com/api/sp-stats (Vercel Blob, sin coste): versión, fabricante, número de amigos y límites, qué apps se limitan y contadores de eventos (bienvenida terminada, pacto sellado, límite añadido, bloqueo, bloqueo por trampa, desbloqueo). Nunca nombres, llaves ni minutos. Con eso se calculan activación y pactos activos a 7 días. Además: descargas de Zapstore y de la web, pagos de Stripe y, en Play, su consola.
+Medición (decidido el 19-10-2026): estadísticas anónimas dentro de la app; desde el 19-10-2026 salen encendidas en la bienvenida (se pueden apagar ahí y en Ajustes). Una vez al día se envía a kimycars.com/api/sp-stats (Vercel Blob, sin coste): versión, fabricante, número de amigos y límites, qué apps se limitan y contadores de eventos (bienvenida terminada, pacto sellado, límite añadido, bloqueo, bloqueo por trampa, desbloqueo). Nunca nombres, llaves ni minutos. Con eso se calculan activación y pactos activos a 7 días. Además: descargas de Zapstore y de la web, pagos de Stripe y, en Play, su consola.
 
 ---
 

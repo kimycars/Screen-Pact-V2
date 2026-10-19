@@ -21,7 +21,8 @@ import java.util.UUID
 import java.util.concurrent.TimeUnit
 
 /**
- * Estadísticas anónimas, solo si el usuario las activa (desactivadas por defecto).
+ * Estadísticas anónimas. Salen encendidas en la bienvenida (la persona puede apagarlas ahí o en
+ * Ajustes); hasta llegar a ese paso no se envía nada.
  *
  * Qué se envía, una vez al día: un id aleatorio propio de las estadísticas (no es el id de
  * emparejamiento ni nada que identifique a la persona), versión de la app, versión de Android,

@@ -184,7 +184,7 @@ private fun PermissionsStep(onDone: () -> Unit) {
         Spacer(Modifier.height(Space.xl))
         PermissionCards(state)
         Spacer(Modifier.height(Space.s))
-        StatsConsentCard()
+        StatsConsentCard(onByDefault = true)
         Spacer(Modifier.height(Space.xxl))
         PrimaryButton("Siguiente", onDone, enabled = state.requiredOk)
     }

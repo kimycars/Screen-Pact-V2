@@ -22,20 +22,23 @@ import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.components.SpSwitch
 
 /**
- * Interruptor de las estadísticas anónimas. Desactivado hasta que el usuario lo enciende.
- * Se usa en la bienvenida (para preguntar una vez) y en Ajustes (para cambiarlo cuando quiera).
+ * Interruptor de las estadísticas anónimas. En la bienvenida ([onByDefault] = true) sale
+ * encendido la primera vez y la persona puede apagarlo ahí mismo; en Ajustes muestra lo que haya.
  */
 @Composable
-fun StatsConsentCard() {
+fun StatsConsentCard(onByDefault: Boolean = false) {
     val context = LocalContext.current
-    var enabled by remember { mutableStateOf(Stats.isEnabled(context)) }
+    var enabled by remember {
+        if (onByDefault && !Stats.wasAsked(context)) Stats.setEnabled(context, true)
+        mutableStateOf(Stats.isEnabled(context))
+    }
     SpCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
                 Text("Estadísticas anónimas", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(Space.xxs))
                 Text(
-                    "Ayúdame a mejorar ScreenPact: una vez al día manda cuántos pactos y límites tienes y qué apps limitas. Nunca nombres, llaves ni minutos de uso.",
+                    "Ayúdame a mejorar ScreenPact: una vez al día manda cuántos pactos y límites tienes y qué apps limitas. Nunca nombres, llaves ni minutos de uso. Puedes apagarlas cuando quieras.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Sp.TextoSuave
                 )

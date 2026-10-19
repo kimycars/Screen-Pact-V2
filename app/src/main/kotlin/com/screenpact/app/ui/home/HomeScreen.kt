@@ -45,6 +45,7 @@ import java.util.Locale
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.data.History
 import com.screenpact.app.data.rememberIsPro
+import com.screenpact.app.ui.pro.ProFeature
 import com.screenpact.app.ui.common.Invite
 import com.screenpact.app.ui.components.ChipButton
 import com.screenpact.app.ui.components.IconAction
@@ -53,7 +54,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 
 @Composable
-fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> Unit, onOpenHistory: () -> Unit, onOpenPro: () -> Unit) {
+fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> Unit, onOpenHistory: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val limits by db.appLimitDao().observeAll().collectAsState(initial = null)
@@ -164,7 +165,7 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
                             }
                         }
                         Spacer(Modifier.width(Space.s))
-                        if (isPro) ChipButton("Historial", onOpenHistory) else ChipButton("Ver Pro", onOpenPro)
+                        if (isPro) ChipButton("Historial", onOpenHistory) else ChipButton("Ver Pro", { onOpenPro(ProFeature.HISTORY) })
                     }
                 }
             }

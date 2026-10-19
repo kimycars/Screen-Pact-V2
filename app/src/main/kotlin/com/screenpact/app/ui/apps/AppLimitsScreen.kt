@@ -63,6 +63,7 @@ import com.screenpact.app.data.Stats
 import com.screenpact.app.data.Plans
 import com.screenpact.app.data.Schedules
 import com.screenpact.app.data.rememberIsPro
+import com.screenpact.app.ui.pro.ProFeature
 import com.screenpact.app.ui.common.ScheduleDialog
 
 /**
@@ -74,7 +75,7 @@ import com.screenpact.app.ui.common.ScheduleDialog
  * Si aún no hay amigos emparejados todo es libre: no hay a quién pedir la llave.
  */
 @Composable
-fun AppLimitsScreen(onOpenPro: () -> Unit) {
+fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val scope = rememberCoroutineScope()
@@ -123,7 +124,7 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
                 onChange = { editing = l },
                 onOptions = { options = l },
                 onResume = { save(l.copy(enabled = true)) },
-                onSchedule = { if (isPro) scheduling = l else onOpenPro() }
+                onSchedule = { if (isPro) scheduling = l else onOpenPro(ProFeature.SCHEDULE) }
             )
         }
 
@@ -134,15 +135,17 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
                     atFreeLimit -> "Añadir otra app con Pro"
                     else -> "Añadir otra app"
                 },
-                { if (atFreeLimit) onOpenPro() else showPicker = true }
+                { if (atFreeLimit) onOpenPro(ProFeature.APPS) else showPicker = true }
             )
         }
-        item {
-            QuietButton(
-                "Horarios, rachas y más con ScreenPact Pro",
-                onOpenPro,
-                modifier = Modifier.fillMaxWidth()
-            )
+        if (!isPro) {
+            item {
+                QuietButton(
+                    "Horarios, rachas y más con ScreenPact Pro",
+                    { onOpenPro(ProFeature.GENERAL) },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
         }
     }
 

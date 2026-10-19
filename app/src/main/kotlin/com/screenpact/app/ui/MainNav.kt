@@ -34,6 +34,7 @@ import com.screenpact.app.ui.friends.FriendsScreen
 import com.screenpact.app.ui.friends.GenerateCodeScreen
 import com.screenpact.app.ui.home.HomeScreen
 import com.screenpact.app.ui.home.OnboardingScreen
+import com.screenpact.app.ui.pro.ProFeature
 import com.screenpact.app.ui.pro.ProScreen
 import com.screenpact.app.ui.theme.Sp
 import com.screenpact.app.ui.theme.Space
@@ -48,11 +49,12 @@ object Routes {
     const val FRIENDS = "friends"
     const val PAIR = "pair"
     const val GENERATE_CODE = "generate/{friendId}"
-    const val PRO = "pro"
+    const val PRO = "pro/{feature}"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
 
     fun generate(friendId: Long) = "generate/$friendId"
+    fun pro(feature: ProFeature) = "pro/${feature.id}"
 }
 
 private data class Tab(val route: String, val label: String, val icon: ImageVector)
@@ -86,11 +88,11 @@ fun MainNav() {
                     onAddApps = { nav.switchTab(Routes.LIMITS) },
                     onOpenSettings = { nav.navigate(Routes.SETTINGS) },
                     onOpenHistory = { nav.navigate(Routes.HISTORY) },
-                    onOpenPro = { nav.navigate(Routes.PRO) }
+                    onOpenPro = { nav.navigate(Routes.pro(it)) }
                 )
             }
             composable(Routes.LIMITS) {
-                AppLimitsScreen(onOpenPro = { nav.navigate(Routes.PRO) })
+                AppLimitsScreen(onOpenPro = { nav.navigate(Routes.pro(it)) })
             }
             composable(Routes.FRIENDS) {
                 FriendsScreen(
@@ -106,13 +108,13 @@ fun MainNav() {
                 GenerateCodeScreen(friendId = id, onBack = { nav.popBackStack() })
             }
             composable(Routes.SETTINGS) {
-                SettingsScreen(onBack = { nav.popBackStack() }, onOpenPro = { nav.navigate(Routes.PRO) })
+                SettingsScreen(onBack = { nav.popBackStack() }, onOpenPro = { nav.navigate(Routes.pro(it)) })
             }
             composable(Routes.HISTORY) {
                 HistoryScreen(onBack = { nav.popBackStack() })
             }
-            composable(Routes.PRO) {
-                ProScreen(onClose = { nav.popBackStack() })
+            composable(Routes.PRO) { backStack ->
+                ProScreen(feature = ProFeature.byId(backStack.arguments?.getString("feature")), onClose = { nav.popBackStack() })
             }
         }
         if (showTabs) BottomTabs(current = route, onSelect = { nav.switchTab(it) })

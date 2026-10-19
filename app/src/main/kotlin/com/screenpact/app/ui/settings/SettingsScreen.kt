@@ -43,16 +43,29 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.screenpact.app.ui.components.SpSwitch
+import com.screenpact.app.ui.components.SelectableCard
+import com.screenpact.app.ui.pro.ProFeature
+import com.screenpact.app.ui.theme.Shapes
+import com.screenpact.app.ui.theme.Sizes
+import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.selection.selectableGroup
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.style.TextAlign
 
 /** Ajustes: Pro, modo estricto, icono, estadísticas y privacidad. */
 @Composable
-fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
+fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
     val context = LocalContext.current
     val isPro = rememberIsPro()
     var showLicense by remember { mutableStateOf(false) }
     var strictActive by remember { mutableStateOf(StrictMode.isActive(context)) }
     var askKeyForStrict by remember { mutableStateOf(false) }
-    var icon by remember { mutableStateOf(AppIcons.current(context)) }
+    var icon by remember { mutableStateOf(AppIcons.chosen(context)) }
     val enableStrict = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
         strictActive = StrictMode.isActive(context)
     }
@@ -87,7 +100,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
                             Text("Todas las apps, horarios, rachas y modo estricto.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
                         }
                         Spacer(Modifier.width(Space.s))
-                        ChipButton("Ver Pro", onOpenPro)
+                        ChipButton("Ver Pro", { onOpenPro(ProFeature.GENERAL) })
                     }
                 }
                 Spacer(Modifier.height(Space.xs))
@@ -105,11 +118,14 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
                 ToggleRow(
                     title = "Modo estricto",
                     checked = strictActive,
-                    enabled = isPro || strictActive,
                     subtitle = if (isPro) "Para desinstalar ScreenPact primero hay que quitarlo, y quitarlo pide la llave de un amigo."
                     else "Con Pro: desinstalar ScreenPact pide la llave de un amigo."
                 ) { on ->
-                    if (on) enableStrict.launch(StrictMode.enableIntent(context)) else askKeyForStrict = true
+                    when {
+                        !on -> askKeyForStrict = true
+                        isPro -> enableStrict.launch(StrictMode.enableIntent(context))
+                        else -> onOpenPro(ProFeature.STRICT)
+                    }
                 }
             }
         }
@@ -119,20 +135,24 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
             SpCard {
                 Text("Icono de la app", style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (isPro) "Puede tardar unos segundos en cambiar en tu escritorio." else "Con Pro puedes elegir otro icono.",
+                    when {
+                        !isPro -> "Con Pro puedes elegir otro icono."
+                        icon != AppIcons.current(context) -> "Se cambia en tu escritorio al salir de ScreenPact."
+                        else -> "El que verás en tu escritorio."
+                    },
                     style = MaterialTheme.typography.bodySmall,
                     color = Sp.TextoSuave
                 )
                 Spacer(Modifier.height(Space.s))
-                Row(horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
                     AppIcons.all.forEach { option ->
-                        val selected = option.alias == icon
-                        ChipButton(if (selected) "✓ ${option.name}" else option.name, {
-                            if (isPro && !selected) {
-                                AppIcons.set(context, option.alias)
+                        IconChoice(option, selected = option.alias == icon, modifier = Modifier.weight(1f)) {
+                            if (!isPro) onOpenPro(ProFeature.ICONS)
+                            else {
+                                AppIcons.choose(context, option.alias)
                                 icon = option.alias
-                            } else if (!isPro) onOpenPro()
-                        })
+                            }
+                        }
                     }
                 }
             }
@@ -141,8 +161,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
         item { StatsConsentCard() }
 
         item {
-            QuietButton("Privacidad y aviso legal", {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("https://www.kimycars.com/legal")).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            QuietButton("Privacidad y condiciones", {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             })
         }
         item { Text("ScreenPact ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave) }
@@ -159,6 +179,40 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: () -> Unit) {
                 StrictMode.disable(context)
                 strictActive = false
             }
+        )
+    }
+}
+
+private const val PRIVACY_URL = "https://www.kimycars.com/screenpact/privacidad"
+
+/** Fondo de cada icono, el mismo que su adaptive-icon de res/drawable. */
+private fun iconBackground(alias: String) = when (alias) {
+    "LauncherNoche" -> Sp.Tinta
+    "LauncherMenta" -> Sp.Pacto
+    else -> Sp.Llave
+}
+
+/** Un icono de la app para elegir: cómo se verá y su nombre. */
+@Composable
+private fun IconChoice(option: AppIcons.Icon, selected: Boolean, modifier: Modifier, onSelect: () -> Unit) {
+    SelectableCard(selected, onSelect, modifier) {
+        Box(
+            Modifier
+                .align(Alignment.CenterHorizontally)
+                .size(Sizes.button)
+                .clip(Shapes.pill)
+                .background(iconBackground(option.alias))
+        ) {
+            Image(painterResource(option.foreground), null, Modifier.fillMaxSize())
+        }
+        Spacer(Modifier.height(Space.xs))
+        Text(
+            option.name,
+            style = MaterialTheme.typography.labelMedium,
+            color = if (selected) Sp.Llave else Sp.Niebla,
+            maxLines = 1,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth()
         )
     }
 }
