@@ -37,11 +37,52 @@
             android:exported="true"
             android:launchMode="singleTask"
             android:theme="@style/Theme.ScreenPact">
+            <!-- Enlace que entrega la licencia de Pro tras pagar: screenpact://license?token=… -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="screenpact" android:host="license" />
+            </intent-filter>
+        </activity>
+
+        <!-- Icono de la app: uno activo cada vez (Pro deja elegir). Ver data/AppIcons.kt. -->
+        <activity-alias
+            android:name=".LauncherAmarillo"
+            android:enabled="true"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher"
+            android:roundIcon="@mipmap/ic_launcher"
+            android:targetActivity=".MainActivity">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-        </activity>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherNoche"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_noche"
+            android:roundIcon="@mipmap/ic_launcher_noche"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
+        <activity-alias
+            android:name=".LauncherMenta"
+            android:enabled="false"
+            android:exported="true"
+            android:icon="@mipmap/ic_launcher_menta"
+            android:roundIcon="@mipmap/ic_launcher_menta"
+            android:targetActivity=".MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity-alias>
 
         <service
             android:name=".services.UsageMonitorService"
@@ -57,6 +98,19 @@
             android:name=".services.OverlayService"
             android:enabled="true"
             android:exported="false" />
+
+        <!-- Modo estricto (Pro): mientras esté activo, desinstalar pide quitarlo antes. -->
+        <receiver
+            android:name=".services.StrictAdminReceiver"
+            android:exported="true"
+            android:permission="android.permission.BIND_DEVICE_ADMIN">
+            <meta-data
+                android:name="android.app.device_admin"
+                android:resource="@xml/device_admin" />
+            <intent-filter>
+                <action android:name="android.app.action.DEVICE_ADMIN_ENABLED" />
+            </intent-filter>
+        </receiver>
 
         <receiver
             android:name=".services.BootReceiver"

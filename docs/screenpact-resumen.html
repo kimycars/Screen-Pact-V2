@@ -171,9 +171,9 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
           <tr><td>Protección contra trampas</td><td><span class="pill ok">Hecha</span></td><td>Hora manual, permisos quitados, servicio parado, segundo móvil. Ver <a href="#trampas">Trampas</a>.</td></tr>
           <tr><td>Marca e icono</td><td><span class="pill ok">Definidos</span></td><td>Colores, tipografía, voz e icono "candado de dos".</td></tr>
           <tr><td>Rediseño de la app con la marca</td><td><span class="pill half">En código, sin probar</span></td><td>Compila, pero no se ha probado en un móvil real ni está commiteado.</td></tr>
-          <tr><td>Cobro de Pro (Stripe + licencia)</td><td><span class="pill no">Sin empezar</span></td><td>La pantalla Pro existe con el botón en "Muy pronto".</td></tr>
-          <tr><td>Funciones Pro (horarios, rachas, modo estricto)</td><td><span class="pill no">Sin empezar</span></td><td></td></tr>
-          <tr><td>APK firmado de release</td><td><span class="pill no">Sin empezar</span></td><td>Necesario para publicar en Zapstore.</td></tr>
+          <tr><td>Cobro de Pro (Stripe + licencia)</td><td><span class="pill half">Hecho, falta Stripe</span></td><td>App y servidor listos. Faltan los productos y enlaces de pago en Stripe.</td></tr>
+          <tr><td>Funciones Pro (horarios, rachas, modo estricto, iconos)</td><td><span class="pill ok">Hechas</span></td><td>Sin probar en móvil real.</td></tr>
+          <tr><td>APK firmado de release</td><td><span class="pill ok">Hecho</span></td><td>Versión 1.0.0 con clave fija.</td></tr>
           <tr><td>Publicación</td><td><span class="pill no">Sin publicar</span></td><td>Primer destino: Zapstore y APK desde la web.</td></tr>
           <tr><td>iOS</td><td><span class="pill no">No previsto aún</span></td><td>Solo cuando Pro genere ingresos.</td></tr>
         </tbody>
@@ -222,7 +222,7 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
           <tr><td>Historial y estadísticas de la semana</td><td>No</td><td>Sí</td></tr>
           <tr><td>Rachas del pacto (días seguidos cumpliendo)</td><td>No</td><td>Sí</td></tr>
           <tr><td>Modo estricto (desinstalar pide llave)</td><td>No</td><td>Sí</td></tr>
-          <tr><td>Temas e icono alternativo</td><td>No</td><td>Sí</td></tr>
+          <tr><td>Iconos alternativos de la app</td><td>No</td><td>Sí</td></tr>
         </tbody>
       </table></div>
       <p>Los amigos nunca se limitan porque cada amigo es una instalación nueva: es nuestro único canal de crecimiento gratuito. El límite de 3 apps cubre lo típico (TikTok, Instagram, YouTube); quien quiere controlar más ya está comprometido y paga.</p>
@@ -417,13 +417,13 @@ footer { margin-top: 56px; padding-top: 20px; border-top: 1px solid var(--line);
 app/src/main/res/font/   las tres tipografías
 docs/                    PRODUCTO.md y este documento</code></pre>
       <h3>Compilar</h3>
-      <p>El <code>gradlew</code> del repositorio está roto (falta la clase del wrapper). En local se compila con Gradle 8.14.3 y JDK 17:</p>
+      <p>Con JDK 17:</p>
 <pre><code>export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-17.0.18.8-hotspot"
-~/.gradle/wrapper/dists/gradle-8.14.3-all/*/gradle-8.14.3/bin/gradle assembleDebug
-# APK en app/build/outputs/apk/debug/app-debug.apk</code></pre>
+./gradlew assembleDebug     # pruebas
+./gradlew assembleRelease   # para publicar, firmado con la clave fija de Documents\claves</code></pre>
       <p>GitHub Actions compila un APK de depuración en cada push a <code>main</code>. La versión de depuración se instala con otro identificador (<code>com.screenpact.app.debug</code>), así que convive con la normal.</p>
       <h3>Privacidad</h3>
-      <p>Amigos, llaves, límites y minutos de uso se quedan en el móvil. La app solo se conecta a Internet para las estadísticas anónimas opcionales (<code>data/Stats.kt</code>), desactivadas por defecto y descritas en la política de privacidad de kimycars.com/legal.</p>
+      <p>Amigos, llaves, límites y minutos de uso se quedan en el móvil. La app solo se conecta a Internet para las estadísticas anónimas opcionales (<code>data/Stats.kt</code>, desactivadas por defecto) y para renovar la licencia de Pro (<code>data/Pro.kt</code>, manda solo el id de licencia). Todo está descrito en la política de privacidad de kimycars.com/legal.</p>
     </section>
 
     <section id="areas">
@@ -459,12 +459,10 @@ docs/                    PRODUCTO.md y este documento</code></pre>
     <section id="pendiente">
       <h2>Lo que falta, por prioridad</h2>
       <ol>
-        <li>Probar el rediseño en un móvil real, corregir lo que salga y hacer commit.</li>
-        <li>Arreglar <code>gradlew</code> y preparar el APK firmado de release.</li>
-        <li>Revisar los permisos de cara a Google Play (lista de apps instaladas y batería sin límite).</li>
-        <li>Cobro de Pro: enlaces de Stripe, función de licencias y comprobación en la app.</li>
-        <li>Aplicar el límite de 3 apps del plan gratis cuando Pro se pueda comprar.</li>
-        <li>Funciones Pro: horarios, historial, rachas y modo estricto.</li>
+        <li>Probar la versión 1.0.0 en móviles reales (y en otra marca además de Xiaomi).</li>
+        <li>Crear en Stripe los cuatro productos con sus Payment Links y configurar el webhook; poner los enlaces en <code>data/Plans.kt</code>.</li>
+        <li>Desplegar la web con la landing, la entrega de licencias y la pestaña de estadísticas.</li>
+        <li>Revisar los permisos de cara a Google Play (lista de apps instaladas y batería sin límite) y añadir Google Play Billing a esa versión.</li>
         <li>Publicar en Zapstore y en la web.</li>
         <li>Más adelante: Google Play, pedir la llave a distancia por nostr e iOS.</li>
       </ol>

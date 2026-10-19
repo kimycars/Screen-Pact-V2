@@ -48,14 +48,24 @@ import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Strokes
 import com.screenpact.app.ui.theme.Shapes
 import com.screenpact.app.data.Plans
+import android.content.Intent
+import android.net.Uri
+import androidx.compose.ui.platform.LocalContext
+import com.screenpact.app.data.rememberIsPro
+import com.screenpact.app.ui.common.LicenseDialog
 
 /**
- * Pantalla de Pro. El cobro (Stripe + licencia firmada) aún no está conectado: el botón queda
- * desactivado con "Muy pronto" hasta entonces. Ver docs/PRODUCTO.md, sección 3.
+ * Pantalla de Pro. "Hazte Pro" abre el Payment Link de Stripe del plan elegido (Plans.kt); tras
+ * pagar, la licencia llega por enlace (screenpact://license) o se pega a mano. Si el plan aún no
+ * tiene enlace configurado, el botón sale como "Muy pronto".
  */
 @Composable
 fun ProScreen(onClose: () -> Unit) {
+    val context = LocalContext.current
+    val isPro = rememberIsPro()
     var plan by remember { mutableStateOf(Plans.DEFAULT) }
+    var showLicense by remember { mutableStateOf(false) }
+    val link = Plans.byId(plan)?.link.orEmpty()
 
     Column(
         Modifier
@@ -89,12 +99,18 @@ fun ProScreen(onClose: () -> Unit) {
         Column(Modifier.selectableGroup(), verticalArrangement = Arrangement.spacedBy(Space.s)) {
             Plans.all.forEach { p -> PlanOption(p.title, p.subtitle, p.price, plan == p.id) { plan = p.id } }
         }
-        Spacer(Modifier.height(Space.s))
-        Text(Plans.PACT_PACK, style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
         Spacer(Modifier.height(Space.l))
-        PrimaryButton("Muy pronto", {}, enabled = false)
+        when {
+            isPro -> PrimaryButton("Ya tienes Pro", {}, enabled = false)
+            link.isEmpty() -> PrimaryButton("Muy pronto", {}, enabled = false)
+            else -> PrimaryButton("Hazte Pro", {
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+            })
+        }
+        QuietButton("Tengo un código de licencia", { showLicense = true }, modifier = Modifier.align(Alignment.CenterHorizontally))
         QuietButton("Ahora no", onClose, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
+    if (showLicense) LicenseDialog(onDismiss = { showLicense = false }, onActivated = { showLicense = false })
 }
 
 @Composable

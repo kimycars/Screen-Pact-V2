@@ -31,6 +31,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 import com.screenpact.app.data.Stats
+import com.screenpact.app.data.History
 
 /**
  * Servicio que dibuja una capa por encima de cualquier app cuando se excede el límite.
@@ -57,10 +58,11 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         val appName: String,
         val usedMs: Long,
         val limitMin: Int,
-        val tamper: String?
+        val tamper: String?,
+        val schedule: String?
     )
 
-    private val current = mutableStateOf(OverlayInfo("", "", 0L, 0, null))
+    private val current = mutableStateOf(OverlayInfo("", "", 0L, 0, null, null))
     private val friendNames = mutableStateOf<List<String>>(emptyList())
 
     override val lifecycle: Lifecycle get() = lifecycleRegistry
@@ -88,7 +90,8 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 val usedMs = intent.getLongExtra(EXTRA_USED_MS, 0L)
                 val limitMin = intent.getIntExtra(EXTRA_LIMIT_MIN, 0)
                 val tamper = intent.getStringExtra(EXTRA_TAMPER)
-                showOverlay(pkg, appName, usedMs, limitMin, tamper)
+                val schedule = intent.getStringExtra(EXTRA_SCHEDULE)
+                showOverlay(pkg, appName, usedMs, limitMin, tamper, schedule)
             }
             ACTION_HIDE -> {
                 hideOverlayAndStop()
@@ -97,10 +100,10 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         return START_NOT_STICKY
     }
 
-    private fun showOverlay(pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String?) {
+    private fun showOverlay(pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String?, schedule: String?) {
         // Already showing: update the content in place instead of recreating the view
         // (avoids flicker on repeated calls from UsageMonitorService).
-        val info = OverlayInfo(pkg, appName, usedMs, limitMin, tamper)
+        val info = OverlayInfo(pkg, appName, usedMs, limitMin, tamper, schedule)
         current.value = info
         if (rootView != null) return
 
@@ -142,6 +145,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                     usedMinutes = (shown.usedMs / 60_000L).toInt(),
                     limitMinutes = shown.limitMin,
                     tamperReason = shown.tamper,
+                    scheduleText = shown.schedule,
                     friendNames = friendNames.value,
                     errorMessage = errorState.value,
                     onSubmit = { code -> attemptUnlock(current.value.pkg, code, errorState) }
@@ -167,6 +171,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 // El código de un amigo también perdona una trampa guardada (permisos, servicio parado).
                 TamperGuard.clear(applicationContext)
                 Stats.count(applicationContext, Stats.Event.UNLOCKED)
+                History.countUnlock(db, pkg)
                 db.unlockGrantDao().upsert(
                     UnlockGrant(
                         packageName = pkg,
@@ -211,6 +216,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         const val EXTRA_USED_MS = "used_ms"
         const val EXTRA_LIMIT_MIN = "limit_min"
         const val EXTRA_TAMPER = "tamper"
+        const val EXTRA_SCHEDULE = "schedule"
 
         const val GRACE_PERIOD_MS = 5 * 60_000L
 
@@ -222,7 +228,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         @Volatile var isShowing: Boolean = false
             private set
 
-        fun show(context: Context, pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String?) {
+        fun show(context: Context, pkg: String, appName: String, usedMs: Long, limitMin: Int, tamper: String? = null, schedule: String? = null) {
             val i = Intent(context, OverlayService::class.java).apply {
                 action = ACTION_SHOW
                 putExtra(EXTRA_PACKAGE, pkg)
@@ -230,6 +236,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 putExtra(EXTRA_USED_MS, usedMs)
                 putExtra(EXTRA_LIMIT_MIN, limitMin)
                 putExtra(EXTRA_TAMPER, tamper)
+                putExtra(EXTRA_SCHEDULE, schedule)
             }
             context.startService(i)
         }

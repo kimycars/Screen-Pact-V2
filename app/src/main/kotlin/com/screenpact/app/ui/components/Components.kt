@@ -64,6 +64,8 @@ import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Strokes
 import com.screenpact.app.ui.theme.Shapes
 import com.screenpact.app.ui.theme.TextStyles
+import androidx.compose.material3.Switch
+import androidx.compose.material3.SwitchDefaults
 
 
 @Composable
@@ -338,4 +340,21 @@ fun CardButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier)
         border = BorderStroke(Strokes.bold, Sp.Borde),
         colors = ButtonDefaults.outlinedButtonColors(contentColor = Sp.Niebla)
     ) { Text(text, style = MaterialTheme.typography.titleMedium) }
+}
+
+/** Interruptor con los colores de la marca. */
+@Composable
+fun SpSwitch(checked: Boolean, onCheckedChange: (Boolean) -> Unit, enabled: Boolean = true) {
+    Switch(
+        checked = checked,
+        enabled = enabled,
+        onCheckedChange = onCheckedChange,
+        colors = SwitchDefaults.colors(
+            checkedThumbColor = Sp.Tinta,
+            checkedTrackColor = Sp.Llave,
+            uncheckedThumbColor = Sp.TextoSuave,
+            uncheckedTrackColor = Sp.Superficie,
+            uncheckedBorderColor = Sp.Borde
+        )
+    )
 }

@@ -60,11 +60,17 @@ import kotlinx.coroutines.withContext
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.data.Stats
+import com.screenpact.app.data.Plans
+import com.screenpact.app.data.Schedules
+import com.screenpact.app.data.rememberIsPro
+import com.screenpact.app.ui.common.ScheduleDialog
 
 /**
  * Reglas de edición (el objetivo es que solo se pueda endurecer sin ayuda):
  *  - Sin llave: añadir apps, bajar un límite, reactivar una app en pausa.
  *  - Con la llave de un amigo: quitar una app, subir un límite, pausar una app.
+ *  - Horarios (Pro): ampliarlos es libre; acortarlos o quitarlos pide llave.
+ *  - Plan gratis: hasta Plans.FREE_APP_LIMIT apps; la siguiente lleva a Pro.
  * Si aún no hay amigos emparejados todo es libre: no hay a quién pedir la llave.
  */
 @Composable
@@ -79,6 +85,9 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
     var pickedApp by remember { mutableStateOf<InstalledApp?>(null) }
     var editing by remember { mutableStateOf<AppLimit?>(null) }
     var options by remember { mutableStateOf<AppLimit?>(null) }
+    var scheduling by remember { mutableStateOf<AppLimit?>(null) }
+    val isPro = rememberIsPro()
+    val atFreeLimit = !isPro && limits.size >= Plans.FREE_APP_LIMIT
     // Acción que afloja el control, a la espera de que un amigo dé su llave.
     var pending by remember { mutableStateOf<Pair<String, () -> Unit>?>(null) }
 
@@ -113,12 +122,20 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
                 limit = l,
                 onChange = { editing = l },
                 onOptions = { options = l },
-                onResume = { save(l.copy(enabled = true)) }
+                onResume = { save(l.copy(enabled = true)) },
+                onSchedule = { if (isPro) scheduling = l else onOpenPro() }
             )
         }
 
         item {
-            CardButton(if (limits.isEmpty()) "Añadir tu primera app" else "Añadir otra app", { showPicker = true })
+            CardButton(
+                when {
+                    limits.isEmpty() -> "Añadir tu primera app"
+                    atFreeLimit -> "Añadir otra app con Pro"
+                    else -> "Añadir otra app"
+                },
+                { if (atFreeLimit) onOpenPro() else showPicker = true }
+            )
         }
         item {
             QuietButton(
@@ -169,6 +186,30 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
         )
     }
 
+    scheduling?.let { l ->
+        val oldStart = l.scheduleStart
+        val oldEnd = l.scheduleEnd
+        ScheduleDialog(
+            appName = l.appName,
+            initialStart = oldStart ?: 0,
+            initialEnd = oldEnd ?: 8 * 60,
+            onDismiss = { scheduling = null },
+            onConfirm = { start, end ->
+                scheduling = null
+                val updated = l.copy(scheduleStart = start, scheduleEnd = end)
+                // Ampliar (o poner por primera vez) endurece: libre. Dejar horas abiertas, pide llave.
+                if (!l.hasSchedule || Schedules.covers(start, end, oldStart!!, oldEnd!!)) save(updated)
+                else loosen("Acortar el horario de ${l.appName} afloja tu pacto: necesitas la llave de un amigo.") { save(updated) }
+            },
+            onRemove = if (l.hasSchedule) ({
+                scheduling = null
+                loosen("Para quitar el horario de ${l.appName} necesitas la llave de un amigo.") {
+                    save(l.copy(scheduleStart = null, scheduleEnd = null))
+                }
+            }) else null
+        )
+    }
+
     pending?.let { (reason, action) ->
         FriendCodeDialog(
             reason = reason,
@@ -208,7 +249,7 @@ fun AppLimitsScreen(onOpenPro: () -> Unit) {
 }
 
 @Composable
-private fun LimitRow(limit: AppLimit, onChange: () -> Unit, onOptions: () -> Unit, onResume: () -> Unit) {
+private fun LimitRow(limit: AppLimit, onChange: () -> Unit, onOptions: () -> Unit, onResume: () -> Unit, onSchedule: () -> Unit) {
     SpCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Column(Modifier.weight(1f)) {
@@ -221,6 +262,16 @@ private fun LimitRow(limit: AppLimit, onChange: () -> Unit, onOptions: () -> Uni
             }
             if (limit.enabled) ChipButton("Cambiar", onChange) else ChipButton("Reactivar", onResume)
             IconAction(Icons.Default.MoreVert, "Más opciones de ${limit.appName}", onOptions)
+        }
+        Spacer(Modifier.height(Space.xs))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Text(
+                if (limit.hasSchedule) "Cerrada ${Schedules.describe(limit.scheduleStart!!, limit.scheduleEnd!!)}" else "Sin horario de cierre",
+                style = MaterialTheme.typography.bodySmall,
+                color = if (limit.hasSchedule) Sp.Llave else Sp.TextoSuave,
+                modifier = Modifier.weight(1f)
+            )
+            ChipButton("Horario", onSchedule)
         }
     }
 }

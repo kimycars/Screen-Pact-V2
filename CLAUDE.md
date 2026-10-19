@@ -20,16 +20,18 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md`. Visión genera
 - Endurecer es libre, aflojar pide llave: añadir apps, bajar límites y reactivar son libres; subir límites, pausar, quitar apps y romper pactos piden la llave de un amigo (`FriendCodeDialog`).
 - La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
-- Los datos de la persona no salen del móvil (minutos, amigos, llaves). La única conexión a Internet son las estadísticas anónimas opcionales de `data/Stats.kt`, desactivadas por defecto. Cualquier dato nuevo que se quiera enviar pasa por ahí, se añade a la política de privacidad de kimycars.com/legal y se habla antes con Kimy.
+- Los datos de la persona no salen del móvil (minutos, amigos, llaves). Las únicas conexiones a Internet son las estadísticas anónimas opcionales de `data/Stats.kt` (desactivadas por defecto) y la renovación de la licencia de Pro en `data/Pro.kt` (manda solo el id de licencia). Cualquier dato nuevo que se quiera enviar pasa por ahí, se añade a la política de privacidad de kimycars.com/legal y se habla antes con Kimy.
 - Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.
+- Pro: `data/Pro.kt` es la única fuente de verdad (`Pro.isPro`, `rememberIsPro()` en la interfaz). Las licencias las firma el servidor de kimycars.com (`api/sp-stripe-webhook.js`, `api/sp-license.js`, `lib/sp-license.js`) con la clave privada de `Documents\claves\screenpact-license-private.pem`; la app solo lleva la pública. En la versión de pruebas hay un interruptor "Pro de prueba" en Ajustes.
+- Base de datos: cada cambio de estructura sube la versión de `AppDatabase` y lleva su `Migration`. Nunca `fallbackToDestructiveMigration`: borraría los pactos de la gente al actualizar.
 
 ## Compilar
 
-`gradlew` está roto (falta la clase del wrapper). Usa el Gradle de la caché con JDK 17:
-
 ```bash
 export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-17.0.18.8-hotspot"
-~/.gradle/wrapper/dists/gradle-8.14.3-all/*/gradle-8.14.3/bin/gradle assembleDebug
+./gradlew assembleDebug     # pruebas: app/build/outputs/apk/debug/app-debug.apk
+./gradlew assembleRelease   # publicar: app/build/outputs/apk/release/app-release.apk (firmado)
 ```
 
-El APK de pruebas queda en `app/build/outputs/apk/debug/app-debug.apk`. Instálalo siempre compilado en este PC: los APK de GitHub Actions se firman con una clave aleatoria y no se pueden actualizar encima.
+- El release se firma con la clave fija de `C:\Users\Usuario\Documents\claves\screenpact-release.jks` (contraseñas en `screenpact-keystore.properties`, en la misma carpeta, fuera del repo). Perder esa clave = no poder actualizar la app nunca más: hay que tener copia de la carpeta `claves`.
+- Instala siempre APK compilados en este PC: los de GitHub Actions se firman con una clave aleatoria y no se pueden actualizar encima.

@@ -42,6 +42,8 @@ import com.screenpact.app.ui.components.SpCard
 import com.screenpact.app.ui.theme.Sp
 import kotlinx.coroutines.launch
 import com.screenpact.app.ui.theme.Space
+import com.screenpact.app.ui.common.Invite
+import com.screenpact.app.ui.components.OutlineButton
 
 @Composable
 fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
@@ -105,6 +107,8 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
         item {
             Spacer(Modifier.height(Space.xs))
             PrimaryButton(if (friends.isEmpty()) "Sellar un pacto" else "Sellar otro pacto", onAdd)
+            Spacer(Modifier.height(Space.xs))
+            OutlineButton("Invitar a un amigo", { Invite.share(context) })
         }
     }
 

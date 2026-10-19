@@ -22,6 +22,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.screenpact.app.data.History
+import com.screenpact.app.data.Pro
+import com.screenpact.app.data.Schedules
 
 /**
  * Servicio en primer plano que cada N segundos:
@@ -59,6 +62,7 @@ class UsageMonitorService : Service() {
 
     private suspend fun runLoop() {
         val db = AppDatabase.get(applicationContext)
+        var lastHistoryAt = 0L
         while (true) {
             try {
                 val hasFriends = db.friendDao().getAll().isNotEmpty()
@@ -72,6 +76,10 @@ class UsageMonitorService : Service() {
 
                     val snap = UsageStatsHelper.snapshot(this)
                     val current = snap.foreground
+                    if (now - lastHistoryAt >= HISTORY_EVERY_MS) {
+                        History.recordToday(db, db.appLimitDao().getEnabled(), snap.todayMs)
+                        lastHistoryAt = now
+                    }
                     if (current != null && current != packageName) {
                         val limit = db.appLimitDao().get(current)
                         if (limit != null && limit.enabled) {
@@ -80,14 +88,18 @@ class UsageMonitorService : Service() {
                                 // Con trampa activa se bloquean todas las apps limitadas, sin gracia.
                                 shouldBlock = true
                                 blockedPkg = current
-                                OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, tamper)
+                                OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, tamper = tamper)
                             } else {
                                 val grant = db.unlockGrantDao().get(current)
                                 val grantActive = grant != null && grant.expiresAt > now
-                                if (!grantActive && usedMs >= limit.dailyLimitMinutes * 60_000L) {
+                                // Horario de cierre (Pro): bloquea aunque quede tiempo.
+                                val closedBySchedule = Pro.isPro(this) && Schedules.isClosedNow(limit, now)
+                                if (!grantActive && (closedBySchedule || usedMs >= limit.dailyLimitMinutes * 60_000L)) {
                                     shouldBlock = true
                                     blockedPkg = current
-                                    OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, null)
+                                    val schedule = if (closedBySchedule)
+                                        Schedules.describe(limit.scheduleStart!!, limit.scheduleEnd!!) else null
+                                    OverlayService.show(this, current, limit.appName, usedMs, limit.dailyLimitMinutes, schedule = schedule)
                                 }
                             }
                         }
@@ -162,6 +174,7 @@ class UsageMonitorService : Service() {
     companion object {
         private const val POLL_INTERVAL_MS = 2_000L
         private const val EXIT_CHECK_MS = 300L
+        private const val HISTORY_EVERY_MS = 60_000L
         private const val NOTIF_ID = 1001
         private const val CHANNEL_ID = "screenpact_monitor"
 

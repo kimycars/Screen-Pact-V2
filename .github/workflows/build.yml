@@ -17,11 +17,8 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Setup Gradle 8.5
+      - name: Setup Gradle (usa la versión del wrapper)
         uses: gradle/actions/setup-gradle@v3
-        with:
-          gradle-version: '8.5'
-          cache-disabled: true
 
       - name: Install Android SDK components
         run: |
@@ -37,7 +34,7 @@ jobs:
 
       - name: Build debug APK
         run: |
-          gradle assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
+          ./gradlew assembleDebug --no-daemon --stacktrace 2>&1 | tee build.log
           STATUS=${PIPESTATUS[0]}
           if [ $STATUS -ne 0 ]; then
             echo "::error::=== KOTLIN/BUILD ERRORS ==="

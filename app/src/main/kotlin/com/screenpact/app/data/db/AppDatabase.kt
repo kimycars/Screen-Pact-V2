@@ -4,19 +4,36 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Friend::class, AppLimit::class, UnlockGrant::class],
-    version = 2,          // bumped: Friend.secret → generateKey + verifyKey (directional secrets)
-    exportSchema = false
+    entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class],
+    version = 3,
+    exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun friendDao(): FriendDao
     abstract fun appLimitDao(): AppLimitDao
     abstract fun unlockGrantDao(): UnlockGrantDao
+    abstract fun dayRecordDao(): DayRecordDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
+
+        /** v3: horarios en los límites y tabla de resumen diario (historial y rachas). */
+        val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE app_limits ADD COLUMN scheduleStart INTEGER")
+                db.execSQL("ALTER TABLE app_limits ADD COLUMN scheduleEnd INTEGER")
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS day_records (" +
+                        "day TEXT NOT NULL, packageName TEXT NOT NULL, usedMs INTEGER NOT NULL, " +
+                        "limitMinutes INTEGER NOT NULL, unlocks INTEGER NOT NULL, " +
+                        "PRIMARY KEY(day, packageName))"
+                )
+            }
+        }
 
         fun get(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
@@ -25,9 +42,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "screenpact.db"
                 )
-                    // Old single-secret rows cannot be safely split into two directional keys,
-                    // so we wipe and let users re-pair. Acceptable at this stage of development.
-                    .fallbackToDestructiveMigration()
+                    // Cada cambio de estructura lleva su migración: actualizar la app NUNCA
+                    // borra pactos ni límites. Solo se borra si se instala una versión más vieja.
+                    .addMigrations(MIGRATION_2_3)
+                    .fallbackToDestructiveMigrationOnDowngrade()
                     .build().also { INSTANCE = it }
             }
         }

@@ -25,6 +25,7 @@ object TamperGuard {
     const val REASON_USAGE_ACCESS = "Se quitó el acceso a datos de uso de ScreenPact."
     const val REASON_OVERLAY = "Se quitó el permiso de mostrarse encima de otras apps."
     const val REASON_SERVICE_STOPPED = "ScreenPact estuvo parado un rato."
+    const val REASON_STRICT_OFF = "Se quitó el modo estricto desde los Ajustes de Android."
 
     private const val PREFS = "screenpact_guard"
     private const val KEY_ARMED = "armed"
@@ -42,6 +43,11 @@ object TamperGuard {
 
     /** Trampa guardada, si la hay. */
     fun savedReason(context: Context): String? = prefs(context).getString(KEY_REASON, null)
+
+    /** Apunta una trampa detectada fuera del servicio (por ejemplo, al quitar el modo estricto). */
+    fun flag(context: Context, reason: String) {
+        if (isArmed(context)) prefs(context).edit().putString(KEY_REASON, reason).apply()
+    }
 
     /** Un amigo ha dado su código: se perdona la trampa guardada. */
     fun clear(context: Context) {

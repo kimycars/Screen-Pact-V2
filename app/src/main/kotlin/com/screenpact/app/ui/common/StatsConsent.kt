@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
-import androidx.compose.material3.SwitchDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -21,10 +19,11 @@ import com.screenpact.app.data.Stats
 import com.screenpact.app.ui.components.SpCard
 import com.screenpact.app.ui.theme.Sp
 import com.screenpact.app.ui.theme.Space
+import com.screenpact.app.ui.components.SpSwitch
 
 /**
  * Interruptor de las estadísticas anónimas. Desactivado hasta que el usuario lo enciende.
- * Se usa en la bienvenida (para preguntar una vez) y en Hoy (para cambiarlo cuando quiera).
+ * Se usa en la bienvenida (para preguntar una vez) y en Ajustes (para cambiarlo cuando quiera).
  */
 @Composable
 fun StatsConsentCard() {
@@ -42,20 +41,10 @@ fun StatsConsentCard() {
                 )
             }
             Spacer(Modifier.width(Space.s))
-            Switch(
-                checked = enabled,
-                onCheckedChange = {
-                    enabled = it
-                    Stats.setEnabled(context, it)
-                },
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = Sp.Tinta,
-                    checkedTrackColor = Sp.Llave,
-                    uncheckedThumbColor = Sp.TextoSuave,
-                    uncheckedTrackColor = Sp.Superficie,
-                    uncheckedBorderColor = Sp.Borde
-                )
-            )
+            SpSwitch(checked = enabled, onCheckedChange = {
+                enabled = it
+                Stats.setEnabled(context, it)
+            })
         }
     }
 }

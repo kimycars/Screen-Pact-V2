@@ -54,3 +54,22 @@ interface UnlockGrantDao {
     @Query("DELETE FROM unlock_grants WHERE expiresAt < :now")
     suspend fun cleanExpired(now: Long)
 }
+
+@Dao
+interface DayRecordDao {
+    @Query("SELECT * FROM day_records WHERE day >= :fromDay ORDER BY day")
+    suspend fun since(fromDay: String): List<DayRecord>
+
+    @Query("SELECT * FROM day_records WHERE day = :day AND packageName = :pkg")
+    suspend fun get(day: String, pkg: String): DayRecord?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(record: DayRecord)
+
+    /** Días distintos con algún registro, del más reciente al más antiguo. */
+    @Query("SELECT day FROM day_records GROUP BY day ORDER BY day DESC")
+    suspend fun days(): List<String>
+
+    @Query("SELECT COALESCE(SUM(unlocks), 0) FROM day_records WHERE day = :day")
+    suspend fun unlocksOn(day: String): Int
+}

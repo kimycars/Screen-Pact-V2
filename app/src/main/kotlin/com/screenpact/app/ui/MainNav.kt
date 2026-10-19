@@ -38,6 +38,8 @@ import com.screenpact.app.ui.pro.ProScreen
 import com.screenpact.app.ui.theme.Sp
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
+import com.screenpact.app.ui.settings.SettingsScreen
+import com.screenpact.app.ui.history.HistoryScreen
 
 object Routes {
     const val ONBOARD = "onboard"
@@ -47,6 +49,8 @@ object Routes {
     const val PAIR = "pair"
     const val GENERATE_CODE = "generate/{friendId}"
     const val PRO = "pro"
+    const val SETTINGS = "settings"
+    const val HISTORY = "history"
 
     fun generate(friendId: Long) = "generate/$friendId"
 }
@@ -79,7 +83,10 @@ fun MainNav() {
             composable(Routes.HOME) {
                 HomeScreen(
                     onPair = { nav.navigate(Routes.PAIR) },
-                    onAddApps = { nav.switchTab(Routes.LIMITS) }
+                    onAddApps = { nav.switchTab(Routes.LIMITS) },
+                    onOpenSettings = { nav.navigate(Routes.SETTINGS) },
+                    onOpenHistory = { nav.navigate(Routes.HISTORY) },
+                    onOpenPro = { nav.navigate(Routes.PRO) }
                 )
             }
             composable(Routes.LIMITS) {
@@ -97,6 +104,12 @@ fun MainNav() {
             composable(Routes.GENERATE_CODE) { backStack ->
                 val id = backStack.arguments?.getString("friendId")?.toLongOrNull() ?: -1L
                 GenerateCodeScreen(friendId = id, onBack = { nav.popBackStack() })
+            }
+            composable(Routes.SETTINGS) {
+                SettingsScreen(onBack = { nav.popBackStack() }, onOpenPro = { nav.navigate(Routes.PRO) })
+            }
+            composable(Routes.HISTORY) {
+                HistoryScreen(onBack = { nav.popBackStack() })
             }
             composable(Routes.PRO) {
                 ProScreen(onClose = { nav.popBackStack() })

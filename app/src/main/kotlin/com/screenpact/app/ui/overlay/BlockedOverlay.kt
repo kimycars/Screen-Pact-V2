@@ -35,6 +35,7 @@ fun BlockedOverlayContent(
     usedMinutes: Int,
     limitMinutes: Int,
     tamperReason: String?,
+    scheduleText: String?,
     friendNames: List<String>,
     errorMessage: String?,
     onSubmit: (String) -> Unit
@@ -59,6 +60,12 @@ fun BlockedOverlayContent(
                 Text("Algo ha tocado tu pacto.", style = MaterialTheme.typography.displayLarge, color = Sp.Tinta)
                 Spacer(Modifier.height(Space.m))
                 Text(tamperReason, style = MaterialTheme.typography.bodyLarge, color = Sp.Tinta)
+            } else if (scheduleText != null) {
+                Text("$appName · horario", style = MaterialTheme.typography.titleMedium, color = Sp.Tinta)
+                Spacer(Modifier.height(Space.m))
+                Text("$appName está cerrada ahora.", style = MaterialTheme.typography.displayLarge, color = Sp.Tinta)
+                Spacer(Modifier.height(Space.m))
+                Text("Tu horario la cierra $scheduleText.", style = MaterialTheme.typography.bodyLarge, color = Sp.Tinta)
             } else {
                 Text("$appName · $usedMinutes de $limitMinutes min", style = MaterialTheme.typography.titleMedium, color = Sp.Tinta)
                 Spacer(Modifier.height(Space.m))

@@ -81,7 +81,7 @@ Coste fijo cero. Solo se gasta cuando alguien paga.
 | Historial y estadísticas semanales | No | Sí |
 | Rachas del pacto (días seguidos cumpliendo) | No | Sí |
 | Modo estricto (impide desinstalar sin código de amigo) | No | Sí |
-| Temas e icono alternativo | No | Sí |
+| Iconos alternativos de la app | No | Sí |
 
 Por qué los amigos no se limitan: cada amigo es una instalación nueva. Cobrar por amigos frenaría el único canal de crecimiento que tenemos.
 
@@ -199,12 +199,14 @@ No se puede cerrar del todo:
 - **Desinstalar o borrar datos de la app.** Android no deja impedirlo sin ser administrador total del dispositivo, y eso exige reiniciar el móvil de fábrica. El modo estricto de Pro (administrador de dispositivo) añadirá pasos que dan pereza, pero quien quiera irse siempre podrá. Es el mismo límite que tienen Opal y compañía.
 - **El primer amigo puede ser un segundo móvil tuyo.** Solo se evita si el usuario quiere de verdad el pacto. Es una trampa contra uno mismo, no contra el sistema.
 
+Hecho el 19-10-2026 (versión 1.0.0):
+- Pro completo: licencias firmadas (ECDSA) que la app comprueba sin conexión, límite de 3 apps en el plan gratis, horarios de cierre, historial y rachas, modo estricto (administrador de dispositivo sin permisos reales) e iconos alternativos.
+- Cobro con Stripe preparado en kimycars.com (webhook, entrega de licencias y página de gracias). Falta crear los productos y Payment Links en Stripe y poner sus enlaces en `data/Plans.kt`.
+- Release firmado con clave fija y `gradlew` arreglado.
+- Base de datos con migraciones: actualizar ya no borra nada.
+
 Pendiente:
-- Modo estricto (Pro) con administrador de dispositivo.
-- Arreglar `gradlew` (el jar del wrapper está roto) y preparar el APK firmado de release.
-- Licencias de Pro con Stripe y firma verificable sin conexión.
-- Rediseño de las pantallas con la nueva marca (mockup en el canvas de diseño).
-- Textos de la app con la voz de la marca (sección 5).
+- Google Play: cuando esté la cuenta, cobrar con Google Play Billing en esa versión (Google lo exige para compras dentro de la app). La versión de Zapstore y la web siguen con Stripe.
 
 ## 8. Ideas para más adelante (sin coste fijo)
 - **Pedir la llave a distancia por nostr:** la petición viaja como mensaje cifrado por relays públicos gratuitos. Sin servidor propio y encaja con el público de Zapstore.

@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -12,13 +14,32 @@ android {
         applicationId = "com.screenpact.app"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "0.1.0"
+        versionCode = 100
+        versionName = "1.0.0"
         vectorDrawables { useSupportLibrary = true }
+    }
+
+    /*
+     * Firma de release: la clave vive FUERA del repo (Documents\claves). Sin ese fichero
+     * (por ejemplo en GitHub Actions) el release sale sin firmar y solo vale el debug.
+     * Perder esta clave = no poder actualizar la app nunca más: guarda copia de la carpeta claves.
+     */
+    val keystoreProps = file(System.getenv("SP_KEYSTORE_PROPS") ?: "C:/Users/Usuario/Documents/claves/screenpact-keystore.properties")
+    signingConfigs {
+        if (keystoreProps.exists()) {
+            val p = Properties().apply { keystoreProps.inputStream().use { load(it) } }
+            create("release") {
+                storeFile = file(p.getProperty("storeFile"))
+                storePassword = p.getProperty("storePassword")
+                keyAlias = p.getProperty("keyAlias")
+                keyPassword = p.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
         release {
+            signingConfig = signingConfigs.findByName("release")
             isMinifyEnabled = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
@@ -46,6 +67,11 @@ android {
     packaging {
         resources.excludes += "/META-INF/{AL2.0,LGPL2.1}"
     }
+}
+
+ksp {
+    // Esquema de la base de datos por versión, para comprobar las migraciones (app/schemas).
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

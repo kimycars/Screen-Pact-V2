@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Sin permisos de administración: solo sirve para que Android no deje desinstalar la app
+     mientras el modo estricto esté activo. -->
+<device-admin>
+    <uses-policies />
+</device-admin>

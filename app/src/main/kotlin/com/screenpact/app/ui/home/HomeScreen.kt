@@ -43,16 +43,31 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import com.screenpact.app.ui.theme.Space
-import com.screenpact.app.ui.common.StatsConsentCard
+import com.screenpact.app.data.History
+import com.screenpact.app.data.rememberIsPro
+import com.screenpact.app.ui.common.Invite
+import com.screenpact.app.ui.components.ChipButton
+import com.screenpact.app.ui.components.IconAction
+import com.screenpact.app.ui.components.OutlineButton
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 
 @Composable
-fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
+fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> Unit, onOpenHistory: () -> Unit, onOpenPro: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val limits by db.appLimitDao().observeAll().collectAsState(initial = null)
     val friends by db.friendDao().observeAll().collectAsState(initial = null)
     var usage by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     val permissions = rememberPermissionState()
+    val isPro = rememberIsPro()
+    var streak by remember { mutableStateOf(0) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            streak = History.streak(db)
+            delay(30_000)
+        }
+    }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -70,7 +85,12 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
         contentPadding = androidx.compose.foundation.layout.PaddingValues(Space.xl),
         verticalArrangement = Arrangement.spacedBy(Space.l)
     ) {
-        item { ScreenTitle("Hoy") }
+        item {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                ScreenTitle("Hoy", modifier = Modifier.weight(1f))
+                IconAction(Icons.Default.Settings, "Ajustes", onOpenSettings, tint = Sp.Niebla)
+            }
+        }
 
         if (!permissions.requiredOk) {
             item {
@@ -102,6 +122,8 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
                     )
                     Spacer(Modifier.height(Space.m))
                     PrimaryButton("Sellar un pacto", onPair)
+                    Spacer(Modifier.height(Space.xs))
+                    OutlineButton("Invitar a un amigo", { Invite.share(context) })
                 }
             } else {
                 val others = f.count { it.id != keeper.id }
@@ -120,6 +142,29 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
                                 color = Sp.TextoSuave
                             )
                         }
+                    }
+                }
+            }
+        }
+
+        if (l.isNotEmpty()) {
+            item {
+                SpCard {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            if (isPro) {
+                                Text(
+                                    if (streak == 1) "1 día sin pedir llave" else "$streak días sin pedir llave",
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text("Tu racha. Se rompe si hoy usas una llave.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+                            } else {
+                                Text("Rachas e historial", style = MaterialTheme.typography.titleMedium)
+                                Text("Mira tu semana y cuántos días llevas sin pedir llave.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+                            }
+                        }
+                        Spacer(Modifier.width(Space.s))
+                        if (isPro) ChipButton("Historial", onOpenHistory) else ChipButton("Ver Pro", onOpenPro)
                     }
                 }
             }
@@ -145,7 +190,6 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit) {
             items(sorted, key = { it.packageName }) { app -> UsageRow(app, usage[app.packageName] ?: 0L) }
         }
     
-        item { Spacer(Modifier.height(Space.xs)); StatsConsentCard() }
     }
 }
 

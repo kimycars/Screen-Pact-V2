@@ -53,6 +53,8 @@ import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Shapes
 import com.screenpact.app.ui.common.StatsConsentCard
 import com.screenpact.app.data.Stats
+import com.screenpact.app.ui.common.Invite
+import com.screenpact.app.ui.components.OutlineButton
 
 /**
  * Bienvenida en tres pasos: presentación, nombre y permisos. Termina proponiendo el primer
@@ -190,6 +192,7 @@ private fun PermissionsStep(onDone: () -> Unit) {
 
 @Composable
 private fun FirstPactStep(onPair: () -> Unit, onLater: () -> Unit) {
+    val context = LocalContext.current
     Column(
         Modifier
             .fillMaxSize()
@@ -205,6 +208,8 @@ private fun FirstPactStep(onPair: () -> Unit, onLater: () -> Unit) {
         )
         Spacer(Modifier.weight(1f))
         PrimaryButton("Sellar el pacto ahora", onPair)
+        Spacer(Modifier.height(Space.xs))
+        OutlineButton("Invitar a un amigo", { Invite.share(context) })
         Spacer(Modifier.height(Space.xs))
         QuietButton("Lo haré luego", onLater, modifier = Modifier.align(Alignment.CenterHorizontally))
     }

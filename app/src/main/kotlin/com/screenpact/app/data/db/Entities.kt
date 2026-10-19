@@ -44,12 +44,31 @@ data class AppLimit(
     @PrimaryKey val packageName: String,
     val appName: String,
     val dailyLimitMinutes: Int,
-    val enabled: Boolean = true
-)
+    val enabled: Boolean = true,
+    /** Horario de cierre (Pro), en minutos desde medianoche. Si fin < inicio, cruza la medianoche. */
+    val scheduleStart: Int? = null,
+    val scheduleEnd: Int? = null
+) {
+    val hasSchedule: Boolean get() = scheduleStart != null && scheduleEnd != null && scheduleStart != scheduleEnd
+}
 
 /** Tras desbloquear con un código válido, damos una ventana de gracia para no relanzar el overlay al instante. */
 @Entity(tableName = "unlock_grants")
 data class UnlockGrant(
     @PrimaryKey val packageName: String,
     val expiresAt: Long
+)
+
+/**
+ * Resumen de un día y una app, para el historial y las rachas (Pro). Se escribe siempre, tenga o
+ * no Pro la persona, para que al hacerse Pro ya vea su historia. [day] es AAAA-MM-DD local.
+ */
+@Entity(tableName = "day_records", primaryKeys = ["day", "packageName"])
+data class DayRecord(
+    val day: String,
+    val packageName: String,
+    val usedMs: Long = 0,
+    val limitMinutes: Int = 0,
+    /** Veces que se usó una llave para abrir esta app ese día. */
+    val unlocks: Int = 0
 )
