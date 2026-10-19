@@ -62,7 +62,7 @@ fun BlockedOverlayContent(
             } else {
                 Text("$appName · $usedMinutes de $limitMinutes min", style = MaterialTheme.typography.titleMedium, color = Sp.Tinta)
                 Spacer(Modifier.height(Space.m))
-                Text("Se acabó el $appName por hoy.", style = MaterialTheme.typography.displayLarge, color = Sp.Tinta)
+                Text("Se acabó $appName por hoy.", style = MaterialTheme.typography.displayLarge, color = Sp.Tinta)
             }
 
             Spacer(Modifier.height(Space.huge))

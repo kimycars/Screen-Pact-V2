@@ -1,0 +1,147 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=720, height=1600" />
+    <title>ScreenPact · demo de la app</title>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.14.2/dist/gsap.min.js"></script>
+    <style>
+      /* Demo en bucle para la portada de la landing: la pantalla del móvil, sin marco
+         (el marco lo pone la web). Colores y fuentes = tokens de la app (ui/theme). */
+      @font-face { font-family: "SP Bricolage"; src: url("fonts/sp-bricolage.woff2") format("woff2"); font-weight: 600 800; }
+      @font-face { font-family: "SP Figtree"; src: url("fonts/sp-figtree.woff2") format("woff2"); font-weight: 300 900; }
+      @font-face { font-family: "SP Mono"; src: url("fonts/sp-jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; }
+
+      :root {
+        --tinta: #171A33; --superficie: #22264A; --niebla: #F4F5FA; --suave: #A9AEC9;
+        --llave: #FFC23D; --pacto: #6FD9B8;
+      }
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+      html, body { width: 720px; height: 1600px; overflow: hidden; background: var(--tinta); }
+      #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "SP Figtree", system-ui, sans-serif; color: var(--niebla); }
+
+      /* Feed tipo vídeo vertical: tarjetas de 1600 px apiladas. */
+      #feed { position: absolute; left: 0; top: 0; width: 720px; }
+      .post { position: relative; width: 720px; height: 1600px; overflow: hidden; }
+      .post .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
+      .post .rail { position: absolute; right: 28px; bottom: 360px; display: flex; flex-direction: column; gap: 44px; align-items: center; }
+      .post .rail i { display: block; width: 76px; height: 76px; border-radius: 50%; background: rgb(255 255 255 / .22); }
+      .post .cap { position: absolute; left: 40px; right: 150px; bottom: 210px; display: flex; flex-direction: column; gap: 18px; }
+      .post .cap b { font-weight: 700; font-size: 32px; }
+      .post .cap span { display: block; height: 22px; border-radius: 11px; background: rgb(255 255 255 / .55); }
+      .p0 { background: linear-gradient(160deg, #2B1E5C, #E0457B); }
+      .p1 { background: linear-gradient(170deg, #0F4C5C, #5FD3C8); }
+      .p2 { background: linear-gradient(150deg, #5A2A0C, #B8621A); }
+      .p3 { background: linear-gradient(165deg, #1C2C6B, #6C8CFF); }
+
+      /* Pantalla de bloqueo: réplica de BlockedOverlay.kt. */
+      #block { position: absolute; inset: 0; background: var(--llave); color: var(--tinta); display: flex; flex-direction: column; padding: 150px 52px 120px; }
+      #block .eyebrow { font-weight: 600; font-size: 31px; }
+      #block .title { font-family: "SP Bricolage", sans-serif; font-weight: 800; font-size: 82px; line-height: 1.02; letter-spacing: -2.5px; margin-top: 26px; }
+      #block .grow { flex: 1; }
+      #block .ask { font-size: 32px; }
+      #block .who { font-family: "SP Bricolage", sans-serif; font-weight: 800; font-size: 52px; margin-top: 6px; }
+      #block .label { font-weight: 600; font-size: 26px; margin-top: 40px; }
+      .digits { display: grid; grid-template-columns: repeat(6, 1fr); gap: 14px; margin-top: 14px; }
+      .digit { position: relative; height: 128px; border-radius: 22px; border: 4px solid var(--tinta); }
+      .digit .fill { position: absolute; inset: -4px; border-radius: 22px; background: var(--tinta); color: var(--llave); display: flex; align-items: center; justify-content: center; font-family: "SP Mono", monospace; font-weight: 700; font-size: 58px; opacity: 0; }
+      #open { margin-top: 44px; height: 116px; border-radius: 58px; background: var(--tinta); color: var(--llave); display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 34px; }
+
+      /* Notificación de Android con el mensaje de Carla. */
+      #notif { position: absolute; left: 22px; right: 22px; top: 82px; border-radius: 40px; background: #2A2E52; color: var(--niebla); padding: 30px 32px; display: flex; gap: 24px; align-items: center; box-shadow: 0 18px 50px rgb(0 0 0 / .35); opacity: 0; }
+      #notif .ico { width: 70px; height: 70px; border-radius: 50%; background: var(--pacto); display: flex; align-items: center; justify-content: center; flex: none; color: var(--tinta); font-family: "SP Bricolage", sans-serif; font-weight: 800; font-size: 34px; }
+      #notif .txt { display: flex; flex-direction: column; gap: 6px; }
+      #notif .who { font-weight: 700; font-size: 30px; }
+      #notif .msg { font-size: 30px; color: #D7DAEB; }
+      #notif .msg b { font-family: "SP Mono", monospace; color: var(--llave); letter-spacing: 2px; }
+
+      /* Barra de estado y barra de gestos de Android, siempre encima. */
+      #sbar { position: absolute; left: 0; right: 0; top: 0; height: 74px; padding: 22px 46px 0; display: flex; justify-content: space-between; font-weight: 600; font-size: 28px; color: var(--niebla); }
+      #sbar .icons { display: flex; gap: 12px; align-items: center; }
+      #sbar svg { width: 28px; height: 28px; fill: currentColor; }
+      #gesture { position: absolute; left: 50%; bottom: 18px; width: 220px; height: 9px; margin-left: -110px; border-radius: 9px; background: var(--niebla); opacity: .6; }
+    </style>
+  </head>
+  <body>
+    <div id="root" data-composition-id="main" data-start="0" data-width="720" data-height="1600" data-duration="14">
+      <div id="feed" data-layout-allow-occlusion>
+        <div class="post p0"><i class="blob" data-layout-allow-overflow style="left:-120px;top:380px;width:620px;height:620px;background:#FF8FB1;opacity:.5"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@lauri.baila</b><span style="width:92%"></span><span style="width:60%"></span></div></div>
+        <div class="post p1"><i class="blob" data-layout-allow-overflow style="left:180px;top:520px;width:560px;height:560px;background:#B8FFF6;opacity:.35"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@marcos.surf</b><span style="width:80%"></span><span style="width:48%"></span></div></div>
+        <div class="post p2"><i class="blob" data-layout-allow-overflow style="left:-60px;top:300px;width:700px;height:700px;background:#FFD08A;opacity:.4"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@recetas.rapidas</b><span style="width:88%"></span><span style="width:70%"></span></div></div>
+        <div class="post p3"><i class="blob" data-layout-allow-overflow style="left:120px;top:420px;width:600px;height:600px;background:#C9D4FF;opacity:.35"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@gamer.nocturno</b><span style="width:76%"></span><span style="width:52%"></span></div></div>
+        <div class="post p0"><i class="blob" data-layout-allow-overflow style="left:-120px;top:380px;width:620px;height:620px;background:#FF8FB1;opacity:.5"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@lauri.baila</b><span style="width:92%"></span><span style="width:60%"></span></div></div>
+      </div>
+
+      <div id="block">
+        <span class="eyebrow" data-layout-allow-occlusion data-layout-allow-overlap>TikTok · 30 de 30 min</span>
+        <span class="title">Se acabó TikTok por hoy.</span>
+        <span class="grow"></span>
+        <span class="ask">¿De verdad lo necesitas?</span>
+        <span class="who">Pídele la llave a Carla</span>
+        <span class="label">Llave de 6 cifras</span>
+        <div class="digits">
+          <div class="digit"><div class="fill">4</div></div>
+          <div class="digit"><div class="fill">8</div></div>
+          <div class="digit"><div class="fill">2</div></div>
+          <div class="digit"><div class="fill">9</div></div>
+          <div class="digit"><div class="fill">1</div></div>
+          <div class="digit"><div class="fill">3</div></div>
+        </div>
+        <div id="open">Abrir 5 minutos</div>
+      </div>
+
+      <div id="notif" data-layout-allow-overlap>
+        <span class="ico">C</span>
+        <span class="txt"><span class="who">Carla</span><span class="msg">Venga, toma: <b>482 913</b></span></span>
+      </div>
+
+      <div id="sbar">
+        <span>12:30</span>
+        <span class="icons">
+          <svg viewBox="0 0 24 24"><path d="M2 22h20V2z" /></svg>
+          <svg viewBox="0 0 24 24"><path d="M12 21 0 7.5C3.3 4.7 7.5 3 12 3s8.7 1.7 12 4.5z" /></svg>
+          <svg viewBox="0 0 24 24"><path d="M9 1h6v2h2.5c.8 0 1.5.7 1.5 1.5v17c0 .8-.7 1.5-1.5 1.5h-11C5.7 23 5 22.3 5 21.5v-17C5 3.7 5.7 3 6.5 3H9z" /></svg>
+        </span>
+      </div>
+      <div id="gesture"></div>
+    </div>
+
+    <script>
+      const tl = gsap.timeline({ paused: true });
+      const H = 1600;
+      const scroll = (to, at) => tl.to("#feed", { y: -H * to, duration: 0.6, ease: "power3.inOut" }, at);
+
+      // Estado inicial
+      tl.set("#feed", { y: 0 }, 0);
+      tl.set("#block", { y: H }, 0);
+
+      // 1. Scroll infinito
+      scroll(1, 0.7);
+      scroll(2, 1.9);
+
+      // 2. Se acaba el tiempo: sube la pantalla amarilla
+      tl.to("#block", { y: 0, duration: 0.7, ease: "power4.out" }, 3.2);
+      tl.to("#sbar", { color: "#171A33", duration: 0.3 }, 3.3);
+      tl.to("#gesture", { backgroundColor: "#171A33", duration: 0.3 }, 3.3);
+
+      // 3. Llega la llave de Carla
+      tl.fromTo("#notif", { y: -260, opacity: 0 }, { y: 0, opacity: 1, duration: 0.5, ease: "back.out(1.4)" }, 4.9);
+      tl.to("#notif", { y: -260, opacity: 0, duration: 0.4, ease: "power2.in" }, 7.4);
+
+      // 4. Se escribe la llave
+      tl.fromTo(".digit .fill", { opacity: 0, scale: 0.6 }, { opacity: 1, scale: 1, duration: 0.18, ease: "back.out(2)", stagger: 0.24 }, 6.3);
+
+      // 5. Abrir 5 minutos y vuelta al feed
+      tl.to("#open", { scale: 0.95, duration: 0.12, yoyo: true, repeat: 1 }, 8.2);
+      tl.to("#block", { y: H, duration: 0.6, ease: "power3.in" }, 8.7);
+      tl.to("#sbar", { color: "#F4F5FA", duration: 0.3 }, 9.0);
+      tl.to("#gesture", { backgroundColor: "#F4F5FA", duration: 0.3 }, 9.0);
+
+      // 6. Sigue el feed y vuelve al primer vídeo (el último es igual que el primero: bucle limpio)
+      scroll(3, 10.4);
+      scroll(4, 12.0);
+
+      window.__timelines["main"] = tl;
+    </script>
+  </body>
+</html>

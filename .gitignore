@@ -19,3 +19,5 @@ release/
 .kotlin/
 local.properties
 /app/build
+/marketing/demo-video/.hyperframes
+/marketing/demo-video/demo.mp4

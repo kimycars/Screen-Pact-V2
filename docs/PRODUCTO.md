@@ -157,7 +157,7 @@ Esquinas de 16 dp en tarjetas, botones en píldora y campos de 12 dp. Una sola e
 ### Elemento firma: la pantalla de bloqueo
 Hoy es una pantalla roja que regaña. Pasa a ser una pantalla amarilla (Llave) a toda pantalla donde el protagonista es **el nombre de tu amigo**:
 
-> Se acabó el TikTok por hoy.
+> Se acabó TikTok por hoy.
 > 32 de 30 min
 > **Pídele la llave a Carla**
 > [ campo de 6 dígitos ]
