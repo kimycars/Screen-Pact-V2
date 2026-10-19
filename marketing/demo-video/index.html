@@ -20,19 +20,55 @@
       html, body { width: 720px; height: 1600px; overflow: hidden; background: var(--tinta); }
       #root { position: relative; width: 100%; height: 100%; overflow: hidden; font-family: "SP Figtree", system-ui, sans-serif; color: var(--niebla); }
 
-      /* Feed tipo vídeo vertical: tarjetas de 1600 px apiladas. */
+      /* Feed de vídeo vertical con la interfaz de TikTok (sin su logo ni su botón "+" de dos
+         colores, que son marca registrada). El vídeo ocupa hasta la barra de navegación. */
+      #viewport { position: absolute; left: 0; top: 0; width: 720px; height: 1472px; overflow: hidden; background: #000; }
       #feed { position: absolute; left: 0; top: 0; width: 720px; }
-      .post { position: relative; width: 720px; height: 1600px; overflow: hidden; }
-      .post .blob { position: absolute; border-radius: 50%; filter: blur(2px); }
-      .post .rail { position: absolute; right: 28px; bottom: 360px; display: flex; flex-direction: column; gap: 44px; align-items: center; }
-      .post .rail i { display: block; width: 76px; height: 76px; border-radius: 50%; background: rgb(255 255 255 / .22); }
-      .post .cap { position: absolute; left: 40px; right: 150px; bottom: 210px; display: flex; flex-direction: column; gap: 18px; }
-      .post .cap b { font-weight: 700; font-size: 32px; }
-      .post .cap span { display: block; height: 22px; border-radius: 11px; background: rgb(255 255 255 / .55); }
-      .p0 { background: linear-gradient(160deg, #2B1E5C, #E0457B); }
-      .p1 { background: linear-gradient(170deg, #0F4C5C, #5FD3C8); }
-      .p2 { background: linear-gradient(150deg, #5A2A0C, #B8621A); }
-      .p3 { background: linear-gradient(165deg, #1C2C6B, #6C8CFF); }
+      .post { position: relative; width: 720px; height: 1472px; overflow: hidden; color: #fff; }
+      .scene { position: absolute; inset: 0; }
+      .shade { position: absolute; left: 0; right: 0; bottom: 0; height: 520px; background: linear-gradient(transparent, rgb(0 0 0 / .55)); }
+      .rail { position: absolute; right: 18px; bottom: 150px; width: 104px; display: flex; flex-direction: column; align-items: center; gap: 30px; font-weight: 600; font-size: 22px; text-shadow: 0 1px 3px rgb(0 0 0 / .4); }
+      .rail .act { display: flex; flex-direction: column; align-items: center; gap: 6px; }
+      .rail svg { width: 64px; height: 64px; fill: #fff; filter: drop-shadow(0 2px 4px rgb(0 0 0 / .3)); }
+      .rail .av { position: relative; width: 92px; height: 92px; border-radius: 50%; border: 3px solid #fff; margin-bottom: 18px; }
+      .rail .av::after { content: "+"; position: absolute; left: 50%; bottom: -16px; width: 36px; height: 36px; margin-left: -18px; border-radius: 50%; background: #fff; color: #111; font: 700 28px/36px "SP Figtree", sans-serif; text-align: center; text-shadow: none; }
+      .rail .disc { width: 84px; height: 84px; border-radius: 50%; background: radial-gradient(circle, var(--c) 0 26%, #222 28% 100%); border: 12px solid #2b2b2b; margin-top: 10px; }
+      .cap { position: absolute; left: 32px; right: 150px; bottom: 54px; display: flex; flex-direction: column; gap: 12px; font-size: 27px; line-height: 1.35; text-shadow: 0 1px 3px rgb(0 0 0 / .45); }
+      .cap .user { font-weight: 700; font-size: 30px; }
+      .cap .tags { font-weight: 700; }
+      .cap .song { display: flex; gap: 10px; align-items: center; font-size: 25px; }
+      .cap .song svg { width: 26px; height: 26px; fill: #fff; flex: none; }
+      .progress { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgb(255 255 255 / .25); }
+      .progress i { display: block; height: 100%; width: var(--w); background: #fff; transform-origin: left; }
+
+      /* Escenas: formas sencillas que se mueven, para que parezcan vídeos distintos. */
+      .s-dance { background: radial-gradient(circle at 50% 18%, #FF6FA8 0, transparent 38%), linear-gradient(170deg, #2A0F3D, #7A1E5C 60%, #1B0B26); }
+      .s-dance .beam { position: absolute; top: -80px; width: 260px; height: 1100px; background: linear-gradient(rgb(255 210 240 / .45), transparent); transform-origin: 50% 0; }
+      .s-dance .floor { position: absolute; left: -10%; right: -10%; bottom: 0; height: 420px; background: radial-gradient(ellipse at 50% 0, rgb(255 120 190 / .55), transparent 70%); }
+      .s-dance .fig { position: absolute; left: 50%; bottom: 300px; width: 180px; height: 520px; margin-left: -90px; border-radius: 90px 90px 30px 30px; background: linear-gradient(#1A0A22, #0D0612); }
+      .s-dance .fig::before { content: ""; position: absolute; left: 45px; top: -110px; width: 90px; height: 100px; border-radius: 50%; background: #1A0A22; }
+      .s-surf { background: linear-gradient(#7FD0F0, #CDEFFF 45%, #2C8FB8 46%, #0D4F6E); }
+      .s-surf .sun { position: absolute; right: 120px; top: 230px; width: 160px; height: 160px; border-radius: 50%; background: #FFF4C2; box-shadow: 0 0 120px 40px rgb(255 240 190 / .7); }
+      .s-surf .wave { position: absolute; left: -200px; width: 1120px; height: 160px; border-radius: 50%; border-top: 18px solid rgb(255 255 255 / .75); }
+      .s-food { background: radial-gradient(circle at 50% 46%, #8A5A35 0 30%, #5E3A20 31% 100%); }
+      .s-food .plate { position: absolute; left: 60px; top: 440px; width: 480px; height: 480px; border-radius: 50%; background: radial-gradient(circle, #F4EFE6 0 58%, #E2DBCF 59% 66%, #F7F3EC 67%); box-shadow: 0 30px 60px rgb(0 0 0 / .35); }
+      .s-food .bit { position: absolute; border-radius: 50%; }
+      .s-game { background: linear-gradient(160deg, #0B0D24, #1B1F4A); }
+      .s-game .screen-glow { position: absolute; left: 40px; right: 160px; top: 380px; height: 560px; border-radius: 28px; background: linear-gradient(135deg, #3A2BFF, #00D1FF 55%, #7CFF6B); box-shadow: 0 0 140px 30px rgb(60 120 255 / .45); }
+      .s-game .hud { position: absolute; left: 70px; top: 410px; width: 220px; height: 26px; border-radius: 13px; background: rgb(255 255 255 / .55); }
+
+      /* Barra superior (Siguiendo | Para ti) y navegación inferior, fijas como en la app. */
+      #topbar { position: absolute; left: 0; right: 0; top: 78px; height: 70px; display: flex; align-items: center; justify-content: center; gap: 34px; color: #fff; font-size: 31px; text-shadow: 0 1px 3px rgb(0 0 0 / .4); }
+      #topbar .off { opacity: .7; font-weight: 600; }
+      #topbar .on { font-weight: 700; position: relative; }
+      #topbar .on::after { content: ""; position: absolute; left: 50%; bottom: -12px; width: 46px; height: 5px; margin-left: -23px; border-radius: 3px; background: #fff; }
+      #topbar .live { position: absolute; left: 30px; font-size: 21px; font-weight: 700; border: 3px solid #fff; border-radius: 8px; padding: 0 6px; }
+      #topbar svg { position: absolute; right: 32px; width: 44px; height: 44px; fill: none; stroke: #fff; stroke-width: 2.4; stroke-linecap: round; }
+      #nav { position: absolute; left: 0; right: 0; bottom: 0; height: 128px; background: #000; color: #fff; display: grid; grid-template-columns: repeat(5, 1fr); align-items: start; padding-top: 14px; font-size: 20px; text-align: center; }
+      #nav span { display: flex; flex-direction: column; align-items: center; gap: 4px; opacity: .65; }
+      #nav span.on { opacity: 1; font-weight: 700; }
+      #nav svg { width: 46px; height: 46px; fill: #fff; }
+      #nav .plus { opacity: 1; margin-top: 6px; width: 92px; height: 58px; border-radius: 16px; background: #fff; color: #000; font: 700 44px/58px "SP Figtree", sans-serif; justify-self: center; display: block; }
 
       /* Pantalla de bloqueo: réplica de BlockedOverlay.kt. */
       #block { position: absolute; inset: 0; background: var(--llave); color: var(--tinta); display: flex; flex-direction: column; padding: 150px 52px 120px; }
@@ -64,12 +100,20 @@
   </head>
   <body>
     <div id="root" data-composition-id="main" data-start="0" data-width="720" data-height="1600" data-duration="14">
-      <div id="feed" data-layout-allow-occlusion>
-        <div class="post p0"><i class="blob" data-layout-allow-overflow style="left:-120px;top:380px;width:620px;height:620px;background:#FF8FB1;opacity:.5"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@lauri.baila</b><span style="width:92%"></span><span style="width:60%"></span></div></div>
-        <div class="post p1"><i class="blob" data-layout-allow-overflow style="left:180px;top:520px;width:560px;height:560px;background:#B8FFF6;opacity:.35"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@marcos.surf</b><span style="width:80%"></span><span style="width:48%"></span></div></div>
-        <div class="post p2"><i class="blob" data-layout-allow-overflow style="left:-60px;top:300px;width:700px;height:700px;background:#FFD08A;opacity:.4"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@recetas.rapidas</b><span style="width:88%"></span><span style="width:70%"></span></div></div>
-        <div class="post p3"><i class="blob" data-layout-allow-overflow style="left:120px;top:420px;width:600px;height:600px;background:#C9D4FF;opacity:.35"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@gamer.nocturno</b><span style="width:76%"></span><span style="width:52%"></span></div></div>
-        <div class="post p0"><i class="blob" data-layout-allow-overflow style="left:-120px;top:380px;width:620px;height:620px;background:#FF8FB1;opacity:.5"></i><div class="rail"><i></i><i></i><i></i></div><div class="cap"><b data-layout-allow-occlusion>@lauri.baila</b><span style="width:92%"></span><span style="width:60%"></span></div></div>
+      <div id="viewport" data-layout-ignore>
+        <div id="feed"></div>
+      </div>
+      <div id="topbar" data-layout-ignore>
+        <span class="live">LIVE</span>
+        <span class="off">Siguiendo</span><span class="on">Para ti</span>
+        <svg viewBox="0 0 24 24"><circle cx="10.5" cy="10.5" r="6.5" /><path d="M15.5 15.5 21 21" /></svg>
+      </div>
+      <div id="nav" data-layout-ignore>
+        <span class="on"><svg viewBox="0 0 24 24"><path d="M3 10.5 12 3l9 7.5V21h-6v-6H9v6H3z" /></svg>Inicio</span>
+        <span><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5" /><circle cx="16.5" cy="9" r="3" /><path d="M2 20c0-3.3 3-5.5 7-5.5s7 2.2 7 5.5zM15 14c3.6-.4 7 1.4 7 4.4V20h-5c0-2.2-.7-4.3-2-6z" /></svg>Amigos</span>
+        <span class="plus">+</span>
+        <span><svg viewBox="0 0 24 24"><path d="M4 4h16v12h-5l-3 3-3-3H4z" /></svg>Bandeja</span>
+        <span><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5z" /></svg>Perfil</span>
       </div>
 
       <div id="block">
@@ -107,13 +151,67 @@
     </div>
 
     <script>
+      const ICON = {
+        heart: '<svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.6-9.6-9.2C.9 8.4 3 4.5 6.6 4.5c2.1 0 3.6 1.2 4.4 2.5.8-1.3 2.3-2.5 4.4-2.5 3.6 0 5.7 3.9 4.2 7.3C19.5 16.4 12 21 12 21z"/></svg>',
+        comment: '<svg viewBox="0 0 24 24"><path d="M12 3C6.5 3 2 6.6 2 11c0 2.4 1.3 4.6 3.4 6.1L4.5 21l4.4-2.3c1 .2 2 .3 3.1.3 5.5 0 10-3.6 10-8s-4.5-8-10-8z"/></svg>',
+        save: '<svg viewBox="0 0 24 24"><path d="M6 2h12a1 1 0 0 1 1 1v19l-7-5-7 5V3a1 1 0 0 1 1-1z"/></svg>',
+        share: '<svg viewBox="0 0 24 24"><path d="M14 4l8 7-8 7v-4.5c-6 0-9.5 1.8-12 6 .8-6 4-11.5 12-12.5z"/></svg>',
+        note: '<svg viewBox="0 0 24 24"><path d="M9 17.5V5l11-2v12.5a3 3 0 1 1-2-2.8V7.2l-7 1.3v9a3 3 0 1 1-2-2.8z"/></svg>',
+      };
+      // Escenas: cada una es un "vídeo" distinto. El último repite el primero para que el bucle no salte.
+      const SCENES = {
+        dance: '<div class="scene s-dance"><i class="beam b1" style="left:60px"></i><i class="beam b2" style="left:400px"></i><i class="floor"></i><i class="fig"></i></div>',
+        surf: '<div class="scene s-surf"><i class="sun"></i><i class="wave w1" style="top:760px"></i><i class="wave w2" style="top:940px"></i><i class="wave w3" style="top:1120px"></i></div>',
+        food: '<div class="scene s-food"><i class="plate"></i><i class="bit" style="left:200px;top:570px;width:90px;height:90px;background:#E8452C"></i><i class="bit" style="left:330px;top:650px;width:70px;height:70px;background:#6DBE45"></i><i class="bit" style="left:250px;top:730px;width:110px;height:60px;background:#F2C14E"></i></div>',
+        game: '<div class="scene s-game"><i class="screen-glow"></i><i class="hud"></i></div>',
+      };
+      const POSTS = [
+        { scene: "dance", user: "lauri.baila", text: "Coreo nueva para el finde, ¿quién se apunta?", tags: "#baile #parati", song: "sonido original - lauri.baila", likes: "84,2 mil", comments: "1.203", saves: "9.870", shares: "2.311", color: "#FF6FA8", progress: "38%" },
+        { scene: "surf", user: "marcos.surf", text: "Primera ola del año y casi me como la tabla", tags: "#surf #playa", song: "Verano Infinito - Los Brisas", likes: "12,7 mil", comments: "318", saves: "1.042", shares: "402", color: "#7FD0F0", progress: "62%" },
+        { scene: "food", user: "recetas.rapidas", text: "Cena en 10 minutos con lo que tienes en la nevera", tags: "#receta #facil", song: "sonido original - recetas.rapidas", likes: "231 mil", comments: "4.587", saves: "58,3 mil", shares: "11,9 mil", color: "#F2C14E", progress: "24%" },
+        { scene: "game", user: "gamer.nocturno", text: "No me lo creo, a la tercera va la vencida", tags: "#gaming #clip", song: "Boss Fight - 8bit Remix", likes: "47,5 mil", comments: "2.090", saves: "3.311", shares: "1.876", color: "#00D1FF", progress: "51%" },
+      ];
+      POSTS.push(POSTS[0]);
+
+      const feed = document.getElementById("feed");
+      feed.innerHTML = POSTS.map((p) => `
+        <div class="post">
+          ${SCENES[p.scene]}
+          <div class="shade"></div>
+          <div class="rail">
+            <div class="av" style="background:${p.color}"></div>
+            <div class="act">${ICON.heart}<span>${p.likes}</span></div>
+            <div class="act">${ICON.comment}<span>${p.comments}</span></div>
+            <div class="act">${ICON.save}<span>${p.saves}</span></div>
+            <div class="act">${ICON.share}<span>${p.shares}</span></div>
+            <div class="disc" style="--c:${p.color}"></div>
+          </div>
+          <div class="cap">
+            <span class="user">${p.user}</span>
+            <span>${p.text} <span class="tags">${p.tags}</span></span>
+            <span class="song">${ICON.note}<span>${p.song}</span></span>
+          </div>
+          <div class="progress" style="--w:${p.progress}"><i></i></div>
+        </div>`).join("");
+
       const tl = gsap.timeline({ paused: true });
-      const H = 1600;
+      const H = 1472;
+      const D = 14;
       const scroll = (to, at) => tl.to("#feed", { y: -H * to, duration: 0.6, ease: "power3.inOut" }, at);
 
       // Estado inicial
       tl.set("#feed", { y: 0 }, 0);
-      tl.set("#block", { y: H }, 0);
+      tl.set("#block", { y: 1600 }, 0);
+
+      // Vida dentro de cada "vídeo": discos girando, focos, olas y la barra de progreso avanzando.
+      tl.to(".disc", { rotation: 360 * 3, duration: D, ease: "none" }, 0);
+      tl.fromTo(".beam.b1", { rotation: -14 }, { rotation: 14, duration: 1.75, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
+      tl.fromTo(".beam.b2", { rotation: 14 }, { rotation: -14, duration: 1.75, ease: "sine.inOut", yoyo: true, repeat: 7 }, 0);
+      tl.fromTo(".s-dance .fig", { scaleY: 1, rotation: -3 }, { scaleY: 0.94, rotation: 3, duration: 0.35, ease: "sine.inOut", yoyo: true, repeat: 39 }, 0);
+      tl.fromTo(".wave", { x: 0 }, { x: 160, duration: 2, ease: "sine.inOut", yoyo: true, repeat: 6 }, 0);
+      tl.fromTo(".s-food .plate", { rotation: 0 }, { rotation: 20, duration: D, ease: "none" }, 0);
+      tl.fromTo(".s-game .screen-glow", { filter: "hue-rotate(0deg)" }, { filter: "hue-rotate(160deg)", duration: 3.5, ease: "none", yoyo: true, repeat: 3 }, 0);
+      tl.fromTo(".progress i", { scaleX: 0.6 }, { scaleX: 1.4, duration: D, ease: "none" }, 0);
 
       // 1. Scroll infinito
       scroll(1, 0.7);
@@ -133,7 +231,7 @@
 
       // 5. Abrir 5 minutos y vuelta al feed
       tl.to("#open", { scale: 0.95, duration: 0.12, yoyo: true, repeat: 1 }, 8.2);
-      tl.to("#block", { y: H, duration: 0.6, ease: "power3.in" }, 8.7);
+      tl.to("#block", { y: 1600, duration: 0.6, ease: "power3.in" }, 8.7);
       tl.to("#sbar", { color: "#F4F5FA", duration: 0.3 }, 9.0);
       tl.to("#gesture", { backgroundColor: "#F4F5FA", duration: 0.3 }, 9.0);
 
