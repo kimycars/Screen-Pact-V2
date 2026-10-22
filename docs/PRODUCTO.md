@@ -211,3 +211,12 @@ Pendiente:
 ## 8. Ideas para más adelante (sin coste fijo)
 - **Pedir la llave a distancia por nostr:** la petición viaja como mensaje cifrado por relays públicos gratuitos. Sin servidor propio y encaja con el público de Zapstore.
 - **Reto de 30 días:** el pacto como formato de contenido para TikTok/Instagram ("30 días con Carla de guardiana").
+
+## Medición del uso frente a "Horas de pantalla" de Xiaomi (22-10-2026)
+
+Kimy vio que ScreenPact le bloqueó Instagram con 2 h cuando "Horas de pantalla" de su Redmi (HyperOS, Android 16) marcaba 1 h 30. Se analizó el registro de uso del móvil por adb:
+- ScreenPact coincide con los registros de Android (Instagram 182 min frente a 184 en el registro del sistema) y no cuenta tiempo con la pantalla apagada o bloqueada.
+- "Horas de pantalla" de Xiaomi no cuenta el tiempo cuando desbloqueas el móvil y aparece directamente la app que ya tenías abierta (Android registra la app como abierta un instante antes del desbloqueo). Solo empieza a contar cuando abres una app con el móvil ya desbloqueado. Reproduciendo esa regla salen sus cifras hora a hora (Instagram 144 frente a 145, Telegram 19 frente a 20, TikTok 41 frente a 41).
+- Esos ratos son uso real (la app delante, desbloqueada, minutos seguidos), así que la cifra correcta es la de ScreenPact.
+
+Pendiente de decidir con Kimy: seguir contando el uso real (recomendado) y explicarlo en la app y en las preguntas frecuentes, o imitar la regla de Xiaomi.
