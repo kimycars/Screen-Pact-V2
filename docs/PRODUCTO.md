@@ -219,4 +219,4 @@ Kimy vio que ScreenPact le bloqueó Instagram con 2 h cuando "Horas de pantalla"
 - "Horas de pantalla" de Xiaomi no cuenta el tiempo cuando desbloqueas el móvil y aparece directamente la app que ya tenías abierta (Android registra la app como abierta un instante antes del desbloqueo). Solo empieza a contar cuando abres una app con el móvil ya desbloqueado. Reproduciendo esa regla salen sus cifras hora a hora (Instagram 144 frente a 145, Telegram 19 frente a 20, TikTok 41 frente a 41).
 - Esos ratos son uso real (la app delante, desbloqueada, minutos seguidos), así que la cifra correcta es la de ScreenPact.
 
-Pendiente de decidir con Kimy: seguir contando el uso real (recomendado) y explicarlo en la app y en las preguntas frecuentes, o imitar la regla de Xiaomi.
+Decidido por Kimy el 22-10-2026: se sigue contando el uso real (imitar a Xiaomi abriría una trampa: bloquear y desbloquear con la app abierta saldría gratis). Por ahora no se explica en la app ni en la web. Si llegan quejas de usuarios de Xiaomi por la diferencia, añadir una pregunta frecuente en la landing.
