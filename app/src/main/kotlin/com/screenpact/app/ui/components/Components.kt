@@ -5,6 +5,8 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -180,13 +182,13 @@ fun Avatar(name: String, size: Dp = Sizes.avatar, color: Color = Sp.Llave) {
 }
 
 @Composable
-fun UsageBar(fraction: Float, color: Color, modifier: Modifier = Modifier) {
+fun UsageBar(fraction: Float, color: Color, modifier: Modifier = Modifier, track: Color = Sp.Superficie) {
     Box(
         modifier
             .fillMaxWidth()
             .height(Sizes.usageBar)
             .clip(Shapes.pill)
-            .background(Sp.Superficie)
+            .background(track)
     ) {
         Box(
             Modifier
@@ -395,4 +397,33 @@ fun Tag(text: String, modifier: Modifier = Modifier) {
             .background(Sp.Llave)
             .padding(horizontal = Space.xs, vertical = Space.xxs)
     )
+}
+
+/**
+ * Anillo de progreso (el uso de hoy). [fraction] de 0 a 1; el centro lleva lo que se le pase.
+ * Dentro de una SpCard, la pista va en Sp.Linea para que se vea.
+ */
+@Composable
+fun UsageRing(
+    fraction: Float,
+    color: Color,
+    modifier: Modifier = Modifier,
+    size: Dp = Sizes.todayRing,
+    track: Color = Sp.Linea,
+    content: @Composable () -> Unit = {}
+) {
+    Box(modifier.size(size), contentAlignment = Alignment.Center) {
+        Canvas(Modifier.fillMaxSize()) {
+            val w = Strokes.ring.toPx()
+            val inset = w / 2
+            val arc = androidx.compose.ui.geometry.Size(this.size.width - w, this.size.height - w)
+            val tl = androidx.compose.ui.geometry.Offset(inset, inset)
+            drawArc(track, 0f, 360f, false, tl, arc, style = androidx.compose.ui.graphics.drawscope.Stroke(w))
+            drawArc(
+                color, -90f, 360f * fraction.coerceIn(0f, 1f), false, tl, arc,
+                style = androidx.compose.ui.graphics.drawscope.Stroke(w, cap = androidx.compose.ui.graphics.StrokeCap.Round)
+            )
+        }
+        content()
+    }
 }

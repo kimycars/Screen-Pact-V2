@@ -39,6 +39,7 @@ import com.screenpact.app.ui.components.BackButton
 import com.screenpact.app.ui.components.OutlineButton
 import com.screenpact.app.ui.theme.Mono
 import com.screenpact.app.ui.theme.Sp
+import com.screenpact.app.ui.components.UsageRing
 import kotlinx.coroutines.delay
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
@@ -80,17 +81,7 @@ fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
         Text(friend?.name ?: "", style = MaterialTheme.typography.headlineLarge)
 
         Spacer(Modifier.height(Space.xxxl))
-        Box(Modifier.size(Sizes.keyRing), contentAlignment = Alignment.Center) {
-            Canvas(Modifier.size(Sizes.keyRing)) {
-                val stroke = Strokes.ring.toPx()
-                val inset = stroke / 2
-                val arcSize = Size(size.width - stroke, size.height - stroke)
-                drawArc(Sp.Superficie, 0f, 360f, false, Offset(inset, inset), arcSize, style = Stroke(stroke))
-                drawArc(
-                    Sp.Llave, -90f, 360f * seconds / 30f, false, Offset(inset, inset), arcSize,
-                    style = Stroke(stroke, cap = StrokeCap.Round)
-                )
-            }
+        UsageRing(seconds / 30f, Sp.Llave, size = Sizes.keyRing, track = Sp.Superficie) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
                 Text(
                     code.chunked(3).joinToString(" "),

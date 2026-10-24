@@ -60,7 +60,7 @@ data class UnlockGrant(
 )
 
 /**
- * Resumen de un día y una app, para el historial y las rachas (Pro). Se escribe siempre, tenga o
+ * Resumen de un día y una app, para el historial y las rachas. Se escribe siempre, tenga o
  * no Pro la persona, para que al hacerse Pro ya vea su historia. [day] es AAAA-MM-DD local.
  */
 @Entity(tableName = "day_records", primaryKeys = ["day", "packageName"])

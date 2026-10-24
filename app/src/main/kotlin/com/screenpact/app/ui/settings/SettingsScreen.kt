@@ -97,7 +97,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
                             Text("ScreenPact Pro", style = MaterialTheme.typography.titleMedium)
-                            Text("Todas las apps, horarios, rachas y modo estricto.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+                            Text("Todas las apps, horarios, historial y modo estricto.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
                         }
                         Spacer(Modifier.width(Space.s))
                         ChipButton("Ver Pro", { onOpenPro(ProFeature.GENERAL) })

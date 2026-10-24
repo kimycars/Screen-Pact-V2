@@ -79,7 +79,8 @@ Coste fijo cero. Solo se gasta cuando alguien paga.
 | Protecciones básicas anti-trampa (aviso si cambias la hora o quitas permisos) | Sí | Sí |
 | Horarios (por ejemplo, Instagram bloqueado de 0:00 a 8:00) | No | Sí |
 | Historial y estadísticas semanales | No | Sí |
-| Rachas del pacto (días seguidos cumpliendo) | No | Sí |
+| Rachas (sin pedir llave y sin llegar al límite) y la semana en Hoy | Sí | Sí |
+| Historial de 4 semanas, récords e insignias | No | Sí |
 | Modo estricto (impide desinstalar sin código de amigo) | No | Sí |
 | Iconos alternativos de la app | No | Sí |
 
@@ -174,7 +175,7 @@ Es lo que la gente fotografiará y subirá a redes. Es nuestro anuncio gratuito.
 ### Mapa de pantallas
 1. **Bienvenida (3 pasos):** tu nombre, permisos explicados uno a uno con el porqué y el primer pacto. Termina en la pantalla de emparejar, no en la de inicio.
 2. **Emparejar:** flujo guiado en dos pasos con los dos móviles cara a cara. Primero "enséñale tu QR" y después "escanea el suyo", con una animación de las dos llaves al cerrarse el pacto.
-3. **Hoy (inicio):** una barra por app con el uso frente al límite, el estado del pacto ("Carla tiene tu llave") y la racha (Pro).
+3. **Hoy (inicio):** una barra por app con el uso frente al límite, el estado del pacto ("Carla tiene tu llave") la racha (gratis desde el 24-10-2026) y un anillo con el uso total de hoy.
 4. **Dar la llave:** el código grande en mono con una cuenta atrás circular de 30 s. Botón "Copiar" para mandarlo por WhatsApp.
 5. **Límites:** la lista de apps con las reglas visibles ("bajar es libre, subir pide llave").
 6. **Amigos:** los pactos activos y desde cuándo.

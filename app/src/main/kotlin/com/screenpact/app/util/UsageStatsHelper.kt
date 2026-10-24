@@ -134,21 +134,32 @@ object UsageStatsHelper {
     }
 
     /**
-     * True si desde [sinceMs] el usuario ha dejado [pkg]: otra app se ha puesto delante, o la
-     * pantalla se ha apagado o bloqueado. Solo lee los eventos de ese intervalo, así que es barato
-     * y se puede llamar varias veces por segundo mientras la pantalla de bloqueo está visible.
+     * True si desde [sinceMs] el usuario ha dejado [pkg]: otra app se ha puesto delante, la app
+     * bloqueada se ha ido a segundo plano (gesto de inicio o de recientes) o la pantalla se ha
+     * apagado o bloqueado. Solo lee los eventos de ese intervalo, así que es barato y se puede
+     * llamar varias veces por segundo mientras la pantalla de bloqueo está visible.
+     *
+     * La pausa de [pkg] es la señal más temprana del gesto de inicio: llega antes de que el
+     * escritorio se ponga delante. Si la app vuelve a ponerse delante en el mismo intervalo
+     * (cambio entre pantallas de la propia app), no cuenta como salida.
      */
     fun leftApp(context: Context, pkg: String, sinceMs: Long): Boolean {
         val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val events = usm.queryEvents(sinceMs, System.currentTimeMillis())
         val ev = UsageEvents.Event()
+        var paused = false
         while (events.hasNextEvent()) {
             events.getNextEvent(ev)
             when (ev.eventType) {
-                ACTIVITY_RESUMED -> if (ev.packageName != pkg && ev.packageName != context.packageName) return true
+                ACTIVITY_RESUMED -> when (ev.packageName) {
+                    pkg -> paused = false
+                    context.packageName -> {}
+                    else -> return true
+                }
+                ACTIVITY_PAUSED -> if (ev.packageName == pkg) paused = true
                 SCREEN_NON_INTERACTIVE, KEYGUARD_SHOWN -> return true
             }
         }
-        return false
+        return paused
     }
 }

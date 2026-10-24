@@ -141,7 +141,7 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
         if (!isPro) {
             item {
                 QuietButton(
-                    "Horarios, rachas y más con ScreenPact Pro",
+                    "Horarios, historial y más con ScreenPact Pro",
                     { onOpenPro(ProFeature.GENERAL) },
                     modifier = Modifier.fillMaxWidth()
                 )

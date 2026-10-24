@@ -30,6 +30,10 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.withContext
+import com.screenpact.app.util.UsageStatsHelper
 import com.screenpact.app.data.Stats
 import com.screenpact.app.data.History
 
@@ -48,6 +52,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     private lateinit var wm: WindowManager
     private var rootView: ComposeView? = null
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+    private var exitWatch: Job? = null
 
     private val lifecycleRegistry = LifecycleRegistry(this)
     private val store = ViewModelStore()
@@ -123,9 +128,10 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
                 WindowManager.LayoutParams.FLAG_HARDWARE_ACCELERATED or
                 WindowManager.LayoutParams.FLAG_LAYOUT_IN_SCREEN or
                 WindowManager.LayoutParams.FLAG_SHOW_WHEN_LOCKED
-            // SOFT_INPUT_ADJUST_RESIZE allows the keyboard to push up the text field.
+            // El teclado sube el campo de la llave. No se abre solo: con el teclado abierto, el
+            // primer gesto de inicio a veces solo lo cerraba y había que repetirlo.
             softInputMode = WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE or
-                WindowManager.LayoutParams.SOFT_INPUT_STATE_VISIBLE
+                WindowManager.LayoutParams.SOFT_INPUT_STATE_HIDDEN
             format = PixelFormat.OPAQUE
             width = WindowManager.LayoutParams.MATCH_PARENT
             height = WindowManager.LayoutParams.MATCH_PARENT
@@ -154,9 +160,32 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         }
 
         rootView = view
+        watchForExit()
         Stats.count(this, if (tamper != null) Stats.Event.TAMPER_BLOCK else Stats.Event.BLOCK_SHOWN)
         isShowing = true
         wm.addView(view, params)
+    }
+
+    /**
+     * Mientras la pantalla de bloqueo está puesta, mira cada [EXIT_CHECK_MS] si la persona ha
+     * salido de la app (gesto de inicio, recientes, otra app, pantalla apagada) y la quita al
+     * momento, desde aquí mismo. Antes lo hacía solo el servicio de vigilancia, con más espera y
+     * pasando por un Intent, y el gesto de inicio parecía no responder.
+     */
+    private fun watchForExit() {
+        exitWatch?.cancel()
+        exitWatch = scope.launch {
+            var since = System.currentTimeMillis()
+            while (rootView != null) {
+                delay(EXIT_CHECK_MS)
+                val now = System.currentTimeMillis()
+                val left = withContext(Dispatchers.Default) {
+                    runCatching { UsageStatsHelper.leftApp(applicationContext, current.value.pkg, since - EXIT_CHECK_MS) }.getOrDefault(false)
+                }
+                if (left) { hideOverlayAndStop(); break }
+                since = now
+            }
+        }
     }
 
     private fun attemptUnlock(
@@ -194,6 +223,8 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     }
 
     private fun hideOverlay() {
+        exitWatch?.cancel()
+        exitWatch = null
         rootView?.let { runCatching { wm.removeView(it) } }
         rootView = null
         isShowing = false
@@ -219,6 +250,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
         const val EXTRA_SCHEDULE = "schedule"
 
         const val GRACE_PERIOD_MS = 5 * 60_000L
+        private const val EXIT_CHECK_MS = 120L
 
         /**
          * True while the blocking overlay is visible on screen.

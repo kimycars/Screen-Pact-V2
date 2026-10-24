@@ -52,6 +52,11 @@ import com.screenpact.app.ui.components.IconAction
 import com.screenpact.app.ui.components.OutlineButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
+import com.screenpact.app.data.db.Friend
+import com.screenpact.app.ui.common.AppIcon
+import com.screenpact.app.ui.common.StreakCard
+import com.screenpact.app.ui.components.UsageRing
+import com.screenpact.app.ui.theme.Sizes
 
 @Composable
 fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> Unit, onOpenHistory: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
@@ -62,10 +67,12 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
     var usage by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
     val permissions = rememberPermissionState()
     val isPro = rememberIsPro()
-    var streak by remember { mutableStateOf(0) }
+    var streaks by remember { mutableStateOf(History.Streaks(0, 0, 0, 0)) }
+    var week by remember { mutableStateOf<List<History.Day>>(emptyList()) }
     LaunchedEffect(Unit) {
         while (true) {
-            streak = History.streak(db)
+            streaks = History.streaks(db)
+            week = History.days(db, 7)
             delay(30_000)
         }
     }
@@ -109,65 +116,18 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
             }
         }
 
-        item {
-            // El amigo que puede desbloquearte ya (el más antiguo con poder de llave).
-            val keeper = f.sortedBy { it.addedAt }.firstOrNull { FriendCodes.canUnlock(it, f) }
-            if (keeper == null) {
-                SpCard {
-                    Text("Aún no tienes pacto", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(Space.xxs))
-                    Text(
-                        "Sin un amigo con tu llave, nadie podrá desbloquearte. Queda con alguien y escanead vuestros QR.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Sp.TextoSuave
-                    )
-                    Spacer(Modifier.height(Space.m))
-                    PrimaryButton("Sellar un pacto", onPair)
-                    Spacer(Modifier.height(Space.xs))
-                    OutlineButton("Invitar a un amigo", { Invite.share(context) })
-                }
-            } else {
-                val others = f.count { it.id != keeper.id }
-                SpCard {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Avatar(keeper.name)
-                        Spacer(Modifier.width(Space.m))
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                if (others == 0) "${keeper.name} tiene tu llave" else "${keeper.name} y $others más tienen tu llave",
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                "Pacto desde el ${formatDay(keeper.addedAt)}",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Sp.TextoSuave
-                            )
-                        }
-                    }
-                }
-            }
-        }
+        // Sin pacto, lo primero es sellarlo; con pacto, la tarjeta del pacto va al final.
+        val keeper = f.sortedBy { it.addedAt }.firstOrNull { FriendCodes.canUnlock(it, f) }
+        if (keeper == null) item { NoPactCard(onPair) { Invite.share(context) } }
 
         if (l.isNotEmpty()) {
             item {
-                SpCard {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Column(Modifier.weight(1f)) {
-                            if (isPro) {
-                                Text(
-                                    if (streak == 1) "1 día sin pedir llave" else "$streak días sin pedir llave",
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text("Tu racha. Se rompe si hoy usas una llave.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
-                            } else {
-                                Text("Rachas e historial", style = MaterialTheme.typography.titleMedium)
-                                Text("Mira tu semana y cuántos días llevas sin pedir llave.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
-                            }
-                        }
-                        Spacer(Modifier.width(Space.s))
-                        if (isPro) ChipButton("Historial", onOpenHistory) else ChipButton("Ver Pro", { onOpenPro(ProFeature.HISTORY) })
-                    }
-                }
+                StreakCard(
+                    streaks = streaks,
+                    week = week,
+                    actionLabel = if (isPro) "Historial" else "Ver más",
+                    onAction = { if (isPro) onOpenHistory() else onOpenPro(ProFeature.HISTORY) }
+                )
             }
         }
 
@@ -186,10 +146,10 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
                 }
             }
         } else {
-            // Las más cerca de su límite, arriba.
-            val sorted = l.sortedByDescending { fractionOf(it, usage) }
-            items(sorted, key = { it.packageName }) { app -> UsageRow(app, usage[app.packageName] ?: 0L) }
+            item { TodayCard(l, usage) }
         }
+
+        if (keeper != null) item { PactCard(keeper, f.count { it.id != keeper.id }) }
     
     }
 }
@@ -206,7 +166,9 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
     val left = limit.dailyLimitMinutes - usedMin
     val hot = limit.enabled && fraction >= 0.8f
     Column(Modifier.fillMaxWidth()) {
-        Row(Modifier.fillMaxWidth()) {
+        Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(limit.packageName, size = Sizes.iconL)
+            Spacer(Modifier.width(Space.s))
             Text(limit.appName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Text(
                 if (limit.enabled) "$usedMin de ${limit.dailyLimitMinutes} min" else "En pausa",
@@ -215,7 +177,7 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
             )
         }
         Spacer(Modifier.height(Space.xs))
-        UsageBar(fraction, if (hot) Sp.Llave else Sp.Niebla)
+        UsageBar(fraction, if (hot) Sp.Llave else Sp.Niebla, track = Sp.Linea)
         if (limit.enabled && hot) {
             Spacer(Modifier.height(Space.xs))
             Text(
@@ -233,3 +195,83 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
 
 private fun formatDay(millis: Long): String =
     SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(Date(millis))
+
+@Composable
+private fun NoPactCard(onPair: () -> Unit, onInvite: () -> Unit) {
+    SpCard {
+        Text("Aún no tienes pacto", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            "Sin un amigo con tu llave, nadie podrá desbloquearte. Queda con alguien y escanead vuestros QR.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.m))
+        PrimaryButton("Sellar un pacto", onPair)
+        Spacer(Modifier.height(Space.xs))
+        OutlineButton("Invitar a un amigo", onInvite)
+    }
+}
+
+@Composable
+private fun PactCard(keeper: Friend, others: Int) {
+    SpCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Avatar(keeper.name)
+            Spacer(Modifier.width(Space.m))
+            Column(Modifier.weight(1f)) {
+                Text(
+                    if (others == 0) "${keeper.name} tiene tu llave" else "${keeper.name} y $others más tienen tu llave",
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    "Pacto desde el ${formatDay(keeper.addedAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Sp.TextoSuave
+                )
+            }
+        }
+    }
+}
+
+/** Uso de hoy: anillo con el total de las apps con límite y una fila por app, la más apurada arriba. */
+@Composable
+private fun TodayCard(limits: List<AppLimit>, usage: Map<String, Long>) {
+    val active = limits.filter { it.enabled && it.dailyLimitMinutes > 0 }
+    val usedMin = active.sumOf { ((usage[it.packageName] ?: 0L) / 60_000L).toInt() }
+    val limitMin = active.sumOf { it.dailyLimitMinutes }
+    val fraction = if (limitMin > 0) usedMin.toFloat() / limitMin else 0f
+    SpCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            UsageRing(fraction, if (fraction >= 0.8f) Sp.Llave else Sp.Pacto) {
+                Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                    Text(formatMinutes(usedMin), style = MaterialTheme.typography.titleLarge)
+                    Text("hoy", style = MaterialTheme.typography.labelSmall, color = Sp.TextoSuave)
+                }
+            }
+            Spacer(Modifier.width(Space.l))
+            Column(Modifier.weight(1f)) {
+                Text("De ${formatMinutes(limitMin)} que te das", style = MaterialTheme.typography.titleMedium)
+                Text(
+                    when {
+                        limitMin == 0 -> "Todas tus apps están en pausa."
+                        usedMin >= limitMin -> "Hoy ya has gastado todo tu tiempo."
+                        else -> "Te quedan ${formatMinutes(limitMin - usedMin)} en total."
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Sp.TextoSuave
+                )
+            }
+        }
+        limits.sortedByDescending { fractionOf(it, usage) }.forEach { app ->
+            Spacer(Modifier.height(Space.l))
+            UsageRow(app, usage[app.packageName] ?: 0L)
+        }
+    }
+}
+
+private fun formatMinutes(min: Int): String = when {
+    min < 60 -> "$min min"
+    min % 60 == 0 -> "${min / 60} h"
+    else -> "${min / 60} h ${min % 60}"
+}

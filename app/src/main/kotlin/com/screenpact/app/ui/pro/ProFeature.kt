@@ -29,9 +29,9 @@ enum class ProFeature(val id: String, val icon: ImageVector, val title: String, 
     ),
     HISTORY(
         "history", Icons.Default.Whatshot,
-        "Las rachas son de Pro",
-        "Mira tu semana y cuántos días llevas sin pedir la llave a nadie.",
-        "Rachas e historial de tu semana",
+        "El historial es de Pro",
+        "Tus últimas 4 semanas día a día, tus récords y tus insignias por cada meta de días sin pedir llave.",
+        "Historial, récords e insignias",
     ),
     STRICT(
         "strict", Icons.Default.Lock,

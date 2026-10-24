@@ -69,7 +69,4 @@ interface DayRecordDao {
     /** Días distintos con algún registro, del más reciente al más antiguo. */
     @Query("SELECT day FROM day_records GROUP BY day ORDER BY day DESC")
     suspend fun days(): List<String>
-
-    @Query("SELECT COALESCE(SUM(unlocks), 0) FROM day_records WHERE day = :day")
-    suspend fun unlocksOn(day: String): Int
 }

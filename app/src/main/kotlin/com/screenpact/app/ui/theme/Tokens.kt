@@ -50,6 +50,12 @@ object Sizes {
     val keyRing = 260.dp
     val appIcon = 32.dp
     val pickerList = 360.dp
+    /** Círculo de cada día en la tira de la racha. */
+    val dayToken = 36.dp
+    /** Anillo del uso de hoy en la pantalla Hoy. */
+    val todayRing = 96.dp
+    /** Insignia de una meta de racha. */
+    val medal = 56.dp
 }
 
 /** Grosor de bordes y trazos. */
