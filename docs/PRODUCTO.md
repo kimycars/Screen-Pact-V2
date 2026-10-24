@@ -221,3 +221,13 @@ Kimy vio que ScreenPact le bloqueó Instagram con 2 h cuando "Horas de pantalla"
 - Esos ratos son uso real (la app delante, desbloqueada, minutos seguidos), así que la cifra correcta es la de ScreenPact.
 
 Decidido por Kimy el 22-10-2026: se sigue contando el uso real (imitar a Xiaomi abriría una trampa: bloquear y desbloquear con la app abierta saldría gratis). No se explica en la app; en la landing hay una pregunta frecuente ("¿Por qué ScreenPact marca más minutos que el tiempo de pantalla de mi móvil?").
+
+## Pactos a distancia (25-10-2026)
+
+Además del QR en persona, un pacto se puede sellar por enlace: A manda su invitación (kimycars.com/screenpact/pacto#…), B la abre y su app le da una respuesta que manda a A. Para que no sirva para saltarse un límite:
+- Ni el QR ni el enlace llevan nada secreto: solo una clave pública. Las llaves salen de Diffie-Hellman en cada móvil. Esto arregla además un agujero que había: el QR antiguo llevaba legible la clave que desbloqueaba a quien lo enseñaba, y con un lector de QR y Google Authenticator uno podía desbloquearse solo.
+- No vale una invitación propia ni una creada en el mismo móvil (apps clonadas o segundo espacio), detectado por el id de instalación y la hora de encendido del móvil.
+- Un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero. En persona, el primero sigue sin esperar.
+- Cada respuesta vale una vez y las invitaciones caducan a los 7 días.
+- Límite conocido: quien tenga un segundo móvil (o reinicie el móvil entre crear la invitación y abrirla en una app clonada) puede ser su propio amigo, igual que ya pasaba en persona. La espera de 24 h hace que no le sirva para salir de un bloqueo en el momento.
+- Los QR de versiones anteriores dejan de valer: los dos tienen que tener la versión nueva.

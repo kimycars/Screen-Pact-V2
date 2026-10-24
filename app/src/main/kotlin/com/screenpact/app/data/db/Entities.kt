@@ -20,7 +20,11 @@ data class Friend(
     val verifyKey: ByteArray,
     val addedAt: Long = System.currentTimeMillis(),
     /** Llaves que este amigo te ha dado (cuenta desde la versión de base de datos 4). */
-    @ColumnInfo(defaultValue = "0") val keysGiven: Int = 0
+    @ColumnInfo(defaultValue = "0") val keysGiven: Int = 0,
+    /** Pacto sellado a distancia (por enlace): espera siempre 24 h antes de poder dar llaves. */
+    @ColumnInfo(defaultValue = "0") val pairedRemotely: Boolean = false,
+    /** Id de instalación del amigo (desde la v5), para no sellar dos pactos con la misma persona. */
+    val peerId: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -30,7 +34,9 @@ data class Friend(
             generateKey.contentEquals(other.generateKey) &&
             verifyKey.contentEquals(other.verifyKey) &&
             addedAt == other.addedAt &&
-            keysGiven == other.keysGiven
+            keysGiven == other.keysGiven &&
+            pairedRemotely == other.pairedRemotely &&
+            peerId == other.peerId
     }
 
     override fun hashCode(): Int {
@@ -40,6 +46,8 @@ data class Friend(
         r = 31 * r + verifyKey.contentHashCode()
         r = 31 * r + addedAt.hashCode()
         r = 31 * r + keysGiven
+        r = 31 * r + pairedRemotely.hashCode()
+        r = 31 * r + (peerId?.hashCode() ?: 0)
         return r
     }
 }

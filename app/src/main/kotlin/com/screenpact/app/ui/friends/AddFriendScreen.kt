@@ -57,88 +57,47 @@ import kotlinx.coroutines.launch
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Shapes
-import com.screenpact.app.data.Stats
+import com.screenpact.app.data.Pairing
+import com.screenpact.app.data.crypto.PactKeys
+import com.screenpact.app.ui.common.Invite
+import com.screenpact.app.ui.components.OutlineButton
+import com.screenpact.app.ui.components.QuietButton
+import com.screenpact.app.ui.components.SpTextField
 
 /**
- * Pantalla de emparejamiento con secretos direccionales.
- *
- * Cada lado genera su propio secreto de verificación (verifyKey) y lo muestra en su QR.
- * Al escanear el QR del amigo se obtiene el generateKey con el que produciremos los
- * códigos que desbloquean AL AMIGO (no a nosotros mismos).
- *
- * El flujo requiere que ambas personas se escaneen mutuamente:
- *   Paso 1 — Enseña TU QR al amigo (él lo escanea → obtiene tu verifyKey como su generateKey).
- *   Paso 2 — Escanea el QR del amigo (tú obtienes su verifyKey como tu generateKey).
+ * Sellar un pacto. En persona: cada uno escanea el QR del otro. A distancia: se manda la
+ * invitación por enlace y el amigo devuelve su respuesta (ver data/Pairing.kt). El QR y el
+ * enlace son la misma invitación y no llevan nada secreto.
  */
 @Composable
-fun AddFriendScreen(onDone: () -> Unit) {
+fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    val db = remember { AppDatabase.get(context) }
 
-    // Generated once per screen session: this is OUR verify key.
-    // We show it as a QR; the friend scans it and stores it as *their* generateKey for us.
-    var myVerifyKey by remember { mutableStateOf<ByteArray?>(null) }
-    var ownPayload by remember { mutableStateOf<PairingPayload?>(null) }
-
-    var myInstallId by remember { mutableStateOf<String?>(null) }
-
-    // When true, shows the full-screen camera view for scanning the friend's QR.
+    // Invitación propia de esta pantalla: se enseña como QR y se puede mandar como enlace.
+    var mine by remember { mutableStateOf<Pair<PactKeys.Invite, PairingPayload>?>(null) }
     var scanning by remember { mutableStateOf(false) }
     var scanError by remember { mutableStateOf<String?>(null) }
     // Nombre del amigo cuyo QR ya escaneamos. La pantalla sigue abierta para que él pueda
-    // escanear el nuestro: si se cerrase, nuestro QR (y su clave) se perderían.
+    // escanear el nuestro.
     var pairedName by remember { mutableStateOf<String?>(null) }
+    var pasted by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        val key = TOTPManager.generateSecret()
-        val installId = Prefs.getInstallId(context)
-        myVerifyKey = key
-        myInstallId = installId
-        val name = Prefs.getOwnName(context).ifBlank { "Yo" }
-        ownPayload = PairingPayload(name = name, secret = key, installId = installId)
-    }
+    LaunchedEffect(Unit) { mine = Pairing.newInvite(context) }
 
-    // When scanning is active, render just the camera — no Scaffold (it takes the full screen).
     if (scanning) {
         ScanView(
             onResult = { text ->
+                scanning = false
                 val parsed = PairingPayload.decode(text)
-                val vk = myVerifyKey
-                val ownId = myInstallId
-                if (parsed == null || vk == null || ownId == null) {
-                    scanError = "Ese QR no es un código de emparejamiento de ScreenPact."
-                    scanning = false
-                } else {
-                    scope.launch {
-                        val existing = db.friendDao().getAll()
-                        // Emparejarse con uno mismo daría la misma clave para generar y verificar,
-                        // y los códigos de "Amigos" desbloquearían tu propio bloqueo.
-                        scanError = when {
-                            parsed.installId.isBlank() ->
-                                "Este QR es de una versión antigua. Pide a tu amigo que actualice ScreenPact."
-                            parsed.installId == ownId || parsed.secret.contentEquals(vk) ->
-                                "Ese es tu propio QR. Tienes que escanear el del móvil de tu amigo."
-                            existing.any { f ->
-                                parsed.secret.contentEquals(f.generateKey) || parsed.secret.contentEquals(f.verifyKey)
-                            } ->
-                                "Ya estás emparejado con ese QR. Pide a tu amigo que salga y vuelva a entrar en 'Sellar un pacto'."
-                            else -> null
-                        }
-                        if (scanError != null) {
-                            scanning = false
-                            return@launch
-                        }
-                        db.friendDao().insert(
-                            Friend(
-                                name = parsed.name,
-                                generateKey = parsed.secret,  // friend's verifyKey → our generateKey
-                                verifyKey = vk                // our secret → friend stores as their generateKey
-                            )
-                        )
-                        pairedName = parsed.name
-                        Stats.count(context, Stats.Event.PACT_SEALED)
-                        scanning = false
+                val screen = mine?.first
+                if (parsed == null || screen == null) {
+                    scanError = if (PairingPayload.isLegacy(text)) "Ese QR es de una versión antigua. Pide a tu amigo que actualice ScreenPact."
+                    else "Ese QR no es un pacto de ScreenPact."
+                } else scope.launch {
+                    when (val r = Pairing.accept(context, parsed, remote = false, screenInvite = screen)) {
+                        is Pairing.Result.Paired -> { pairedName = r.name; scanError = null }
+                        is Pairing.Result.Failed -> scanError = r.message
                     }
                 }
             },
@@ -160,23 +119,18 @@ fun AddFriendScreen(onDone: () -> Unit) {
             Text("Sellad el pacto", style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.height(Space.xs))
             Text(
-                "Juntaos con los dos móviles. Cada uno escanea el QR del otro, en el orden que queráis.",
+                "Si estáis juntos, cada uno escanea el QR del otro. Si no, mándale la invitación por WhatsApp o donde habléis.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Sp.TextoSuave
             )
         }
 
+        // ── En persona ──
         SpCard {
             Text("Enséñale tu QR", style = MaterialTheme.typography.titleMedium)
-            Spacer(Modifier.height(Space.xxs))
-            Text(
-                "Con él, tu amigo podrá darte la llave cuando te pases.",
-                style = MaterialTheme.typography.bodySmall,
-                color = Sp.TextoSuave
-            )
             Spacer(Modifier.height(Space.m))
-            ownPayload?.let { payload ->
-                val bitmap = remember(payload) { QrUtils.generate(payload.encode()) }
+            mine?.second?.let { payload ->
+                val bitmap = remember(payload) { QrUtils.generate(payload.link()) }
                 Box(
                     Modifier
                         .align(Alignment.CenterHorizontally)
@@ -185,24 +139,17 @@ fun AddFriendScreen(onDone: () -> Unit) {
                         .background(Sp.Niebla)
                         .padding(Space.xs)
                 ) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = "Tu QR de emparejamiento",
-                        modifier = Modifier.fillMaxSize()
-                    )
+                    Image(bitmap = bitmap.asImageBitmap(), contentDescription = "Tu QR del pacto", modifier = Modifier.fillMaxSize())
                 }
             }
-        }
-
-        SpCard {
+            Spacer(Modifier.height(Space.m))
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text("Escanea el suyo", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+                Text("Y escanea el suyo", style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 if (pairedName != null) Text("Hecho", style = MaterialTheme.typography.labelMedium, color = Sp.Pacto)
             }
-            Spacer(Modifier.height(Space.xxs))
             Text(
-                if (pairedName != null) "Ya tienes la llave de $pairedName."
-                else "Así tú también tendrás su llave. Sin este paso, el pacto solo va en un sentido.",
+                if (pairedName != null) "Ya tienes la llave de $pairedName. Comprueba que también ha escaneado tu QR."
+                else "Así el pacto va en los dos sentidos.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Sp.TextoSuave
             )
@@ -212,18 +159,27 @@ fun AddFriendScreen(onDone: () -> Unit) {
             }
         }
 
-        scanError?.let { msg ->
-            Text(msg, style = MaterialTheme.typography.bodyMedium, color = Sp.Aviso)
-        }
-
-        if (pairedName != null) {
+        // ── A distancia ──
+        SpCard {
+            Text("¿No estáis juntos?", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Antes de cerrar, comprueba que $pairedName también ha escaneado tu QR. Si sales de esta pantalla, tu QR cambia.",
+                "Mándale tu invitación. Al abrirla, su app le dará una respuesta para que te la mande a ti. Un pacto a distancia tarda 24 h en poder dar llaves.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Sp.TextoSuave
             )
-            PrimaryButton("Listo", onDone)
+            Spacer(Modifier.height(Space.m))
+            OutlineButton("Mandar invitación", { mine?.second?.let { Invite.sharePact(context, it) } })
+            Spacer(Modifier.height(Space.l))
+            Text("¿Te ha llegado una invitación o una respuesta?", style = MaterialTheme.typography.bodyMedium)
+            Spacer(Modifier.height(Space.xs))
+            SpTextField(value = pasted, onValueChange = { pasted = it }, label = "Pega aquí el enlace")
+            Spacer(Modifier.height(Space.xs))
+            QuietButton("Abrir", { if (pasted.isNotBlank()) onOpenInvite(pasted.trim()) }, color = Sp.Llave)
         }
+
+        scanError?.let { msg -> Text(msg, style = MaterialTheme.typography.bodyMedium, color = Sp.Aviso) }
+
+        if (pairedName != null) PrimaryButton("Listo", onDone)
     }
 }
 
@@ -280,7 +236,7 @@ private fun ScanView(onResult: (String) -> Unit, onBack: () -> Unit) {
             onClick = onBack,
             modifier = Modifier.align(Alignment.TopStart).padding(Space.xs)
         ) {
-            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancelar", tint = Color.White)
+            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Cancelar", tint = Sp.Niebla)
         }
     }
 }

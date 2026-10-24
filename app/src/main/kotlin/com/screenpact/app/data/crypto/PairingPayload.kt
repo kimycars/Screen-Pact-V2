@@ -1,61 +1,68 @@
 package com.screenpact.app.data.crypto
 
-import android.util.Base64
 import org.json.JSONObject
 
 /**
- * Payload incrustado en el QR de emparejamiento. Texto JSON base64-url:
- *   { "v": 1, "name": "Carla", "id": "<uuid de instalación>", "secret": "<base64 url-safe>" }
+ * Lo que va en el QR o en el enlace de invitación (versión 2). Nada de esto es secreto:
+ * se puede mandar por WhatsApp o enseñar en una foto sin riesgo (ver PactKeys).
  *
- * No hay servidor: el secreto se intercambia físicamente al escanear.
+ *   { "v": 2, "n": nombre, "i": id de instalación, "k": clave pública,
+ *     "b": momento de encendido del móvil, "x": id de esta invitación, "r": id al que responde }
  *
- * Semántica del campo `secret` (diseño de secretos direccionales):
- *   El emisor del QR generó este secreto aleatoriamente. Lo usará en su overlay para VERIFICAR
- *   los códigos que el receptor le envíe. El receptor lo almacena como `generateKey`, con el que
- *   producirá los códigos que el overlay del emisor aceptará.
- *   Así, cada sentido del emparejamiento usa un secreto independiente y el usuario NO puede
- *   generar desde su propio móvil los códigos que desbloquearían su propio overlay.
+ * Una invitación nueva no lleva "r". La respuesta a una invitación a distancia lleva en "r" el
+ * id de la invitación original, para que quien invitó sepa con qué clave privada combinarla.
  */
 data class PairingPayload(
     val name: String,
-    val secret: ByteArray,
-    /** Id de la instalación que generó el QR (vacío en QRs antiguos). Sirve para detectar el QR propio. */
-    val installId: String = ""
+    val installId: String,
+    val publicKey: ByteArray,
+    val bootTime: Long,
+    val inviteId: String,
+    val replyTo: String? = null
 ) {
-    fun encode(): String {
-        val json = JSONObject().apply {
-            put("v", 1)
-            put("name", name)
-            put("id", installId)
-            put("secret", Base64.encodeToString(secret, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING))
-        }
-        return "screenpact://pair?d=" + Base64.encodeToString(
-            json.toString().toByteArray(Charsets.UTF_8),
-            Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
-        )
-    }
+    /** Enlace que se puede mandar por chat. Lo que va tras "#" no llega nunca al servidor. */
+    fun link(): String = WEB + "#" + PactKeys.b64(json().toByteArray(Charsets.UTF_8))
+
+    private fun json(): String = JSONObject().apply {
+        put("v", 2)
+        put("n", name.take(MAX_NAME))
+        put("i", installId)
+        put("k", PactKeys.b64(publicKey))
+        put("b", bootTime)
+        put("x", inviteId)
+        replyTo?.let { put("r", it) }
+    }.toString()
+
+    override fun equals(other: Any?): Boolean =
+        other is PairingPayload && inviteId == other.inviteId && installId == other.installId && publicKey.contentEquals(other.publicKey)
+
+    override fun hashCode(): Int = inviteId.hashCode()
 
     companion object {
+        const val WEB = "https://www.kimycars.com/screenpact/pacto"
+        private const val MAX_NAME = 40
+
+        /**
+         * Lee una invitación desde un QR, un enlace (https o screenpact://pair) o un mensaje de
+         * chat que lo contenga. Null si no es de ScreenPact o es de una versión antigua.
+         */
         fun decode(text: String): PairingPayload? = runCatching {
-            val payload = if (text.startsWith("screenpact://pair?d=")) {
-                text.removePrefix("screenpact://pair?d=")
-            } else text
-            val jsonBytes = Base64.decode(payload, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
-            val json = JSONObject(String(jsonBytes, Charsets.UTF_8))
-            val name = json.getString("name")
-            val secret = Base64.decode(
-                json.getString("secret"),
-                Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING
+            val data = Regex("""(?:pacto#|pair\?d=)([A-Za-z0-9_-]+)""").find(text)?.groupValues?.get(1)
+                ?: text.trim().takeIf { Regex("^[A-Za-z0-9_-]+$").matches(it) }
+                ?: return null
+            val json = JSONObject(String(PactKeys.unb64(data), Charsets.UTF_8))
+            if (json.optInt("v") != 2) return null
+            PairingPayload(
+                name = json.getString("n").trim().take(MAX_NAME).ifBlank { "Tu amigo" },
+                installId = json.getString("i"),
+                publicKey = PactKeys.unb64(json.getString("k")),
+                bootTime = json.optLong("b", 0),
+                inviteId = json.getString("x"),
+                replyTo = json.optString("r").takeIf { it.isNotBlank() }
             )
-            PairingPayload(name, secret, json.optString("id", ""))
         }.getOrNull()
-    }
 
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (other !is PairingPayload) return false
-        return name == other.name && secret.contentEquals(other.secret) && installId == other.installId
+        /** True si el texto parece una invitación de una versión antigua (sin clave pública). */
+        fun isLegacy(text: String): Boolean = text.contains("pair?d=") && decode(text) == null
     }
-
-    override fun hashCode(): Int = 31 * name.hashCode() + secret.contentHashCode()
 }

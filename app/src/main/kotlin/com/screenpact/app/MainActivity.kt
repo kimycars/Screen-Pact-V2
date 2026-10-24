@@ -8,6 +8,7 @@ import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
 import com.screenpact.app.data.AppIcons
 import com.screenpact.app.data.Pro
+import com.screenpact.app.ui.friends.IncomingPact
 import com.screenpact.app.ui.MainNav
 import com.screenpact.app.ui.theme.ScreenPactTheme
 
@@ -15,6 +16,7 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         handleLicenseLink(intent)
+        IncomingPact.from(intent)
         setContent {
             ScreenPactTheme {
                 Surface { MainNav() }
@@ -37,6 +39,7 @@ class MainActivity : ComponentActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleLicenseLink(intent)
+        IncomingPact.from(intent)
     }
 
     /** screenpact://license?token=… : enlace que entrega la licencia de Pro tras pagar. */

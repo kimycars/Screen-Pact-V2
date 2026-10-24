@@ -19,6 +19,7 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md`. Visión genera
 
 - Endurecer es libre, aflojar pide llave: añadir apps, bajar límites y reactivar son libres; subir límites, pausar, quitar apps y romper pactos piden la llave de un amigo (`FriendCodeDialog`).
 - La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`.
+- Los pactos se sellan solo en `data/Pairing.kt` (en persona por QR o a distancia por enlace). Las llaves salen de Diffie-Hellman (`data/crypto/PactKeys.kt`): ni el QR ni el enlace llevan nada secreto. No se acepta una invitación propia ni una creada en el mismo móvil (apps clonadas), y un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
 - Los datos de la persona no salen del móvil (minutos, amigos, llaves). Las únicas conexiones a Internet son las estadísticas anónimas de `data/Stats.kt` (encendidas en la bienvenida, se apagan en Ajustes) y la renovación de la licencia de Pro en `data/Pro.kt` (manda solo el id de licencia). Cualquier dato nuevo que se quiera enviar pasa por ahí, se añade a la política de privacidad de la app (kimycars.com/screenpact/privacidad, en la web de kimycars) y se habla antes con Kimy.
 - Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.

@@ -9,7 +9,8 @@ import com.screenpact.app.data.db.Friend
  *
  * Un amigo recién emparejado no tiene poder de desbloqueo durante [NEW_FRIEND_COOLDOWN_MS].
  * Así no sirve emparejarse en caliente con un segundo móvil (o una app clonada) para salir de
- * un bloqueo. El primer amigo no espera: sin él la app no podría empezar a usarse.
+ * un bloqueo. El primer amigo sellado en persona no espera: sin él la app no podría empezar a
+ * usarse. Los pactos a distancia esperan siempre (ver data/Pairing.kt).
  */
 object FriendCodes {
 
@@ -17,7 +18,10 @@ object FriendCodes {
 
     fun canUnlock(friend: Friend, all: List<Friend>, now: Long = System.currentTimeMillis()): Boolean {
         val first = all.minByOrNull { it.addedAt }
-        return friend.id == first?.id || now - friend.addedAt >= NEW_FRIEND_COOLDOWN_MS
+        // El primer amigo no espera solo si el pacto se selló en persona. A distancia es más fácil
+        // hacerse amigo de uno mismo con otro móvil, así que ahí siempre hay 24 h de espera.
+        val exempt = friend.id == first?.id && !friend.pairedRemotely
+        return exempt || now - friend.addedAt >= NEW_FRIEND_COOLDOWN_MS
     }
 
     /** Milisegundos que le faltan a [friend] para poder desbloquear (0 si ya puede). */

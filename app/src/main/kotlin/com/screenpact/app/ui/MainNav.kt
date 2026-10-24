@@ -30,6 +30,11 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.screenpact.app.ui.apps.AppLimitsScreen
 import com.screenpact.app.ui.friends.AddFriendScreen
+import com.screenpact.app.ui.friends.AcceptPactScreen
+import com.screenpact.app.ui.friends.IncomingPact
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.remember
 import com.screenpact.app.ui.friends.FriendsScreen
 import com.screenpact.app.ui.friends.GenerateCodeScreen
 import com.screenpact.app.ui.home.HomeScreen
@@ -52,6 +57,7 @@ object Routes {
     const val PRO = "pro/{feature}"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
+    const val ACCEPT = "accept"
 
     fun generate(friendId: Long) = "generate/$friendId"
     fun pro(feature: ProFeature) = "pro/${feature.id}"
@@ -71,6 +77,14 @@ fun MainNav() {
     val entry by nav.currentBackStackEntryAsState()
     val route = entry?.destination?.route
     val showTabs = tabs.any { it.route == route }
+
+    // Invitación a un pacto que llega por enlace: se abre en cuanto la bienvenida está hecha.
+    val incoming by IncomingPact.text.collectAsState()
+    LaunchedEffect(incoming, route) {
+        if (incoming != null && route != null && route != Routes.ONBOARD && route != Routes.ACCEPT) {
+            nav.navigate(Routes.ACCEPT)
+        }
+    }
 
     Column(Modifier.fillMaxSize()) {
         NavHost(navController = nav, startDestination = Routes.ONBOARD, modifier = Modifier.weight(1f)) {
@@ -101,7 +115,10 @@ fun MainNav() {
                 )
             }
             composable(Routes.PAIR) {
-                AddFriendScreen(onDone = { nav.popBackStack() })
+                AddFriendScreen(
+                    onDone = { nav.popBackStack() },
+                    onOpenInvite = { IncomingPact.text.value = it }
+                )
             }
             composable(Routes.GENERATE_CODE) { backStack ->
                 val id = backStack.arguments?.getString("friendId")?.toLongOrNull() ?: -1L
@@ -109,6 +126,12 @@ fun MainNav() {
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen(onBack = { nav.popBackStack() }, onOpenPro = { nav.navigate(Routes.pro(it)) })
+            }
+            composable(Routes.ACCEPT) {
+                // La invitación se lee una vez al entrar; así un enlace nuevo no cambia la pantalla a medias.
+                val text = remember { IncomingPact.text.value.orEmpty() }
+                LaunchedEffect(Unit) { IncomingPact.text.value = null }
+                AcceptPactScreen(text, onDone = { nav.popBackStack() })
             }
             composable(Routes.HISTORY) {
                 HistoryScreen(onBack = { nav.popBackStack() })

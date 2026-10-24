@@ -44,6 +44,20 @@
                 <category android:name="android.intent.category.BROWSABLE" />
                 <data android:scheme="screenpact" android:host="license" />
             </intent-filter>
+            <!-- Invitaciones a un pacto a distancia (data/Pairing.kt): el enlace de la web y el
+                 que abre su botón "Abrir en ScreenPact". -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="screenpact" android:host="pair" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="https" android:host="www.kimycars.com" android:pathPrefix="/screenpact/pacto" />
+            </intent-filter>
         </activity>
 
         <!-- Icono de la app: uno activo cada vez (Pro deja elegir). Ver data/AppIcons.kt. -->

@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class],
-    version = 4,
+    version = 5,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -42,6 +42,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v5: pactos a distancia (esperan 24 h) e id de instalación del amigo. */
+        val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE friends ADD COLUMN pairedRemotely INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE friends ADD COLUMN peerId TEXT")
+            }
+        }
+
         fun get(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -51,7 +59,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Cada cambio de estructura lleva su migración: actualizar la app NUNCA
                     // borra pactos ni límites. Solo se borra si se instala una versión más vieja.
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build().also { INSTANCE = it }
             }

@@ -7,7 +7,7 @@ import javax.crypto.spec.SecretKeySpec
 
 /**
  * RFC 6238 TOTP. SHA1, 6 dígitos, paso de 30s.
- * El secreto compartido se intercambia por QR al emparejar dos amigos.
+ * Las llaves salen del pacto con Diffie-Hellman al emparejar dos amigos (ver PactKeys).
  */
 object TOTPManager {
 
