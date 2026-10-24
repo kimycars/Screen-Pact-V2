@@ -55,6 +55,9 @@ import androidx.compose.material.icons.filled.Settings
 import com.screenpact.app.data.db.Friend
 import com.screenpact.app.ui.common.AppIcon
 import com.screenpact.app.ui.common.StreakCard
+import com.screenpact.app.ui.common.formatMinutes
+import com.screenpact.app.ui.common.formatDay
+import com.screenpact.app.ui.common.rememberTodayUsage
 import com.screenpact.app.ui.components.UsageRing
 import com.screenpact.app.ui.theme.Sizes
 
@@ -64,7 +67,7 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
     val db = remember { AppDatabase.get(context) }
     val limits by db.appLimitDao().observeAll().collectAsState(initial = null)
     val friends by db.friendDao().observeAll().collectAsState(initial = null)
-    var usage by remember { mutableStateOf<Map<String, Long>>(emptyMap()) }
+    val usage = rememberTodayUsage()
     val permissions = rememberPermissionState()
     val isPro = rememberIsPro()
     var streaks by remember { mutableStateOf(History.Streaks(0, 0, 0, 0)) }
@@ -77,12 +80,6 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
         }
     }
 
-    LaunchedEffect(Unit) {
-        while (true) {
-            usage = withContext(Dispatchers.Default) { UsageStatsHelper.foregroundTimeTodayMs(context) }
-            delay(5_000)
-        }
-    }
 
     // Mientras Room no ha respondido no se pinta nada, para no enseñar un estado vacío falso.
     val l = limits ?: return
@@ -163,7 +160,6 @@ private fun fractionOf(limit: AppLimit, usage: Map<String, Long>): Float {
 private fun UsageRow(limit: AppLimit, usedMs: Long) {
     val usedMin = (usedMs / 60_000L).toInt()
     val fraction = if (limit.dailyLimitMinutes > 0) usedMin.toFloat() / limit.dailyLimitMinutes else 0f
-    val left = limit.dailyLimitMinutes - usedMin
     val hot = limit.enabled && fraction >= 0.8f
     Column(Modifier.fillMaxWidth()) {
         Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -171,30 +167,16 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
             Spacer(Modifier.width(Space.s))
             Text(limit.appName, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
             Text(
-                if (limit.enabled) "$usedMin de ${limit.dailyLimitMinutes} min" else "En pausa",
+                if (limit.enabled) "$usedMin / ${limit.dailyLimitMinutes} min" else "En pausa",
                 style = MaterialTheme.typography.bodyMedium,
                 color = if (hot) Sp.Llave else Sp.TextoSuave
             )
         }
         Spacer(Modifier.height(Space.xs))
         UsageBar(fraction, if (hot) Sp.Llave else Sp.Niebla, track = Sp.Linea)
-        if (limit.enabled && hot) {
-            Spacer(Modifier.height(Space.xs))
-            Text(
-                when {
-                    left <= 0 -> "Se acabó por hoy"
-                    left == 1 -> "Te queda 1 minuto"
-                    else -> "Te quedan $left minutos"
-                },
-                style = MaterialTheme.typography.bodySmall,
-                color = Sp.TextoSuave
-            )
-        }
     }
 }
 
-private fun formatDay(millis: Long): String =
-    SimpleDateFormat("d 'de' MMMM", Locale("es", "ES")).format(Date(millis))
 
 @Composable
 private fun NoPactCard(onPair: () -> Unit, onInvite: () -> Unit) {
@@ -234,44 +216,41 @@ private fun PactCard(keeper: Friend, others: Int) {
     }
 }
 
-/** Uso de hoy: anillo con el total de las apps con límite y una fila por app, la más apurada arriba. */
+/**
+ * Uso de hoy. Cada sitio dice una cosa: el anillo, lo que te queda en total; la frase de al
+ * lado, cómo vas (sin números); cada fila, lo usado de esa app frente a su límite.
+ */
 @Composable
 private fun TodayCard(limits: List<AppLimit>, usage: Map<String, Long>) {
     val active = limits.filter { it.enabled && it.dailyLimitMinutes > 0 }
-    val usedMin = active.sumOf { ((usage[it.packageName] ?: 0L) / 60_000L).toInt() }
+    val usedOf = { l: AppLimit -> ((usage[l.packageName] ?: 0L) / 60_000L).toInt() }
+    val usedMin = active.sumOf(usedOf)
     val limitMin = active.sumOf { it.dailyLimitMinutes }
+    val leftMin = (limitMin - usedMin).coerceAtLeast(0)
     val fraction = if (limitMin > 0) usedMin.toFloat() / limitMin else 0f
+    val closed = active.filter { usedOf(it) >= it.dailyLimitMinutes }
+    val close = active.filter { it !in closed && usedOf(it) >= it.dailyLimitMinutes * 0.8f }
+    val status = when {
+        active.isEmpty() -> "Todas tus apps están en pausa."
+        closed.size == active.size -> "Hoy ya has gastado todo tu tiempo. Mañana más."
+        closed.isNotEmpty() -> "${closed.joinToString(" y ") { it.appName }} ${if (closed.size == 1) "está cerrada" else "están cerradas"} hasta mañana."
+        close.isNotEmpty() -> "${close.first().appName} está cerca de su límite."
+        else -> "Vas bien. Sigue así."
+    }
     SpCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             UsageRing(fraction, if (fraction >= 0.8f) Sp.Llave else Sp.Pacto) {
                 Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(formatMinutes(usedMin), style = MaterialTheme.typography.titleLarge)
-                    Text("hoy", style = MaterialTheme.typography.labelSmall, color = Sp.TextoSuave)
+                    Text(formatMinutes(leftMin), style = MaterialTheme.typography.titleLarge)
+                    Text("te quedan", style = MaterialTheme.typography.labelSmall, color = Sp.TextoSuave)
                 }
             }
             Spacer(Modifier.width(Space.l))
-            Column(Modifier.weight(1f)) {
-                Text("De ${formatMinutes(limitMin)} que te das", style = MaterialTheme.typography.titleMedium)
-                Text(
-                    when {
-                        limitMin == 0 -> "Todas tus apps están en pausa."
-                        usedMin >= limitMin -> "Hoy ya has gastado todo tu tiempo."
-                        else -> "Te quedan ${formatMinutes(limitMin - usedMin)} en total."
-                    },
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Sp.TextoSuave
-                )
-            }
+            Text(status, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
         }
         limits.sortedByDescending { fractionOf(it, usage) }.forEach { app ->
             Spacer(Modifier.height(Space.l))
             UsageRow(app, usage[app.packageName] ?: 0L)
         }
     }
-}
-
-private fun formatMinutes(min: Int): String = when {
-    min < 60 -> "$min min"
-    min % 60 == 0 -> "${min / 60} h"
-    else -> "${min / 60} h ${min % 60}"
 }

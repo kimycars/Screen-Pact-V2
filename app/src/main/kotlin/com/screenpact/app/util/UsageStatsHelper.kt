@@ -57,19 +57,49 @@ object UsageStatsHelper {
      * contador; encender/desbloquear lo reanuda si la app sigue arriba.
      */
     fun snapshot(context: Context): Snapshot {
-        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
         val now = System.currentTimeMillis()
-        val startOfDay = Calendar.getInstance().apply {
-            timeInMillis = now
-            set(Calendar.HOUR_OF_DAY, 0)
-            set(Calendar.MINUTE, 0)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-        }.timeInMillis
-
-        val events = usm.queryEvents(startOfDay - LOOKBACK_MS, now)
-        val ev = UsageEvents.Event()
+        val startOfDay = startOfDay(now)
         val totals = HashMap<String, Long>()
+        val visibleFg = replay(context, startOfDay - LOOKBACK_MS, now) { pkg, from, to ->
+            // Solo cuenta la parte del tramo que cae dentro de hoy.
+            val delta = to - maxOf(from, startOfDay)
+            if (delta > 0) totals.merge(pkg, delta) { x, y -> x + y }
+        }
+        return Snapshot(foreground = visibleFg, todayMs = totals)
+    }
+
+    /**
+     * Media diaria de uso de cada app en los [days] días completos anteriores a hoy, con el mismo
+     * criterio que el uso de hoy. Sirve para sugerir límites con datos reales del móvil.
+     */
+    fun dailyAverageMs(context: Context, days: Int = 7): Map<String, Long> {
+        val today = startOfDay(System.currentTimeMillis())
+        val from = Calendar.getInstance().apply { timeInMillis = today; add(Calendar.DAY_OF_YEAR, -days) }.timeInMillis
+        val totals = HashMap<String, Long>()
+        replay(context, from - LOOKBACK_MS, today) { pkg, a, b ->
+            val delta = b - maxOf(a, from)
+            if (delta > 0) totals.merge(pkg, delta) { x, y -> x + y }
+        }
+        return totals.mapValues { it.value / days }
+    }
+
+    private fun startOfDay(now: Long): Long = Calendar.getInstance().apply {
+        timeInMillis = now
+        set(Calendar.HOUR_OF_DAY, 0)
+        set(Calendar.MINUTE, 0)
+        set(Calendar.SECOND, 0)
+        set(Calendar.MILLISECOND, 0)
+    }.timeInMillis
+
+    /**
+     * Recorre los eventos entre [from] y [until] con la máquina de estados de arriba y llama a
+     * [onSegment] con cada tramo en que una app estuvo delante, con pantalla encendida y móvil
+     * desbloqueado. Devuelve la app que sigue visible en [until] (o null).
+     */
+    private fun replay(context: Context, from: Long, until: Long, onSegment: (String, Long, Long) -> Unit): String? {
+        val usm = context.getSystemService(Context.USAGE_STATS_SERVICE) as UsageStatsManager
+        val events = usm.queryEvents(from, until)
+        val ev = UsageEvents.Event()
 
         var fgPkg: String? = null
         val fgActivities = HashSet<String>()   // actividades de fgPkg en estado resumed
@@ -79,12 +109,8 @@ object UsageStatsHelper {
 
         fun close(at: Long) {
             val pkg = fgPkg
-            val from = segmentStart
-            if (pkg != null && from != null) {
-                // Solo cuenta la parte del tramo que cae dentro de hoy.
-                val delta = at - maxOf(from, startOfDay)
-                if (delta > 0) totals.merge(pkg, delta) { a, b -> a + b }
-            }
+            val start = segmentStart
+            if (pkg != null && start != null && at > start) onSegment(pkg, start, at)
             segmentStart = null
         }
 
@@ -129,8 +155,8 @@ object UsageStatsHelper {
         }
 
         val visible = segmentStart != null
-        close(now)
-        return Snapshot(foreground = if (visible) fgPkg else null, todayMs = totals)
+        close(until)
+        return if (visible) fgPkg else null
     }
 
     /**

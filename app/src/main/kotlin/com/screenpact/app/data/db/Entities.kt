@@ -1,5 +1,6 @@
 package com.screenpact.app.data.db
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 
@@ -17,7 +18,9 @@ data class Friend(
      * Only we have this in our DB; it is not readable through any in-app "generate" screen.
      */
     val verifyKey: ByteArray,
-    val addedAt: Long = System.currentTimeMillis()
+    val addedAt: Long = System.currentTimeMillis(),
+    /** Llaves que este amigo te ha dado (cuenta desde la versión de base de datos 4). */
+    @ColumnInfo(defaultValue = "0") val keysGiven: Int = 0
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -26,7 +29,8 @@ data class Friend(
             name == other.name &&
             generateKey.contentEquals(other.generateKey) &&
             verifyKey.contentEquals(other.verifyKey) &&
-            addedAt == other.addedAt
+            addedAt == other.addedAt &&
+            keysGiven == other.keysGiven
     }
 
     override fun hashCode(): Int {
@@ -35,6 +39,7 @@ data class Friend(
         r = 31 * r + generateKey.contentHashCode()
         r = 31 * r + verifyKey.contentHashCode()
         r = 31 * r + addedAt.hashCode()
+        r = 31 * r + keysGiven
         return r
     }
 }

@@ -28,13 +28,16 @@ import com.screenpact.app.data.db.DayRecord
 import com.screenpact.app.ui.components.BackButton
 import com.screenpact.app.ui.components.ScreenTitle
 import com.screenpact.app.ui.components.SpCard
-import com.screenpact.app.ui.components.UsageBar
 import com.screenpact.app.ui.theme.Sp
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.common.Medal
 import com.screenpact.app.ui.common.StreakCard
 import com.screenpact.app.ui.common.WeekStrip
+import com.screenpact.app.ui.common.AppIcon
+import com.screenpact.app.ui.common.dayLetter
+import com.screenpact.app.ui.common.formatMinutes
+import com.screenpact.app.ui.components.WeekBars
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
@@ -65,7 +68,6 @@ fun HistoryScreen(onBack: () -> Unit) {
     }
 
     val names = limits.associate { it.packageName to it.appName }
-    val maxDayMs = week.maxOfOrNull { (_, recs) -> recs.sumOf { it.usedMs } }?.coerceAtLeast(1L) ?: 1L
 
     LazyColumn(
         Modifier.fillMaxSize(),
@@ -114,9 +116,12 @@ fun HistoryScreen(onBack: () -> Unit) {
             }
         }
 
-        item { Text("Día a día", style = MaterialTheme.typography.titleMedium) }
+        item { Text("Por app, esta semana", style = MaterialTheme.typography.titleMedium) }
 
-        if (week.all { it.second.isEmpty() }) {
+        // Una tarjeta por app: sus 7 días en barras, con la línea de su límite.
+        val apps = week.flatMap { it.second }.map { it.packageName }.distinct()
+            .sortedByDescending { pkg -> week.sumOf { (_, recs) -> recs.filter { it.packageName == pkg }.sumOf { it.usedMs } } }
+        if (apps.isEmpty()) {
             item {
                 Text(
                     "Aún no hay datos. ScreenPact apunta cada día cuánto usas tus apps con límite; vuelve mañana.",
@@ -125,44 +130,43 @@ fun HistoryScreen(onBack: () -> Unit) {
                 )
             }
         } else {
-            items(week.reversed(), key = { it.first }) { (day, recs) ->
-                val used = recs.sumOf { it.usedMs }
-                val unlocks = recs.sumOf { it.unlocks }
-                Column(Modifier.fillMaxWidth()) {
-                    Row(Modifier.fillMaxWidth()) {
-                        Text(dayLabel(day), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
-                        Text(
-                            formatMinutes(used) + if (unlocks > 0) " · $unlocks ${if (unlocks == 1) "llave" else "llaves"}" else "",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = if (unlocks > 0) Sp.Llave else Sp.TextoSuave
-                        )
-                    }
-                    Spacer(Modifier.height(Space.xs))
-                    UsageBar(used.toFloat() / maxDayMs, if (unlocks > 0) Sp.Llave else Sp.Niebla)
-                    if (recs.isNotEmpty()) {
-                        Spacer(Modifier.height(Space.xxs))
-                        Text(
-                            recs.sortedByDescending { it.usedMs }.joinToString(" · ") { "${names[it.packageName] ?: it.packageName} ${formatMinutes(it.usedMs)}" },
-                            style = MaterialTheme.typography.bodySmall,
-                            color = Sp.TextoSuave
-                        )
-                    }
-                }
+            items(apps, key = { it }) { pkg ->
+                val perDay = week.map { (_, recs) -> recs.firstOrNull { it.packageName == pkg } }
+                AppWeekCard(
+                    packageName = pkg,
+                    name = names[pkg] ?: pkg,
+                    perDay = perDay,
+                    labels = week.map { dayLetter(it.first) }
+                )
             }
         }
     }
 }
 
-private fun formatMinutes(ms: Long): String {
-    val min = (ms / 60_000L).toInt()
-    return if (min < 60) "$min min" else "${min / 60} h ${min % 60} min"
-}
-
-private fun dayLabel(day: String): String {
-    if (day == History.dayKey()) return "Hoy"
-    if (day == History.daysAgo(1)) return "Ayer"
-    val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(day) ?: return day
-    return SimpleDateFormat("EEEE d", Locale("es", "ES")).format(date).replaceFirstChar { it.uppercase() }
+/** Semana de una app: barras por día, su límite, la media y cuántos días se quedó por debajo. */
+@Composable
+private fun AppWeekCard(packageName: String, name: String, perDay: List<DayRecord?>, labels: List<String>) {
+    val days = perDay.filterNotNull()
+    val limitMs = (days.lastOrNull()?.limitMinutes ?: 0) * 60_000L
+    val avgMin = if (days.isEmpty()) 0 else (days.sumOf { it.usedMs } / days.size / 60_000L).toInt()
+    val under = days.count { it.limitMinutes > 0 && it.usedMs < it.limitMinutes * 60_000L }
+    val keys = days.sumOf { it.unlocks }
+    SpCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(packageName, size = Sizes.iconL)
+            Spacer(Modifier.width(Space.s))
+            Text(name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
+            if (keys > 0) Text(if (keys == 1) "1 llave" else "$keys llaves", style = MaterialTheme.typography.bodySmall, color = Sp.Llave)
+        }
+        Spacer(Modifier.height(Space.m))
+        WeekBars(values = perDay.map { it?.usedMs ?: 0L }, limit = limitMs, labels = labels)
+        Spacer(Modifier.height(Space.s))
+        Text(
+            "Media: ${formatMinutes(avgMin)} al día · $under de ${days.size} días por debajo",
+            style = MaterialTheme.typography.bodySmall,
+            color = Sp.TextoSuave
+        )
+    }
 }
 
 /** Una cifra de récord en su tarjeta. */

@@ -28,4 +28,8 @@ object FriendCodes {
         val all = db.friendDao().getAll()
         return all.firstOrNull { canUnlock(it, all) && TOTPManager.verifyCode(it.verifyKey, code) }
     }
+
+    /** Usa una llave: si vale, apunta que ese amigo te ha dado una más y lo devuelve. */
+    suspend fun redeem(db: AppDatabase, code: String): Friend? =
+        match(db, code)?.also { db.friendDao().countKey(it.id) }
 }

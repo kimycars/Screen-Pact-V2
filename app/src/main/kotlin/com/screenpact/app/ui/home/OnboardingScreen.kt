@@ -43,6 +43,7 @@ import com.screenpact.app.ui.common.rememberPermissionState
 import com.screenpact.app.services.UsageMonitorService
 import com.screenpact.app.ui.components.LogoTile
 import com.screenpact.app.ui.components.PrimaryButton
+import com.screenpact.app.ui.components.StepLine
 import com.screenpact.app.ui.components.QuietButton
 import com.screenpact.app.ui.components.SpCard
 import com.screenpact.app.ui.components.SpTextField
@@ -118,9 +119,9 @@ private fun WelcomeStep(onStart: () -> Unit) {
             color = Sp.TextoSuave
         )
         Spacer(Modifier.height(Space.xxxl))
-        StepLine(1, "Dinos cómo te llamas")
-        StepLine(2, "Da dos permisos (te explicamos por qué)")
-        StepLine(3, "Sella tu primer pacto con un amigo")
+        StepLine(number = 1, text = "Dinos cómo te llamas")
+        StepLine(number = 2, text = "Da dos permisos (te explicamos por qué)")
+        StepLine(number = 3, text = "Sella tu primer pacto con un amigo")
         Spacer(Modifier.weight(1f))
         PrimaryButton("Empezar", onStart)
         Row(
@@ -132,18 +133,6 @@ private fun WelcomeStep(onStart: () -> Unit) {
             Spacer(Modifier.width(Space.xs))
             Text("Sin cuenta. Nada sale de tu móvil.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
         }
-    }
-}
-
-@Composable
-private fun StepLine(n: Int, text: String) {
-    Row(Modifier.padding(vertical = Space.xs), verticalAlignment = Alignment.CenterVertically) {
-        Box(
-            Modifier.size(Sizes.stepBadge).clip(Shapes.field).background(Sp.Superficie),
-            contentAlignment = Alignment.Center
-        ) { Text("$n", style = MaterialTheme.typography.titleMedium, color = Sp.Llave) }
-        Spacer(Modifier.width(Space.m))
-        Text(text, style = MaterialTheme.typography.bodyMedium)
     }
 }
 

@@ -56,6 +56,10 @@ object Sizes {
     val todayRing = 96.dp
     /** Insignia de una meta de racha. */
     val medal = 56.dp
+    /** Icono de app en las tarjetas de límites y sugerencias. */
+    val appIconLarge = 40.dp
+    /** Alto de la mini gráfica de barras de la semana. */
+    val weekChart = 72.dp
 }
 
 /** Grosor de bordes y trazos. */
@@ -63,6 +67,8 @@ object Strokes {
     val hairline = 1.dp
     val bold = 2.dp
     val ring = 8.dp
+    /** Largo de cada trazo (y de cada hueco) de un borde punteado. */
+    val dash = 6.dp
 }
 
 /** Formas. Una sola escala de esquinas en toda la app. */

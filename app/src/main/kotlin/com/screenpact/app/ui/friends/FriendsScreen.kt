@@ -44,6 +44,15 @@ import kotlinx.coroutines.launch
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.ui.common.Invite
 import com.screenpact.app.ui.components.OutlineButton
+import com.screenpact.app.ui.components.QuietButton
+import com.screenpact.app.ui.components.StepLine
+import com.screenpact.app.ui.components.UsageRing
+import com.screenpact.app.ui.common.formatDay
+import com.screenpact.app.ui.theme.Sizes
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.QrCodeScanner
 
 @Composable
 fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
@@ -62,7 +71,7 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
         item { ScreenTitle("Amigos") }
         item {
             Text(
-                "Cada pacto va en los dos sentidos: tú guardas su llave y él la tuya.",
+                "Cada pacto va en los dos sentidos: tú guardas su llave y tu amigo guarda la tuya.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Sp.TextoSuave,
                 modifier = Modifier.padding(top = Space.xxs, bottom = Space.s)
@@ -72,43 +81,29 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
         if (friends.isEmpty()) {
             item {
                 SpCard {
-                    Text("Aún no tienes pacto", style = MaterialTheme.typography.titleMedium)
-                    Spacer(Modifier.height(Space.xxs))
-                    Text(
-                        "Queda con alguien que también tenga ScreenPact. Con los dos móviles delante se hace en un minuto.",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Sp.TextoSuave
-                    )
+                    Text("Así se sella un pacto", style = MaterialTheme.typography.titleMedium)
+                    Spacer(Modifier.height(Space.xs))
+                    StepLine("Quedad en persona", icon = Icons.Default.People, detail = "Los dos con ScreenPact en el móvil.", badge = Sp.Linea)
+                    StepLine("Escanead vuestros QR", icon = Icons.Default.QrCodeScanner, detail = "Cada uno el del otro. Tarda un minuto.", badge = Sp.Linea)
+                    StepLine("Ya tenéis la llave", icon = Icons.Default.Key, detail = "Si uno se pasa del límite, el otro decide si le da más tiempo.", badge = Sp.Linea)
                 }
             }
         } else {
             items(friends, key = { it.id }) { f ->
-                val waitMs = FriendCodes.cooldownLeftMs(f, friends)
-                SpCard {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Avatar(f.name)
-                        Spacer(Modifier.width(Space.m))
-                        Column(Modifier.weight(1f)) {
-                            Text(f.name, style = MaterialTheme.typography.titleMedium)
-                            Text(
-                                if (waitMs > 0) "Podrá desbloquearte en ${(waitMs + 3_599_999) / 3_600_000} h"
-                                else "Tiene tu llave",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = Sp.TextoSuave
-                            )
-                        }
-                        ChipButton("Darle llave", { onOpenFriend(f.id) })
-                        IconAction(Icons.Default.Close, "Romper el pacto con ${f.name}", { toDelete = f })
-                    }
-                }
+                FriendCard(
+                    friend = f,
+                    waitMs = FriendCodes.cooldownLeftMs(f, friends),
+                    onGiveKey = { onOpenFriend(f.id) },
+                    onBreak = { toDelete = f }
+                )
             }
         }
 
         item {
             Spacer(Modifier.height(Space.xs))
-            PrimaryButton(if (friends.isEmpty()) "Sellar un pacto" else "Sellar otro pacto", onAdd)
+            if (friends.isEmpty()) PrimaryButton("Sellar un pacto", onAdd) else OutlineButton("Sellar otro pacto", onAdd)
             Spacer(Modifier.height(Space.xs))
-            OutlineButton("Invitar a un amigo", { Invite.share(context) })
+            QuietButton("Invitar a un amigo", { Invite.share(context) }, modifier = Modifier.fillMaxWidth())
         }
     }
 
@@ -121,5 +116,41 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
                 scope.launch { db.friendDao().delete(f) }
             }
         )
+    }
+}
+
+/**
+ * Un amigo: avatar (con un anillo de cuenta atrás mientras su llave aún no vale), desde cuándo
+ * dura el pacto, cuántas llaves te ha dado y el botón para darle la suya.
+ */
+@Composable
+private fun FriendCard(friend: Friend, waitMs: Long, onGiveKey: () -> Unit, onBreak: () -> Unit) {
+    SpCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (waitMs > 0) {
+                val done = 1f - waitMs.toFloat() / FriendCodes.NEW_FRIEND_COOLDOWN_MS
+                UsageRing(done, Sp.Llave, size = Sizes.medal) { Avatar(friend.name, size = Sizes.appIconLarge) }
+            } else {
+                Avatar(friend.name, size = Sizes.medal)
+            }
+            Spacer(Modifier.width(Space.m))
+            Column(Modifier.weight(1f)) {
+                Text(friend.name, style = MaterialTheme.typography.titleMedium)
+                Text("Pacto desde el ${formatDay(friend.addedAt)}", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+                Text(
+                    when {
+                        waitMs > 0 -> "Su llave valdrá en ${(waitMs + 3_599_999) / 3_600_000} h"
+                        friend.keysGiven == 0 -> "Aún no te ha dado ninguna llave"
+                        friend.keysGiven == 1 -> "Te ha dado 1 llave"
+                        else -> "Te ha dado ${friend.keysGiven} llaves"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (waitMs > 0) Sp.Llave else Sp.TextoSuave
+                )
+            }
+            IconAction(Icons.Default.Close, "Romper el pacto con ${friend.name}", onBreak)
+        }
+        Spacer(Modifier.height(Space.m))
+        PrimaryButton("Darle su llave", onGiveKey)
     }
 }

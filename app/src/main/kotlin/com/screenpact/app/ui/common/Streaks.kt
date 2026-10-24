@@ -80,7 +80,8 @@ private val weekLetter = mapOf(
     Calendar.FRIDAY to "V", Calendar.SATURDAY to "S", Calendar.SUNDAY to "D",
 )
 
-private fun letterOf(dayKey: String): String {
+/** Letra del día de la semana (L, M, X…) de un día "yyyy-MM-dd". */
+fun dayLetter(dayKey: String): String {
     val date = SimpleDateFormat("yyyy-MM-dd", Locale.US).parse(dayKey) ?: return ""
     return weekLetter[Calendar.getInstance().apply { time = date }.get(Calendar.DAY_OF_WEEK)] ?: ""
 }
@@ -98,12 +99,12 @@ fun DayToken(day: History.Day, modifier: Modifier = Modifier) {
     val today = day.key == History.dayKey()
     Column(
         modifier.semantics(mergeDescendants = true) {
-            contentDescription = (if (today) "Hoy" else letterOf(day.key)) + ": " + describe(day.state)
+            contentDescription = (if (today) "Hoy" else dayLetter(day.key)) + ": " + describe(day.state)
         },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            letterOf(day.key),
+            dayLetter(day.key),
             style = MaterialTheme.typography.labelSmall,
             color = if (today) Sp.Niebla else Sp.TextoSuave,
             modifier = Modifier.clearAndSetSemantics { }

@@ -6,6 +6,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.graphics.drawOutline
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.ui.semantics.Role
@@ -425,5 +428,116 @@ fun UsageRing(
             )
         }
         content()
+    }
+}
+
+/**
+ * Hueco vacío con borde punteado: un sitio libre para algo que aún no está (otra app con
+ * límite, por ejemplo). Toda la tarjeta es el botón.
+ */
+@Composable
+fun SlotCard(text: String, icon: ImageVector, onClick: () -> Unit, modifier: Modifier = Modifier, tint: Color = Sp.TextoSuave) {
+    Row(
+        modifier
+            .fillMaxWidth()
+            .heightIn(min = Sizes.button)
+            .clip(Shapes.card)
+            .drawBehind {
+                val outline = Shapes.card.createOutline(size, layoutDirection, this)
+                val dash = Strokes.dash.toPx()
+                drawOutline(
+                    outline, Sp.Borde,
+                    style = androidx.compose.ui.graphics.drawscope.Stroke(
+                        Strokes.bold.toPx(),
+                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(dash, dash))
+                    )
+                )
+            }
+            .clickable(onClick = onClick)
+            .padding(horizontal = Space.l, vertical = Space.m),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Icon(icon, null, tint = tint, modifier = Modifier.size(Sizes.iconL))
+        Spacer(Modifier.width(Space.s))
+        Text(text, style = MaterialTheme.typography.titleMedium, color = tint)
+    }
+}
+
+/**
+ * Mini gráfica de barras de una semana. [values] en la misma unidad que [limit]; las barras que
+ * llegan al límite van en [overColor]. La línea discontinua marca el límite.
+ */
+@Composable
+fun WeekBars(
+    values: List<Long>,
+    limit: Long,
+    labels: List<String>,
+    modifier: Modifier = Modifier,
+    color: Color = Sp.Pacto,
+    overColor: Color = Sp.Llave
+) {
+    val max = maxOf(values.maxOrNull() ?: 0L, limit, 1L).toFloat()
+    Column(modifier.fillMaxWidth()) {
+        Box(Modifier.fillMaxWidth().height(Sizes.weekChart)) {
+            Row(Modifier.fillMaxSize(), verticalAlignment = Alignment.Bottom, horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                values.forEach { v ->
+                    Box(
+                        Modifier
+                            .weight(1f)
+                            .fillMaxHeight((v / max).coerceIn(0.02f, 1f))
+                            .clip(Shapes.field)
+                            .background(if (limit > 0 && v >= limit) overColor else color)
+                    )
+                }
+            }
+            if (limit > 0) {
+                Canvas(Modifier.fillMaxSize()) {
+                    val y = size.height * (1f - limit / max)
+                    val dash = Strokes.dash.toPx()
+                    drawLine(
+                        Sp.TextoSuave, androidx.compose.ui.geometry.Offset(0f, y), androidx.compose.ui.geometry.Offset(size.width, y),
+                        strokeWidth = Strokes.hairline.toPx(),
+                        pathEffect = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(dash, dash))
+                    )
+                }
+            }
+        }
+        Spacer(Modifier.height(Space.xxs))
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+            labels.forEach {
+                Text(it, style = MaterialTheme.typography.labelSmall, color = Sp.TextoSuave, textAlign = TextAlign.Center, modifier = Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+/**
+ * Un paso de una explicación: insignia con número o icono y su texto. [badge] es el fondo de la
+ * insignia (Sp.Linea si va dentro de una SpCard, para que se vea).
+ */
+@Composable
+fun StepLine(
+    text: String,
+    modifier: Modifier = Modifier,
+    number: Int? = null,
+    icon: ImageVector? = null,
+    detail: String? = null,
+    badge: Color = Sp.Superficie
+) {
+    Row(modifier.padding(vertical = Space.xs), verticalAlignment = Alignment.CenterVertically) {
+        Box(
+            Modifier.size(Sizes.stepBadge).clip(Shapes.field).background(badge),
+            contentAlignment = Alignment.Center
+        ) {
+            when {
+                icon != null -> Icon(icon, null, tint = Sp.Llave, modifier = Modifier.size(Sizes.iconM))
+                number != null -> Text("$number", style = MaterialTheme.typography.titleMedium, color = Sp.Llave)
+            }
+        }
+        Spacer(Modifier.width(Space.m))
+        Column {
+            Text(text, style = if (detail != null) MaterialTheme.typography.titleMedium else MaterialTheme.typography.bodyMedium)
+            detail?.let { Text(it, style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave) }
+        }
     }
 }

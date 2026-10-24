@@ -23,6 +23,9 @@ interface FriendDao {
 
     @Query("DELETE FROM friends WHERE id = :id")
     suspend fun deleteById(id: Long)
+
+    @Query("UPDATE friends SET keysGiven = keysGiven + 1 WHERE id = :id")
+    suspend fun countKey(id: Long)
 }
 
 @Dao

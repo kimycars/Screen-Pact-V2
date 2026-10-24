@@ -65,6 +65,14 @@ import com.screenpact.app.data.Schedules
 import com.screenpact.app.data.rememberIsPro
 import com.screenpact.app.ui.pro.ProFeature
 import com.screenpact.app.ui.common.ScheduleDialog
+import com.screenpact.app.ui.common.AppIcon
+import com.screenpact.app.ui.common.formatMinutes
+import com.screenpact.app.ui.common.rememberTodayUsage
+import com.screenpact.app.ui.components.SlotCard
+import com.screenpact.app.ui.components.UsageBar
+import com.screenpact.app.util.Suggestion
+import com.screenpact.app.data.History
+import androidx.compose.material.icons.filled.Add
 
 /**
  * Reglas de edición (el objetivo es que solo se pueda endurecer sin ayuda):
@@ -84,6 +92,7 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
 
     var showPicker by remember { mutableStateOf(false) }
     var pickedApp by remember { mutableStateOf<InstalledApp?>(null) }
+    var pickedInitial by remember { mutableStateOf(30) }
     var editing by remember { mutableStateOf<AppLimit?>(null) }
     var options by remember { mutableStateOf<AppLimit?>(null) }
     var scheduling by remember { mutableStateOf<AppLimit?>(null) }
@@ -98,6 +107,24 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
 
     fun save(limit: AppLimit) {
         scope.launch { db.appLimitDao().upsert(limit) }
+    }
+
+    val usage = rememberTodayUsage()
+    // Días de esta semana (sin contar hoy) que cada app se quedó por debajo de su límite.
+    var weekUnder by remember { mutableStateOf<Map<String, Pair<Int, Int>>>(emptyMap()) }
+    var suggestions by remember { mutableStateOf<List<Suggestion>>(emptyList()) }
+    LaunchedEffect(limits) {
+        val recs = db.dayRecordDao().since(History.daysAgo(7)).filter { it.day != History.dayKey() }
+        weekUnder = recs.groupBy { it.packageName }.mapValues { (_, r) ->
+            r.count { it.limitMinutes > 0 && it.usedMs < it.limitMinutes * 60_000L } to r.size
+        }
+        suggestions = withContext(Dispatchers.IO) {
+            AppListHelper.suggestions(context, exclude = limits.map { it.packageName }.toSet())
+        }
+    }
+
+    fun limitApp(app: InstalledApp, minutes: Int) {
+        if (atFreeLimit) onOpenPro(ProFeature.APPS) else { pickedInitial = minutes; pickedApp = app }
     }
 
     LazyColumn(
@@ -118,33 +145,56 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
             }
         }
 
-        items(limits, key = { it.packageName }) { l ->
-            LimitRow(
-                limit = l,
-                onChange = { editing = l },
-                onOptions = { options = l },
-                onResume = { save(l.copy(enabled = true)) },
-                onSchedule = { if (isPro) scheduling = l else onOpenPro(ProFeature.SCHEDULE) }
-            )
-        }
-
-        item {
-            CardButton(
-                when {
-                    limits.isEmpty() -> "Añadir tu primera app"
-                    atFreeLimit -> "Añadir otra app con Pro"
-                    else -> "Añadir otra app"
-                },
-                { if (atFreeLimit) onOpenPro(ProFeature.APPS) else showPicker = true }
-            )
-        }
-        if (!isPro) {
+        if (limits.isEmpty()) {
+            // Sin límites: las apps que más usa de verdad, con un límite ya propuesto.
             item {
-                QuietButton(
-                    "Horarios, historial y más con ScreenPact Pro",
-                    { onOpenPro(ProFeature.GENERAL) },
-                    modifier = Modifier.fillMaxWidth()
+                Spacer(Modifier.height(Space.s))
+                Text("Empieza por la que más te roba", style = MaterialTheme.typography.titleLarge)
+                Text("Tu media de los últimos 7 días, sacada de tu móvil.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+            }
+            items(suggestions, key = { "s-" + it.app.packageName }) { sug ->
+                SuggestionCard(sug) { limitApp(sug.app, sug.suggestedMinutes) }
+            }
+            item { SlotCard("Elegir otra app", Icons.Default.Add, { showPicker = true }) }
+        } else {
+            items(limits, key = { it.packageName }) { l ->
+                LimitCard(
+                    limit = l,
+                    usedMs = usage[l.packageName] ?: 0L,
+                    weekUnder = weekUnder[l.packageName],
+                    onChange = { editing = l },
+                    onOptions = { options = l },
+                    onResume = { save(l.copy(enabled = true)) },
+                    onSchedule = { if (isPro) scheduling = l else onOpenPro(ProFeature.SCHEDULE) }
                 )
+            }
+
+            // Huecos: los libres del plan gratis, punteados; el siguiente, con candado de Pro.
+            if (!isPro) {
+                item {
+                    Text(
+                        "${limits.size} de ${Plans.FREE_APP_LIMIT} apps del plan gratis",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Sp.TextoSuave,
+                        modifier = Modifier.padding(top = Space.xs)
+                    )
+                }
+                items(maxOf(0, Plans.FREE_APP_LIMIT - limits.size)) {
+                    SlotCard("Añadir otra app", Icons.Default.Add, { showPicker = true })
+                }
+                item { SlotCard("Más apps con Pro", Icons.Default.Lock, { onOpenPro(ProFeature.APPS) }, tint = Sp.Llave) }
+            } else {
+                item { SlotCard("Añadir otra app", Icons.Default.Add, { showPicker = true }) }
+            }
+
+            if (suggestions.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(Space.l))
+                    Text("Las que más usas sin límite", style = MaterialTheme.typography.titleMedium)
+                }
+                items(suggestions, key = { "s-" + it.app.packageName }) { sug ->
+                    SuggestionCard(sug) { limitApp(sug.app, sug.suggestedMinutes) }
+                }
             }
         }
     }
@@ -230,6 +280,7 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
             onDismiss = { showPicker = false },
             onPick = { app ->
                 showPicker = false
+                pickedInitial = 30
                 pickedApp = app
             }
         )
@@ -239,7 +290,7 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
         MinutesDialog(
             title = app.label,
             message = "¿Cuántos minutos al día? Luego podrás bajarlo cuando quieras, pero subirlo pedirá la llave de un amigo.",
-            initial = 30,
+            initial = pickedInitial,
             confirm = "Añadir",
             onDismiss = { pickedApp = null },
             onConfirm = { minutes ->
@@ -251,30 +302,79 @@ fun AppLimitsScreen(onOpenPro: (ProFeature) -> Unit) {
     }
 }
 
+/** Un límite: icono, límite al día, cómo va hoy, cómo fue la semana y sus acciones. */
 @Composable
-private fun LimitRow(limit: AppLimit, onChange: () -> Unit, onOptions: () -> Unit, onResume: () -> Unit, onSchedule: () -> Unit) {
+private fun LimitCard(
+    limit: AppLimit,
+    usedMs: Long,
+    weekUnder: Pair<Int, Int>?,
+    onChange: () -> Unit,
+    onOptions: () -> Unit,
+    onResume: () -> Unit,
+    onSchedule: () -> Unit
+) {
+    val usedMin = (usedMs / 60_000L).toInt()
+    val fraction = if (limit.dailyLimitMinutes > 0) usedMin.toFloat() / limit.dailyLimitMinutes else 0f
     SpCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(limit.packageName, size = Sizes.appIconLarge)
+            Spacer(Modifier.width(Space.s))
             Column(Modifier.weight(1f)) {
                 Text(limit.appName, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    if (limit.enabled) "${limit.dailyLimitMinutes} min al día" else "En pausa · ${limit.dailyLimitMinutes} min al día",
+                    when {
+                        !limit.enabled -> "En pausa"
+                        limit.hasSchedule -> "Cerrada ${Schedules.describe(limit.scheduleStart!!, limit.scheduleEnd!!)}"
+                        else -> "Sin horario de cierre"
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (limit.enabled && limit.hasSchedule) Sp.Llave else Sp.TextoSuave
+                )
+            }
+            Column(horizontalAlignment = Alignment.End) {
+                Text(formatMinutes(limit.dailyLimitMinutes), style = MaterialTheme.typography.titleLarge)
+                Text("al día", style = MaterialTheme.typography.labelSmall, color = Sp.TextoSuave)
+            }
+        }
+        if (limit.enabled) {
+            Spacer(Modifier.height(Space.m))
+            UsageBar(fraction, if (fraction >= 0.8f) Sp.Llave else Sp.Pacto, track = Sp.Linea)
+            Spacer(Modifier.height(Space.xs))
+            Text(
+                buildString {
+                    append("Hoy ${formatMinutes(usedMin)}")
+                    weekUnder?.let { (under, total) -> append(" · Esta semana, $under de $total días por debajo") }
+                },
+                style = MaterialTheme.typography.bodySmall,
+                color = Sp.TextoSuave
+            )
+        }
+        Spacer(Modifier.height(Space.s))
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+            if (limit.enabled) ChipButton("Cambiar", onChange) else ChipButton("Reactivar", onResume)
+            ChipButton("Horario", onSchedule)
+            Spacer(Modifier.weight(1f))
+            IconAction(Icons.Default.MoreVert, "Más opciones de ${limit.appName}", onOptions)
+        }
+    }
+}
+
+/** App que usas mucho sin límite, con su media y un botón para limitarla con un valor propuesto. */
+@Composable
+private fun SuggestionCard(sug: Suggestion, onLimit: () -> Unit) {
+    SpCard {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            AppIcon(sug.app.packageName, size = Sizes.appIconLarge)
+            Spacer(Modifier.width(Space.s))
+            Column(Modifier.weight(1f)) {
+                Text(sug.app.label, style = MaterialTheme.typography.titleMedium)
+                Text(
+                    "${formatMinutes((sug.averageMs / 60_000L).toInt())} al día de media",
                     style = MaterialTheme.typography.bodySmall,
                     color = Sp.TextoSuave
                 )
             }
-            if (limit.enabled) ChipButton("Cambiar", onChange) else ChipButton("Reactivar", onResume)
-            IconAction(Icons.Default.MoreVert, "Más opciones de ${limit.appName}", onOptions)
-        }
-        Spacer(Modifier.height(Space.xs))
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Text(
-                if (limit.hasSchedule) "Cerrada ${Schedules.describe(limit.scheduleStart!!, limit.scheduleEnd!!)}" else "Sin horario de cierre",
-                style = MaterialTheme.typography.bodySmall,
-                color = if (limit.hasSchedule) Sp.Llave else Sp.TextoSuave,
-                modifier = Modifier.weight(1f)
-            )
-            ChipButton("Horario", onSchedule)
+            ChipButton("Limitar a ${formatMinutes(sug.suggestedMinutes)}", onLimit)
         }
     }
 }
@@ -350,13 +450,8 @@ private fun AppPickerDialog(
                                     .padding(vertical = Space.s),
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
-                                val bmp = remember(app.packageName) {
-                                    runCatching { app.icon?.toBitmap(64, 64) }.getOrNull()
-                                }
-                                if (bmp != null) {
-                                    Image(bmp.asImageBitmap(), contentDescription = null, modifier = Modifier.size(Sizes.appIcon))
-                                    Spacer(Modifier.width(Space.s))
-                                }
+                                AppIcon(app.packageName)
+                                Spacer(Modifier.width(Space.s))
                                 Text(app.label, style = MaterialTheme.typography.bodyMedium)
                             }
                         }

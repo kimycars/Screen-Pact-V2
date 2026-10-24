@@ -58,7 +58,7 @@ fun FriendCodeDialog(
             TextButton(
                 onClick = {
                     scope.launch {
-                        if (FriendCodes.match(db, code) != null) onVerified()
+                        if (FriendCodes.redeem(db, code) != null) onVerified()
                         else {
                             error = "Esa llave no vale. Puede que haya caducado: pide la que sale ahora."
                             code = ""

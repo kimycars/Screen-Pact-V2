@@ -195,7 +195,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     ) {
         scope.launch {
             val db = AppDatabase.get(applicationContext)
-            val match = FriendCodes.match(db, code)
+            val match = FriendCodes.redeem(db, code)
             if (match != null) {
                 // El código de un amigo también perdona una trampa guardada (permisos, servicio parado).
                 TamperGuard.clear(applicationContext)
