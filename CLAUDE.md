@@ -1,8 +1,11 @@
-# ScreenPact: reglas del proyecto
+# Scrollban (antes ScreenPact): reglas del proyecto
 
-App Android (Kotlin + Jetpack Compose) de pacto entre amigos para limitar el uso del móvil.
-Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md`. Visión general para cualquier
-área: `docs/screenpact-resumen.html`.
+App Android (Kotlin + Jetpack Compose): el reto de soltar el móvil con tus amigos o tu pareja, donde
+solo ellos pueden darte más tiempo. El 28-10-2026 cambiaron el nombre (ScreenPact pasa a Scrollban),
+el posicionamiento y las funciones previstas (grupos, retos, tiempo ganado, pacto mixto con iPhone,
+servidor en Supabase). El código y la web todavía dicen ScreenPact hasta el rediseño.
+Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: decisiones vigentes).
+`docs/screenpact-resumen.html` y `docs/LANZAMIENTO.md` son de la etapa ScreenPact y están desfasados.
 
 ## Sistema de diseño: nada escrito a mano
 
@@ -21,6 +24,7 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md`. Visión genera
 - La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`.
 - Los pactos se sellan solo en `data/Pairing.kt` (en persona por QR o a distancia por enlace). Las llaves salen de Diffie-Hellman (`data/crypto/PactKeys.kt`): ni el QR ni el enlace llevan nada secreto. No se acepta una invitación propia ni una creada en el mismo móvil (apps clonadas), y un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
+- Privacidad en revisión (28-10-2026): con los grupos, los minutos de cada día por app subirán a Supabase y solo los verá el grupo; las llaves no salen nunca del móvil y no habrá correo ni contraseña. Hasta que se construya, rige lo de abajo, y el cambio exige actualizar la política de privacidad antes de lanzar.
 - Los datos de la persona no salen del móvil (minutos, amigos, llaves). Las únicas conexiones a Internet son las estadísticas anónimas de `data/Stats.kt` (encendidas en la bienvenida, se apagan en Ajustes) y la renovación de la licencia de Pro en `data/Pro.kt` (manda solo el id de licencia). Cualquier dato nuevo que se quiera enviar pasa por ahí, se añade a la política de privacidad de la app (kimycars.com/screenpact/privacidad, en la web de kimycars) y se habla antes con Kimy.
 - Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.
 - Pro: `data/Pro.kt` es la única fuente de verdad (`Pro.isPro`, `rememberIsPro()` en la interfaz). Las licencias las firma el servidor de kimycars.com (`api/sp-stripe-webhook.js`, `api/sp-license.js`, `lib/sp-license.js`) con la clave privada de `Documents\claves\screenpact-license-private.pem`; la app solo lleva la pública. En la versión de pruebas hay un interruptor "Pro de prueba" en Ajustes.

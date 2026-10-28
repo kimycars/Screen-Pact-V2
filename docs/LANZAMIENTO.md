@@ -1,5 +1,7 @@
 # ScreenPact: plan de lanzamiento
 
+> Desfasado desde el 28-10-2026: la app pasa a llamarse Scrollban y cambian el posicionamiento y las funciones (ver `docs/PRODUCTO.md`, sección 0). Las fechas y fases de abajo se rehacen después del rediseño.
+
 Preparado el 19-10-2026. Fechas orientativas: se ajustan cuando Kimy fije el día del lanzamiento.
 
 ## La idea en una frase
