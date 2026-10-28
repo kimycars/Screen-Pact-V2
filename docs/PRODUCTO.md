@@ -238,7 +238,7 @@ Tipografías: Bricolage Grotesque (titulares y cifras), Figtree (texto e interfa
 
 ## Rediseño: decisiones de partida (Kimy, 28-10-2026)
 
-- Identidad: se evoluciona la actual (tinta y amarillo Llave), con nombre y logo nuevos. No se rehace el sistema de diseño.
+- Identidad: se evoluciona la actual (tinta y amarillo Llave) con el nombre nuevo. El logo se mantiene: el "candado de dos" actual (Kimy, 28-10-2026; se descartaron "prohibido con llave" y "dos llaves en X"). No se rehace el sistema de diseño.
 - Id de la app: pasa de com.screenpact.app a com.scrollban.app (hecho el 28-10-2026). La versión de pruebas anterior hay que desinstalarla; sus datos se pierden. El paquete de Kotlin sigue siendo com.screenpact.app porque es interno.
 - El nombre visible sale de una sola constante, `Brand.NAME`, y del `app_name` de strings.xml.
 - Los esquemas de enlace (`screenpact://license`, `screenpact://pair`) y la ruta web `kimycars.com/screenpact/...` no cambian hasta rehacer la web, para no romper las licencias ni las invitaciones.
