@@ -50,7 +50,7 @@ class MainActivity : ComponentActivity() {
         val ok = Pro.activate(this, token)
         Toast.makeText(
             this,
-            if (ok) "Ya tienes ScreenPact Pro. ¡Gracias!" else "Ese enlace de licencia no es válido. Pega el código a mano en Ajustes.",
+            if (ok) "Ya tienes ${Brand.NAME} Pro. ¡Gracias!" else "Ese enlace de licencia no es válido. Pega el código a mano en Ajustes.",
             Toast.LENGTH_LONG
         ).show()
     }

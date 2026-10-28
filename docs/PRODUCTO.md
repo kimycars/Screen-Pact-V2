@@ -236,6 +236,15 @@ Tipografías: Bricolage Grotesque (titulares y cifras), Figtree (texto e interfa
 
 ---
 
+## Rediseño: decisiones de partida (Kimy, 28-10-2026)
+
+- Identidad: se evoluciona la actual (tinta y amarillo Llave), con nombre y logo nuevos. No se rehace el sistema de diseño.
+- Id de la app: pasa de com.screenpact.app a com.scrollban.app (hecho el 28-10-2026). La versión de pruebas anterior hay que desinstalarla; sus datos se pierden. El paquete de Kotlin sigue siendo com.screenpact.app porque es interno.
+- El nombre visible sale de una sola constante, `Brand.NAME`, y del `app_name` de strings.xml.
+- Los esquemas de enlace (`screenpact://license`, `screenpact://pair`) y la ruta web `kimycars.com/screenpact/...` no cambian hasta rehacer la web, para no romper las licencias ni las invitaciones.
+- Orden: primero identidad y pantallas con lo que funciona sin servidor (tiempo ganado propio y retos de dos); mientras, Kimy crea la cuenta de Supabase; después grupos y ranking.
+- La web (landing, página del pacto y privacidad) se rehace después de la app.
+
 ## 9. Pendientes
 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.

@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.pro
 
+import com.screenpact.app.Brand
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Bedtime
@@ -36,13 +37,13 @@ enum class ProFeature(val id: String, val icon: ImageVector, val title: String, 
     STRICT(
         "strict", Icons.Default.Lock,
         "El modo estricto es de Pro",
-        "Con el modo estricto, para desinstalar ScreenPact primero hay que quitarlo, y quitarlo pide la llave de un amigo.",
+        "Con el modo estricto, para desinstalar ${Brand.NAME} primero hay que quitarlo, y quitarlo pide la llave de un amigo.",
         "Modo estricto: desinstalar pide llave",
     ),
     ICONS(
         "icons", Icons.Default.Palette,
         "Cambiar el icono es de Pro",
-        "Elige el icono de ScreenPact en tu escritorio: amarillo, noche o menta.",
+        "Elige el icono de ${Brand.NAME} en tu escritorio: amarillo, noche o menta.",
         "Iconos de la app a elegir",
     ),
     GENERAL(

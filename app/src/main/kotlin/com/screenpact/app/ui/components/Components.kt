@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.components
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -162,7 +163,7 @@ fun LogoTile(size: Dp) {
     ) {
         Image(
             painterResource(R.drawable.ic_logo),
-            contentDescription = "ScreenPact",
+            contentDescription = "${Brand.NAME}",
             modifier = Modifier.size(size * Shapes.logoInnerRatio)
         )
     }

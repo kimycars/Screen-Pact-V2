@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.home
 
+import com.screenpact.app.Brand
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -166,7 +167,7 @@ private fun PermissionsStep(onDone: () -> Unit) {
         Text("Dos permisos", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(Space.xs))
         Text(
-            "Sin ellos ScreenPact no puede saber cuánto llevas ni pararte. Nada de esto sale de tu móvil.",
+            "Sin ellos ${Brand.NAME} no puede saber cuánto llevas ni pararte. Nada de esto sale de tu móvil.",
             style = MaterialTheme.typography.bodyMedium,
             color = Sp.TextoSuave
         )
@@ -191,7 +192,7 @@ private fun FirstPactStep(onPair: () -> Unit, onLater: () -> Unit) {
         Text("Ahora, tu primer pacto", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(Space.s))
         Text(
-            "Queda con alguien de confianza que también tenga ScreenPact. Os escaneáis el QR y cada uno guarda la llave del otro.",
+            "Queda con alguien de confianza que también tenga ${Brand.NAME}. Os escaneáis el QR y cada uno guarda la llave del otro.",
             style = MaterialTheme.typography.bodyLarge,
             color = Sp.TextoSuave
         )

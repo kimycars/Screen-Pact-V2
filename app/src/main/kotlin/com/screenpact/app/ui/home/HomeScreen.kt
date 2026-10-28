@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.home
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -100,7 +101,7 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
         if (!permissions.requiredOk) {
             item {
                 Column {
-                    Text("ScreenPact está parado", style = MaterialTheme.typography.titleLarge, color = Sp.Aviso)
+                    Text("${Brand.NAME} está parado", style = MaterialTheme.typography.titleLarge, color = Sp.Aviso)
                     Spacer(Modifier.height(Space.xs))
                     Text(
                         "Falta un permiso, así que ahora mismo no cuenta tus minutos ni te bloquea.",

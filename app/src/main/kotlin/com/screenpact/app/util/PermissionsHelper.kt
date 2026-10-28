@@ -1,5 +1,6 @@
 package com.screenpact.app.util
 
+import com.screenpact.app.Brand
 import android.annotation.SuppressLint
 import android.content.ComponentName
 import android.content.Context
@@ -36,12 +37,12 @@ object PermissionsHelper {
         get() = when (Build.MANUFACTURER.lowercase()) {
             "xiaomi", "redmi", "poco" -> BackgroundSetting(
                 "Inicio automático",
-                "Busca ScreenPact y activa su interruptor.",
+                "Busca ${Brand.NAME} y activa su interruptor.",
                 listOf(cn("com.miui.securitycenter", "com.miui.permcenter.autostart.AutoStartManagementActivity"))
             )
             "huawei", "honor" -> BackgroundSetting(
                 "Inicio de aplicaciones",
-                "Busca ScreenPact, desactiva \"Gestionar automáticamente\" y deja activadas las tres opciones.",
+                "Busca ${Brand.NAME}, desactiva \"Gestionar automáticamente\" y deja activadas las tres opciones.",
                 listOf(
                     cn("com.huawei.systemmanager", "com.huawei.systemmanager.startupmgr.ui.StartupNormalAppListActivity"),
                     cn("com.huawei.systemmanager", "com.huawei.systemmanager.appcontrol.activity.StartupAppControlActivity"),
@@ -50,7 +51,7 @@ object PermissionsHelper {
             )
             "oppo", "realme" -> BackgroundSetting(
                 "Inicio automático",
-                "Busca ScreenPact y actívalo. En la ficha de la app, permite también la actividad en segundo plano.",
+                "Busca ${Brand.NAME} y actívalo. En la ficha de la app, permite también la actividad en segundo plano.",
                 listOf(
                     cn("com.coloros.safecenter", "com.coloros.safecenter.permission.startup.StartupAppListActivity"),
                     cn("com.coloros.safecenter", "com.coloros.safecenter.startupapp.StartupAppListActivity"),
@@ -59,7 +60,7 @@ object PermissionsHelper {
             )
             "vivo", "iqoo" -> BackgroundSetting(
                 "Inicio automático",
-                "Busca ScreenPact y activa su interruptor.",
+                "Busca ${Brand.NAME} y activa su interruptor.",
                 listOf(
                     cn("com.vivo.permissionmanager", "com.vivo.permissionmanager.activity.BgStartUpManagerActivity"),
                     cn("com.iqoo.secure", "com.iqoo.secure.ui.phoneoptimize.BgStartUpManager"),
@@ -68,12 +69,12 @@ object PermissionsHelper {
             )
             "oneplus" -> BackgroundSetting(
                 "Inicio automático",
-                "Busca ScreenPact y actívalo.",
+                "Busca ${Brand.NAME} y actívalo.",
                 listOf(cn("com.oneplus.security", "com.oneplus.security.chainlaunch.view.ChainLaunchAppListActivity"))
             )
             "samsung" -> BackgroundSetting(
                 "Apps que nunca se suspenden",
-                "En Batería, entra en \"Límites de uso en segundo plano\" y añade ScreenPact a \"Apps que nunca se suspenden\".",
+                "En Batería, entra en \"Límites de uso en segundo plano\" y añade ${Brand.NAME} a \"Apps que nunca se suspenden\".",
                 listOf(cn("com.samsung.android.lool", "com.samsung.android.sm.ui.battery.BatteryActivity"))
             )
             else -> null

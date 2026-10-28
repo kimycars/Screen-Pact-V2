@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.settings
 
+import com.screenpact.app.Brand
 import android.content.Intent
 import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -83,7 +84,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
             SpCard {
                 val license = Pro.license(context)
                 if (isPro) {
-                    Text("Tienes ScreenPact Pro", style = MaterialTheme.typography.titleMedium, color = Sp.Llave)
+                    Text("Tienes ${Brand.NAME} Pro", style = MaterialTheme.typography.titleMedium, color = Sp.Llave)
                     Text(
                         when {
                             license == null -> "Pro de prueba (solo en la versión de pruebas)."
@@ -96,7 +97,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
                 } else {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Column(Modifier.weight(1f)) {
-                            Text("ScreenPact Pro", style = MaterialTheme.typography.titleMedium)
+                            Text("${Brand.NAME} Pro", style = MaterialTheme.typography.titleMedium)
                             Text("Todas las apps, horarios, historial y modo estricto.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
                         }
                         Spacer(Modifier.width(Space.s))
@@ -118,8 +119,8 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
                 ToggleRow(
                     title = "Modo estricto",
                     checked = strictActive,
-                    subtitle = if (isPro) "Para desinstalar ScreenPact primero hay que quitarlo, y quitarlo pide la llave de un amigo."
-                    else "Con Pro: desinstalar ScreenPact pide la llave de un amigo."
+                    subtitle = if (isPro) "Para desinstalar ${Brand.NAME} primero hay que quitarlo, y quitarlo pide la llave de un amigo."
+                    else "Con Pro: desinstalar ${Brand.NAME} pide la llave de un amigo."
                 ) { on ->
                     when {
                         !on -> askKeyForStrict = true
@@ -137,7 +138,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
                 Text(
                     when {
                         !isPro -> "Con Pro puedes elegir otro icono."
-                        icon != AppIcons.current(context) -> "Se cambia en tu escritorio al salir de ScreenPact."
+                        icon != AppIcons.current(context) -> "Se cambia en tu escritorio al salir de ${Brand.NAME}."
                         else -> "El que verás en tu escritorio."
                     },
                     style = MaterialTheme.typography.bodySmall,
@@ -165,7 +166,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
                 context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             })
         }
-        item { Text("ScreenPact ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave) }
+        item { Text("${Brand.NAME} ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave) }
     }
 
     if (showLicense) LicenseDialog(onDismiss = { showLicense = false }, onActivated = { showLicense = false })

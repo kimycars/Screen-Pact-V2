@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.common
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -38,7 +39,7 @@ fun StatsConsentCard(onByDefault: Boolean = false) {
                 Text("Estadísticas anónimas", style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(Space.xxs))
                 Text(
-                    "Ayúdame a mejorar ScreenPact: una vez al día manda cuántos pactos y límites tienes y qué apps limitas. Nunca nombres, llaves ni minutos de uso. Puedes apagarlas cuando quieras.",
+                    "Ayúdame a mejorar ${Brand.NAME}: una vez al día manda cuántos pactos y límites tienes y qué apps limitas. Nunca nombres, llaves ni minutos de uso. Puedes apagarlas cuando quieras.",
                     style = MaterialTheme.typography.bodySmall,
                     color = Sp.TextoSuave
                 )

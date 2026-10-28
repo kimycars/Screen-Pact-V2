@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.friends
 
+import com.screenpact.app.Brand
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -92,8 +93,8 @@ fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
                 val parsed = PairingPayload.decode(text)
                 val screen = mine?.first
                 if (parsed == null || screen == null) {
-                    scanError = if (PairingPayload.isLegacy(text)) "Ese QR es de una versión antigua. Pide a tu amigo que actualice ScreenPact."
-                    else "Ese QR no es un pacto de ScreenPact."
+                    scanError = if (PairingPayload.isLegacy(text)) "Ese QR es de una versión antigua. Pide a tu amigo que actualice ${Brand.NAME}."
+                    else "Ese QR no es un pacto de ${Brand.NAME}."
                 } else scope.launch {
                     when (val r = Pairing.accept(context, parsed, remote = false, screenInvite = screen)) {
                         is Pairing.Result.Paired -> { pairedName = r.name; scanError = null }

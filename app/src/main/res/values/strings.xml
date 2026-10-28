@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">ScreenPact</string>
+    <string name="app_name">Scrollban</string>
     <string name="monitor_notification_channel">Pacto activo</string>
     <string name="monitor_notification_title">Tu pacto está activo</string>
-    <string name="monitor_notification_text">ScreenPact cuenta tus minutos. Nada sale de tu móvil.</string>
+    <string name="monitor_notification_text">Scrollban cuenta tus minutos. Nada sale de tu móvil.</string>
 </resources>

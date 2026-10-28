@@ -1,5 +1,6 @@
 package com.screenpact.app.data
 
+import com.screenpact.app.Brand
 import android.app.admin.DevicePolicyManager
 import android.content.ComponentName
 import android.content.Context
@@ -31,7 +32,7 @@ object StrictMode {
             .putExtra(DevicePolicyManager.EXTRA_DEVICE_ADMIN, admin(context))
             .putExtra(
                 DevicePolicyManager.EXTRA_ADD_EXPLANATION,
-                "Con el modo estricto, para desinstalar ScreenPact primero hay que quitarlo, y quitarlo pide la llave de un amigo. No da ningún otro permiso sobre tu móvil."
+                "Con el modo estricto, para desinstalar ${Brand.NAME} primero hay que quitarlo, y quitarlo pide la llave de un amigo. No da ningún otro permiso sobre tu móvil."
             )
     }
 

@@ -1,5 +1,6 @@
 package com.screenpact.app.util
 
+import com.screenpact.app.Brand
 import android.content.Context
 import android.os.SystemClock
 import android.provider.Settings
@@ -22,9 +23,9 @@ import android.provider.Settings
 object TamperGuard {
 
     const val REASON_MANUAL_CLOCK = "Tienes la fecha y hora en manual. Activa la hora automática en Ajustes para volver a usar esta app."
-    const val REASON_USAGE_ACCESS = "Se quitó el acceso a datos de uso de ScreenPact."
+    const val REASON_USAGE_ACCESS = "Se quitó el acceso a datos de uso de ${Brand.NAME}."
     const val REASON_OVERLAY = "Se quitó el permiso de mostrarse encima de otras apps."
-    const val REASON_SERVICE_STOPPED = "ScreenPact estuvo parado un rato."
+    const val REASON_SERVICE_STOPPED = "${Brand.NAME} estuvo parado un rato."
     const val REASON_STRICT_OFF = "Se quitó el modo estricto desde los Ajustes de Android."
 
     private const val PREFS = "screenpact_guard"

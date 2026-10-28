@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.friends
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -83,7 +84,7 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
                 SpCard {
                     Text("Así se sella un pacto", style = MaterialTheme.typography.titleMedium)
                     Spacer(Modifier.height(Space.xs))
-                    StepLine("Quedad en persona", icon = Icons.Default.People, detail = "Los dos con ScreenPact en el móvil.", badge = Sp.Linea)
+                    StepLine("Quedad en persona", icon = Icons.Default.People, detail = "Los dos con ${Brand.NAME} en el móvil.", badge = Sp.Linea)
                     StepLine("Escanead vuestros QR", icon = Icons.Default.QrCodeScanner, detail = "Cada uno el del otro. Tarda un minuto.", badge = Sp.Linea)
                     StepLine("Ya tenéis la llave", icon = Icons.Default.Key, detail = "Si uno se pasa del límite, el otro decide si le da más tiempo.", badge = Sp.Linea)
                 }

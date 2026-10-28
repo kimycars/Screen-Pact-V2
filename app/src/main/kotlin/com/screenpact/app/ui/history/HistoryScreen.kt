@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.history
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -124,7 +125,7 @@ fun HistoryScreen(onBack: () -> Unit) {
         if (apps.isEmpty()) {
             item {
                 Text(
-                    "Aún no hay datos. ScreenPact apunta cada día cuánto usas tus apps con límite; vuelve mañana.",
+                    "Aún no hay datos. ${Brand.NAME} apunta cada día cuánto usas tus apps con límite; vuelve mañana.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Sp.TextoSuave
                 )

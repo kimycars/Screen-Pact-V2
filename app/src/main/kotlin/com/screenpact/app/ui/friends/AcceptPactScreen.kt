@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.friends
 
+import com.screenpact.app.Brand
 import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -76,8 +77,8 @@ fun AcceptPactScreen(text: String, onDone: () -> Unit) {
             payload == null -> {
                 Text("Esta invitación no vale", style = MaterialTheme.typography.headlineLarge)
                 Text(
-                    if (PairingPayload.isLegacy(text)) "Es de una versión antigua de ScreenPact. Pide que actualicen la app y te la vuelvan a mandar."
-                    else "El enlace está incompleto o no es de ScreenPact. Pide que te lo vuelvan a mandar.",
+                    if (PairingPayload.isLegacy(text)) "Es de una versión antigua de ${Brand.NAME}. Pide que actualicen la app y te la vuelvan a mandar."
+                    else "El enlace está incompleto o no es de ${Brand.NAME}. Pide que te lo vuelvan a mandar.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Sp.TextoSuave
                 )

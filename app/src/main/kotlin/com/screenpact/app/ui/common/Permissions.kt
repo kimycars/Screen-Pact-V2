@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.common
 
+import com.screenpact.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
@@ -46,7 +47,7 @@ fun rememberPermissionState(): PermissionState {
 @Composable
 fun PermissionCards(state: PermissionState, onlyMissing: Boolean = false) {
     val context = LocalContext.current
-    val listHelp = "Si se abre una lista, busca ScreenPact y activa su interruptor."
+    val listHelp = "Si se abre una lista, busca ${Brand.NAME} y activa su interruptor."
     val restrictedHelp = if (PermissionsHelper.mayHaveRestrictedSettings)
         " ¿Sale gris o dice \"ajuste restringido\"? Toca \"Ficha de la app\", luego ⋮ arriba a la derecha y \"Permitir ajustes restringidos\". Después vuelve a darle a \"Dar\"."
     else ""
@@ -75,7 +76,7 @@ fun PermissionCards(state: PermissionState, onlyMissing: Boolean = false) {
         )
         if (!onlyMissing || !state.battery) PermissionCard(
             title = "Sin límite de batería (recomendado)",
-            why = "Algunos móviles cierran apps en segundo plano. Así ScreenPact no se duerme.",
+            why = "Algunos móviles cierran apps en segundo plano. Así ${Brand.NAME} no se duerme.",
             granted = state.battery,
             onGrant = { PermissionsHelper.openBatteryOptimizationSettings(context) }
         )
@@ -84,7 +85,7 @@ fun PermissionCards(state: PermissionState, onlyMissing: Boolean = false) {
         val oem = PermissionsHelper.backgroundSetting
         if (!onlyMissing && oem != null) PermissionCard(
             title = "${oem.title} (recomendado)",
-            why = "Tu móvil cierra apps en segundo plano. Así ScreenPact sigue contando.",
+            why = "Tu móvil cierra apps en segundo plano. Así ${Brand.NAME} sigue contando.",
             granted = false,
             action = "Abrir",
             onGrant = { PermissionsHelper.openBackgroundSetting(context) },

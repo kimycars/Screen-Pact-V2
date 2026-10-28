@@ -1,5 +1,6 @@
 package com.screenpact.app.ui.common
 
+import com.screenpact.app.Brand
 import android.content.Context
 import android.content.Intent
 import com.screenpact.app.data.crypto.PairingPayload
@@ -12,7 +13,7 @@ object Invite {
     private const val URL = "https://www.kimycars.com/screenpact"
 
     fun share(context: Context) {
-        val text = "¿Hacemos un pacto? Con ScreenPact tú guardas mi llave y yo la tuya: " +
+        val text = "¿Hacemos un pacto? Con ${Brand.NAME} tú guardas mi llave y yo la tuya: " +
             "si me paso con el móvil, solo tú puedes darme más tiempo. Descárgala aquí: $URL"
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
@@ -24,9 +25,9 @@ object Invite {
     /** Manda una invitación al pacto (o la respuesta a una) por la app que elija la persona. */
     fun sharePact(context: Context, payload: PairingPayload) {
         val text = if (payload.replyTo == null)
-            "Sellemos un pacto en ScreenPact: tú guardas mi llave y yo la tuya. Abre este enlace en tu móvil: ${payload.link()}"
+            "Sellemos un pacto en ${Brand.NAME}: tú guardas mi llave y yo la tuya. Abre este enlace en tu móvil: ${payload.link()}"
         else
-            "Aquí va mi respuesta para cerrar nuestro pacto en ScreenPact. Ábrela en tu móvil: ${payload.link()}"
+            "Aquí va mi respuesta para cerrar nuestro pacto en ${Brand.NAME}. Ábrela en tu móvil: ${payload.link()}"
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
