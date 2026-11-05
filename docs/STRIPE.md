@@ -2,7 +2,7 @@
 
 Lo hace Kimy en su panel de Stripe (decidido el 05-11-2026). Primero en **modo de prueba**, se prueba un pago completo y después se repite en modo real.
 
-El cobro ya está programado en kimycars.com: `api/scrollban-stripe-webhook.js` crea la licencia cuando llega el pago y `scrollban/gracias` se la entrega a la persona. La app solo necesita los cuatro enlaces de pago.
+El cobro ya está programado en kimycars.com: el webhook (`lib/scrollban-webhook.js`, servido por `api/scrollban-license.js`) crea la licencia cuando llega el pago y `scrollban/gracias` se la entrega a la persona. La app solo necesita los cuatro enlaces de pago.
 
 ## 0. Cuenta nueva de ScrollBan
 
