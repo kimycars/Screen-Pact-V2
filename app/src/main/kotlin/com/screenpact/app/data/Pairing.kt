@@ -20,6 +20,11 @@ import com.screenpact.app.data.db.Friend
  *    primero (FriendCodes.canUnlock). Así, aunque alguien se las apañe para ser su propio amigo
  *    con otro móvil, no le sirve para salir de un bloqueo en el momento.
  *  - Cada respuesta solo vale una vez y las invitaciones caducan a los 7 días.
+ *
+ * Pacto con iPhone: la otra mitad la hace la página web kimycars.com/screenpact/iphone con las
+ * mismas cuentas (Diffie-Hellman en el navegador). Como esa página la puede abrir cualquiera,
+ * un pacto con iPhone espera siempre 24 h, se haga en persona o a distancia. Tú le das a tu
+ * amigo el código de Tiempo de uso de su iPhone ([IosCodes]).
  */
 object Pairing {
 
@@ -67,13 +72,16 @@ object Pairing {
             PactKeys.derive(myId, mine.privateKey, mine.publicKey, payload.installId, payload.publicKey)
         }.getOrElse { return Result.Failed("Esa invitación está dañada. Pide que te la vuelvan a mandar.") }
 
+        val ios = payload.platform == "ios"
         db.friendDao().insert(
             Friend(
                 name = payload.name,
                 generateKey = generateKey,
                 verifyKey = verifyKey,
-                pairedRemotely = remote || isReply,
-                peerId = payload.installId
+                pairedRemotely = remote || isReply || ios,
+                peerId = payload.installId,
+                ios = ios,
+                screenTimeCode = if (ios) IosCodes.newCode() else null
             )
         )
         Stats.count(context, Stats.Event.PACT_SEALED)

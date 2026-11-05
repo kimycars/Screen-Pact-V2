@@ -105,7 +105,8 @@ fun AcceptPactScreen(text: String, onDone: () -> Unit) {
             r is Pairing.Result.Paired -> {
                 Text("Pacto sellado", style = MaterialTheme.typography.headlineLarge)
                 Text(
-                    "${r.name} y tú ya tenéis la llave del otro. Su llave empezará a valer dentro de 24 h.",
+                    if (payload?.platform == "ios") "${r.name} ya guarda en su iPhone la llave que te desbloquea, y valdrá dentro de 24 h. Ahora ponle tú el código de Tiempo de uso: lo tienes en Juntos."
+                    else "${r.name} y tú ya tenéis la llave del otro. Su llave empezará a valer dentro de 24 h.",
                     style = MaterialTheme.typography.bodyMedium,
                     color = Sp.TextoSuave
                 )
@@ -121,10 +122,14 @@ fun AcceptPactScreen(text: String, onDone: () -> Unit) {
                 )
                 SpCard {
                     StepLine("Guardas su llave", icon = Icons.Default.Key, detail = "Si se pasa del límite, tú decides si le das más tiempo.", badge = Sp.Linea)
-                    StepLine("Y tú le das la tuya", icon = Icons.Default.Send,
-                        detail = if (payload.replyTo == null) "Al aceptar, tu app te da una respuesta para mandarle." else "Con esto el pacto queda cerrado.",
+                    StepLine(if (payload.platform == "ios") "Y tú le pones su código" else "Y tú le das la tuya", icon = Icons.Default.Send,
+                        detail = when {
+                            payload.platform == "ios" -> "Tiene iPhone: tú le pones el código de Tiempo de uso y se lo das cuando le toque."
+                            payload.replyTo == null -> "Al aceptar, tu app te da una respuesta para mandarle."
+                            else -> "Con esto el pacto queda cerrado."
+                        },
                         badge = Sp.Linea)
-                    StepLine("Empieza en 24 h", icon = Icons.Default.Schedule, detail = "Los pactos a distancia tardan un día en poder dar llaves.", badge = Sp.Linea)
+                    StepLine("Empieza en 24 h", icon = Icons.Default.Schedule, detail = if (payload.platform == "ios") "Los pactos con iPhone tardan un día en poder darte llaves." else "Los pactos a distancia tardan un día en poder dar llaves.", badge = Sp.Linea)
                 }
                 Spacer(Modifier.height(Space.xs))
                 PrimaryButton(if (payload.replyTo == null) "Sellar el pacto" else "Cerrar el pacto", {

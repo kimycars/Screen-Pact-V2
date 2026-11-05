@@ -1,6 +1,8 @@
 package com.screenpact.app.ui.friends
 
 import com.screenpact.app.Brand
+import com.screenpact.app.ui.components.ChoiceChip
+import androidx.compose.foundation.selection.selectableGroup
 import android.Manifest
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -83,6 +85,8 @@ fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
     // escanear el nuestro.
     var pairedName by remember { mutableStateOf<String?>(null) }
     var pasted by remember { mutableStateOf("") }
+    // Amigo con iPhone: misma invitación, pero el QR y el enlace abren la página web del pacto.
+    var forIphone by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) { mine = Pairing.newInvite(context) }
 
@@ -120,18 +124,24 @@ fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
             Text("Sellad el pacto", style = MaterialTheme.typography.headlineLarge)
             Spacer(Modifier.height(Space.xs))
             Text(
-                "Si estáis juntos, cada uno escanea el QR del otro. Si no, mándale la invitación por WhatsApp o donde habléis.",
+                if (forIphone) "Tu amigo no tiene que instalar nada: sella el pacto desde una página web y tú le pones el código de Tiempo de uso de su iPhone."
+                else "Si estáis juntos, cada uno escanea el QR del otro. Si no, mándale la invitación por WhatsApp o donde habléis.",
                 style = MaterialTheme.typography.bodyMedium,
                 color = Sp.TextoSuave
             )
+            Spacer(Modifier.height(Space.m))
+            Row(Modifier.selectableGroup(), horizontalArrangement = Arrangement.spacedBy(Space.xs)) {
+                ChoiceChip("Tiene Android", !forIphone, { forIphone = false })
+                ChoiceChip("Tiene iPhone", forIphone, { forIphone = true })
+            }
         }
 
         // ── En persona ──
         SpCard {
-            Text("Enséñale tu QR", style = MaterialTheme.typography.titleMedium)
+            Text(if (forIphone) "Que escanee tu QR con la cámara" else "Enséñale tu QR", style = MaterialTheme.typography.titleMedium)
             Spacer(Modifier.height(Space.m))
             mine?.second?.let { payload ->
-                val bitmap = remember(payload) { QrUtils.generate(payload.link()) }
+                val bitmap = remember(payload, forIphone) { QrUtils.generate(if (forIphone) payload.iphoneLink() else payload.link()) }
                 Box(
                     Modifier
                         .align(Alignment.CenterHorizontally)
@@ -149,8 +159,12 @@ fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
                 if (pairedName != null) Text("Hecho", style = MaterialTheme.typography.labelMedium, color = Sp.Pacto)
             }
             Text(
-                if (pairedName != null) "Ya tienes la llave de $pairedName. Comprueba que también ha escaneado tu QR."
-                else "Así el pacto va en los dos sentidos.",
+                when {
+                    pairedName != null && forIphone -> "Pacto sellado con $pairedName. Ahora ponle el código de Tiempo de uso: lo tienes en Juntos."
+                    pairedName != null -> "Ya tienes la llave de $pairedName. Comprueba que también ha escaneado tu QR."
+                    forIphone -> "Al sellarlo, su iPhone le enseña un QR. Escanéalo para cerrar el pacto."
+                    else -> "Así el pacto va en los dos sentidos."
+                },
                 style = MaterialTheme.typography.bodySmall,
                 color = Sp.TextoSuave
             )
@@ -164,12 +178,13 @@ fun AddFriendScreen(onDone: () -> Unit, onOpenInvite: (String) -> Unit) {
         SpCard {
             Text("¿No estáis juntos?", style = MaterialTheme.typography.titleMedium)
             Text(
-                "Mándale tu invitación. Al abrirla, su app le dará una respuesta para que te la mande a ti. Un pacto a distancia tarda 24 h en poder dar llaves.",
+                if (forIphone) "Mándale el enlace. Al abrirlo en su iPhone le saldrá una respuesta para que te la mande a ti. Un pacto con iPhone tarda 24 h en poder darte llaves."
+                else "Mándale tu invitación. Al abrirla, su app le dará una respuesta para que te la mande a ti. Un pacto a distancia tarda 24 h en poder dar llaves.",
                 style = MaterialTheme.typography.bodySmall,
                 color = Sp.TextoSuave
             )
             Spacer(Modifier.height(Space.m))
-            OutlineButton("Mandar invitación", { mine?.second?.let { Invite.sharePact(context, it) } })
+            OutlineButton("Mandar invitación", { mine?.second?.let { Invite.sharePact(context, it, iphone = forIphone) } })
             Spacer(Modifier.height(Space.l))
             Text("¿Te ha llegado una invitación o una respuesta?", style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(Space.xs))

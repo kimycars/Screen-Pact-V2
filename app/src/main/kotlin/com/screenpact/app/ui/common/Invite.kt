@@ -34,9 +34,14 @@ object Invite {
         context.startActivity(Intent.createChooser(send, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
-    /** Manda una invitación al pacto (o la respuesta a una) por la app que elija la persona. */
-    fun sharePact(context: Context, payload: PairingPayload) {
-        val text = if (payload.replyTo == null)
+    /**
+     * Manda una invitación al pacto (o la respuesta a una) por la app que elija la persona.
+     * [iphone]: la invitación es para un amigo con iPhone y abre la página web del pacto.
+     */
+    fun sharePact(context: Context, payload: PairingPayload, iphone: Boolean = false) {
+        val text = if (iphone)
+            "Sellemos un pacto en ${Brand.NAME}: tú guardas mi llave y yo pongo el código de Tiempo de uso de tu iPhone. No tienes que instalar nada, abre este enlace en tu iPhone: ${payload.iphoneLink()}"
+        else if (payload.replyTo == null)
             "Sellemos un pacto en ${Brand.NAME}: tú guardas mi llave y yo la tuya. Abre este enlace en tu móvil: ${payload.link()}"
         else
             "Aquí va mi respuesta para cerrar nuestro pacto en ${Brand.NAME}. Ábrela en tu móvil: ${payload.link()}"

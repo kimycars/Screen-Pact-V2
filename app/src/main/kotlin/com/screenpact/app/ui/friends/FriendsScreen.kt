@@ -158,7 +158,7 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember:
                 )
             }
         }
-        if (friends.isNotEmpty()) {
+        if (friends.any { !it.ios }) {
             if (!togetherOn) {
                 item {
                     TogetherOffCard(busy = enabling, error = enableFailed, onEnable = {
@@ -174,7 +174,8 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember:
                 }
             } else if (b != null) {
                 item {
-                    val others = friends.map { f -> f.name to b.friends[f.id] } +
+                    // Los amigos con iPhone no tienen la app, así que no salen en el ranking.
+                    val others = friends.filter { !it.ios }.map { f -> f.name to b.friends[f.id] } +
                         groupOnlyMembers(b).map { m -> m.name to b.people[m.uid] }
                     val rows = listOf(RankRow("Tú", true, b.me.weekUsedMs().takeIf { b.me.hasData }, TimeWon.summaryOf(b.me.records, b.me.baselines).wonMs)) +
                         others.map { (name, person) ->
@@ -365,7 +366,11 @@ private fun FriendCard(friend: Friend, waitMs: Long, onGiveKey: () -> Unit, onBr
             Spacer(Modifier.width(Space.m))
             Column(Modifier.weight(1f)) {
                 Text(friend.name, style = MaterialTheme.typography.titleMedium)
-                Text("Pacto desde el ${formatDay(friend.addedAt)}", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+                Text(
+                    if (friend.ios) "Con iPhone. Pacto desde el ${formatDay(friend.addedAt)}" else "Pacto desde el ${formatDay(friend.addedAt)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Sp.TextoSuave
+                )
                 Text(
                     when {
                         waitMs > 0 -> "Su llave valdrá en ${(waitMs + 3_599_999) / 3_600_000} h"
@@ -380,7 +385,7 @@ private fun FriendCard(friend: Friend, waitMs: Long, onGiveKey: () -> Unit, onBr
             IconAction(Icons.Default.Close, "Romper el pacto con ${friend.name}", onBreak)
         }
         Spacer(Modifier.height(Space.m))
-        PrimaryButton("Darle su llave", onGiveKey)
+        PrimaryButton(if (friend.ios) "Ver su código de Tiempo de uso" else "Darle su llave", onGiveKey)
     }
 }
 

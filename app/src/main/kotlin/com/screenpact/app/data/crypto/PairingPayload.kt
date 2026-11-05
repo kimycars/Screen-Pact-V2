@@ -7,7 +7,8 @@ import org.json.JSONObject
  * se puede mandar por WhatsApp o enseñar en una foto sin riesgo (ver PactKeys).
  *
  *   { "v": 2, "n": nombre, "i": id de instalación, "k": clave pública,
- *     "b": momento de encendido del móvil, "x": id de esta invitación, "r": id al que responde }
+ *     "b": momento de encendido del móvil, "x": id de esta invitación, "r": id al que responde,
+ *     "o": "ios" si responde la página web del pacto con iPhone }
  *
  * Una invitación nueva no lleva "r". La respuesta a una invitación a distancia lleva en "r" el
  * id de la invitación original, para que quien invitó sepa con qué clave privada combinarla.
@@ -18,10 +19,17 @@ data class PairingPayload(
     val publicKey: ByteArray,
     val bootTime: Long,
     val inviteId: String,
-    val replyTo: String? = null
+    val replyTo: String? = null,
+    /** "ios" si la respuesta viene de la página web del pacto con iPhone (sin app). */
+    val platform: String? = null
 ) {
     /** Enlace que se puede mandar por chat. Lo que va tras "#" no llega nunca al servidor. */
-    fun link(): String = WEB + "#" + PactKeys.b64(json().toByteArray(Charsets.UTF_8))
+    fun link(): String = WEB + "#" + data()
+
+    /** La misma invitación, para un amigo con iPhone: abre la página web que sella el pacto sin app. */
+    fun iphoneLink(): String = WEB_IPHONE + "#" + data()
+
+    private fun data() = PactKeys.b64(json().toByteArray(Charsets.UTF_8))
 
     private fun json(): String = JSONObject().apply {
         put("v", 2)
@@ -31,6 +39,7 @@ data class PairingPayload(
         put("b", bootTime)
         put("x", inviteId)
         replyTo?.let { put("r", it) }
+        platform?.let { put("o", it) }
     }.toString()
 
     override fun equals(other: Any?): Boolean =
@@ -40,6 +49,7 @@ data class PairingPayload(
 
     companion object {
         const val WEB = "https://www.kimycars.com/screenpact/pacto"
+        const val WEB_IPHONE = "https://www.kimycars.com/screenpact/iphone"
         private const val MAX_NAME = 40
 
         /**
@@ -58,7 +68,8 @@ data class PairingPayload(
                 publicKey = PactKeys.unb64(json.getString("k")),
                 bootTime = json.optLong("b", 0),
                 inviteId = json.getString("x"),
-                replyTo = json.optString("r").takeIf { it.isNotBlank() }
+                replyTo = json.optString("r").takeIf { it.isNotBlank() },
+                platform = json.optString("o").takeIf { it == "ios" }
             )
         }.getOrNull()
 

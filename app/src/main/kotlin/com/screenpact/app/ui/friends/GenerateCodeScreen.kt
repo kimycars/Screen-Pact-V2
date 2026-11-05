@@ -59,13 +59,17 @@ fun GenerateCodeScreen(target: KeyFor, onBack: () -> Unit) {
     val clipboard = LocalClipboardManager.current
     var name by remember { mutableStateOf("") }
     var key by remember { mutableStateOf<ByteArray?>(null) }
+    var iosFriend by remember { mutableStateOf<com.screenpact.app.data.db.Friend?>(null) }
     var code by remember { mutableStateOf("------") }
     var seconds by remember { mutableIntStateOf(30) }
     var copied by remember { mutableStateOf(false) }
 
     LaunchedEffect(target) {
         when (target) {
-            is KeyFor.Friend -> db.friendDao().getAll().firstOrNull { it.id == target.friendId }?.let { name = it.name; key = it.generateKey }
+            is KeyFor.Friend -> db.friendDao().getAll().firstOrNull { it.id == target.friendId }?.let {
+                // Con iPhone no hay llave de 6 cifras: se le da el código de Tiempo de uso.
+                if (it.ios) iosFriend = it else { name = it.name; key = it.generateKey }
+            }
             is KeyFor.GroupMember -> db.pactGroupDao().getAll().firstOrNull { it.id == target.groupId }?.let {
                 name = target.name
                 key = GroupKeys.unlockKey(it.secret, target.installId)
@@ -83,6 +87,8 @@ fun GenerateCodeScreen(target: KeyFor, onBack: () -> Unit) {
             delay(1000)
         }
     }
+
+    iosFriend?.let { IosCodeScreen(it, onBack); return }
 
     Column(
         Modifier.fillMaxSize().padding(horizontal = Space.xl).padding(top = Space.xs, bottom = Space.xl),

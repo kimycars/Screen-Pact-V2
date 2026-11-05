@@ -104,7 +104,7 @@ object Together {
 
         val joined = p.getStringSet(KEY_JOINED, emptySet())!!.toMutableSet()
         val before = joined.toSet()
-        val toJoin = db.friendDao().getAll().map { groupOf(it) } +
+        val toJoin = db.friendDao().getAll().filter { !it.ios }.map { groupOf(it) } +
             db.pactGroupDao().getAll().map { it.id to GroupKeys.joinSecret(it.secret) }
         for ((id, secret) in toJoin) {
             if (id in joined) continue

@@ -210,6 +210,7 @@ fun InviteToGroupDialog(
 /** Amigos que se pueden invitar a un grupo y los que aún no (pacto en espera o sin ranking). */
 fun inviteCandidates(friends: List<Friend>, board: Together.Board, members: List<Together.Member>): Pair<List<Friend>, List<Friend>> {
     val inGroup = members.map { it.uid }.toSet()
-    val notIn = friends.filter { board.friendUids[it.id] !in inGroup || board.friendUids[it.id] == null }
+    // Los amigos con iPhone no tienen la app: no pueden estar en un grupo.
+    val notIn = friends.filter { !it.ios && (board.friendUids[it.id] !in inGroup || board.friendUids[it.id] == null) }
     return notIn.partition { FriendCodes.canUnlock(it, friends) && board.friendUids[it.id] != null }
 }

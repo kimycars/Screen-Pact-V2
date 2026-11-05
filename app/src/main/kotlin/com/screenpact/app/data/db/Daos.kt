@@ -26,6 +26,9 @@ interface FriendDao {
 
     @Query("UPDATE friends SET keysGiven = keysGiven + 1 WHERE id = :id")
     suspend fun countKey(id: Long)
+
+    @Query("UPDATE friends SET screenTimeCode = :code WHERE id = :id")
+    suspend fun setScreenTimeCode(id: Long, code: String)
 }
 
 @Dao

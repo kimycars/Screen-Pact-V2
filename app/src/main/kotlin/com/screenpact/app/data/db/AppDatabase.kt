@@ -9,7 +9,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class, Baseline::class, Challenge::class, PactGroup::class],
-    version = 7,
+    version = 8,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -81,6 +81,14 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v8: amigos con iPhone (pacto mixto) y su código de Tiempo de uso. */
+        val MIGRATION_7_8 = object : Migration(7, 8) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE friends ADD COLUMN ios INTEGER NOT NULL DEFAULT 0")
+                db.execSQL("ALTER TABLE friends ADD COLUMN screenTimeCode TEXT")
+            }
+        }
+
         fun get(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -90,7 +98,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Cada cambio de estructura lleva su migración: actualizar la app NUNCA
                     // borra pactos ni límites. Solo se borra si se instala una versión más vieja.
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7, MIGRATION_7_8)
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build().also { INSTANCE = it }
             }

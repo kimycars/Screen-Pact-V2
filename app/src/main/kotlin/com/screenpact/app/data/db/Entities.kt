@@ -24,7 +24,11 @@ data class Friend(
     /** Pacto sellado a distancia (por enlace): espera siempre 24 h antes de poder dar llaves. */
     @ColumnInfo(defaultValue = "0") val pairedRemotely: Boolean = false,
     /** Id de instalación del amigo (desde la v5), para no sellar dos pactos con la misma persona. */
-    val peerId: String? = null
+    val peerId: String? = null,
+    /** Amigo con iPhone (desde la v8): te da la llave desde la web y tú le das su código de Tiempo de uso. */
+    @ColumnInfo(defaultValue = "0") val ios: Boolean = false,
+    /** Código de 4 cifras de Tiempo de uso que pones en su iPhone. Solo si [ios]. */
+    val screenTimeCode: String? = null
 ) {
     override fun equals(other: Any?): Boolean {
         if (this === other) return true
@@ -36,7 +40,9 @@ data class Friend(
             addedAt == other.addedAt &&
             keysGiven == other.keysGiven &&
             pairedRemotely == other.pairedRemotely &&
-            peerId == other.peerId
+            peerId == other.peerId &&
+            ios == other.ios &&
+            screenTimeCode == other.screenTimeCode
     }
 
     override fun hashCode(): Int {
@@ -48,6 +54,8 @@ data class Friend(
         r = 31 * r + keysGiven
         r = 31 * r + pairedRemotely.hashCode()
         r = 31 * r + (peerId?.hashCode() ?: 0)
+        r = 31 * r + ios.hashCode()
+        r = 31 * r + (screenTimeCode?.hashCode() ?: 0)
         return r
     }
 }
