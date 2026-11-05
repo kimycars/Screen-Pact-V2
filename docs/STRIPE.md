@@ -53,3 +53,7 @@ Con los enlaces de modo de prueba: compra el anual con la tarjeta `4242 4242 424
 ## Estado (05-11-2026)
 
 Cuenta "ScrollBan" creada en Stripe. Probado en modo de prueba: compra con redirección a la página de gracias y compra cerrando la pestaña nada más pagar (la app recogió la licencia anual sola al volver). Los cuatro Payment Links de **modo de prueba** están en `data/Plans.kt` y las tres variables `SCROLLBAN_*` están en Vercel (Production), con la web ya redesplegada. Falta la compra de prueba completa y después repetirlo todo en modo real (productos, enlaces, webhook y variables con las claves `sk_live_`). La landing no lleva botones de compra a propósito: Pro se compra desde la app, porque sin la app la licencia no sirve.
+
+## Pago dentro de la app (05-11-2026)
+
+El pago se abre en una Custom Tab (pestaña del navegador superpuesta a la app, con los colores de ScrollBan), no con el pago "integrado" de Stripe ni con su SDK nativo. Motivo: con los Payment Links no hace falta otra función en Vercel (el plan Hobby ya está en el límite de 12), Stripe sigue encargándose de la verificación del banco y de Google Pay, y la app recoge la licencia sola al cerrar la pestaña. Si algún día se quiere la hoja de pago nativa (PaymentSheet del SDK de Stripe), habrá que crear los pagos desde el servidor en vez de con Payment Links. En Play Store, Google obliga a usar su sistema de pagos para Pro de todos modos.
