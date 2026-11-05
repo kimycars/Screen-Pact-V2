@@ -2,9 +2,11 @@
 --
 -- Qué guarda: por persona (identidad anónima, sin correo), los minutos de cada día por app con
 -- límite, su límite, las llaves usadas y su media de antes; y sus retos con fecha. Lo ve solo
--- la gente con la que comparte grupo (hoy, cada pacto es un grupo de 2).
--- Qué NO guarda: nombres, llaves de los pactos ni nada que permita desbloquear. Los nombres se
--- quedan en cada móvil.
+-- la gente con la que comparte grupo. Cada pacto es un grupo de 2; además hay grupos de 3 o más.
+-- Qué NO guarda en claro: nombres, llaves ni nada que permita desbloquear. En los grupos de 3 o
+-- más, cada miembro sube su nombre cifrado con el secreto del grupo (profile) y las invitaciones
+-- llevan el secreto cifrado con la clave del pacto entre quien invita y quien recibe (box). El
+-- servidor no tiene ninguna de esas claves.
 --
 -- Acceso: ninguna tabla se puede leer ni escribir directamente desde la app (RLS activo y sin
 -- políticas). Todo pasa por las funciones de abajo, que comprueban auth.uid().
@@ -28,6 +30,19 @@ create table if not exists public.group_members (
   primary key (group_id, user_id)
 );
 create index if not exists group_members_user_idx on public.group_members(user_id);
+-- Nombre del miembro cifrado para el resto del grupo (solo en grupos de 3 o más).
+alter table public.group_members add column if not exists profile text check (char_length(profile) <= 600);
+
+-- Invitación a un grupo de 3 o más: el secreto del grupo cifrado para quien la recibe.
+create table if not exists public.group_invites (
+  group_id uuid not null references public.groups(id) on delete cascade,
+  to_user uuid not null references auth.users(id) on delete cascade,
+  from_user uuid not null references auth.users(id) on delete cascade,
+  box text not null check (char_length(box) between 1 and 1000),
+  created_at timestamptz not null default now(),
+  primary key (group_id, to_user)
+);
+create index if not exists group_invites_to_idx on public.group_invites(to_user);
 
 create table if not exists public.day_usage (
   user_id uuid not null references auth.users(id) on delete cascade,
@@ -58,8 +73,9 @@ alter table public.groups enable row level security;
 alter table public.group_members enable row level security;
 alter table public.day_usage enable row level security;
 alter table public.challenges enable row level security;
+alter table public.group_invites enable row level security;
 
-revoke all on public.groups, public.group_members, public.day_usage, public.challenges from anon, authenticated;
+revoke all on public.groups, public.group_members, public.day_usage, public.challenges, public.group_invites from anon, authenticated;
 
 -- Funciones -----------------------------------------------------------------------------------
 
@@ -88,6 +104,59 @@ begin
   if (select count(*) from group_members where user_id = v_uid) >= 50 then raise exception 'too many groups'; end if;
 
   insert into group_members (group_id, user_id) values (p_group, v_uid);
+  delete from group_invites where group_id = p_group and to_user = v_uid;
+end;
+$$;
+
+-- Guarda el nombre cifrado del que llama en un grupo suyo.
+create or replace function public.set_profile(p_group uuid, p_profile text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  update group_members set profile = p_profile where group_id = p_group and user_id = auth.uid();
+end;
+$$;
+
+-- Invita a alguien a un grupo de 3 o más. Solo se puede invitar a alguien con quien ya se
+-- comparte otro grupo (en la práctica, un amigo con pacto). Como mucho 8 personas contando las
+-- invitaciones pendientes.
+create or replace function public.invite_to_group(p_group uuid, p_to uuid, p_box text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  v_uid uuid := auth.uid();
+begin
+  if v_uid is null then raise exception 'not signed in'; end if;
+  if not exists (select 1 from group_members where group_id = p_group and user_id = v_uid) then raise exception 'not a member'; end if;
+  if not exists (
+    select 1 from group_members a join group_members b using (group_id)
+    where a.user_id = v_uid and b.user_id = p_to and a.group_id <> p_group
+  ) then raise exception 'not connected'; end if;
+  if exists (select 1 from group_members where group_id = p_group and user_id = p_to) then return; end if;
+  if (select count(*) from group_members where group_id = p_group)
+     + (select count(*) from group_invites where group_id = p_group and to_user <> p_to) >= 8 then raise exception 'group full'; end if;
+  insert into group_invites (group_id, to_user, from_user, box) values (p_group, p_to, v_uid, p_box)
+  on conflict (group_id, to_user) do update set from_user = excluded.from_user, box = excluded.box, created_at = now();
+end;
+$$;
+
+-- Rechaza una invitación.
+create or replace function public.decline_invite(p_group uuid)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  delete from group_invites where group_id = p_group and to_user = auth.uid();
 end;
 $$;
 
@@ -166,7 +235,10 @@ begin
     )
     select jsonb_build_object(
       'me', v_uid,
-      'members', coalesce((select jsonb_agg(jsonb_build_object('g', group_id, 'u', user_id)) from members), '[]'::jsonb),
+      'members', coalesce((select jsonb_agg(jsonb_build_object('g', m.group_id, 'u', m.user_id, 'p', gm.profile))
+        from members m join group_members gm on gm.group_id = m.group_id and gm.user_id = m.user_id), '[]'::jsonb),
+      'invites', coalesce((select jsonb_agg(jsonb_build_object('g', i.group_id, 'from', i.from_user, 'box', i.box))
+        from group_invites i where i.to_user = v_uid), '[]'::jsonb),
       'usage', coalesce((
         select jsonb_agg(jsonb_build_object(
           'u', d.user_id, 'day', d.day, 'package', d.package, 'app_name', d.app_name,
@@ -200,6 +272,8 @@ end;
 $$;
 
 revoke all on function public.join_group(uuid, text), public.leave_group(uuid), public.push_usage(jsonb, jsonb),
-  public.my_board(int), public.delete_my_data() from public, anon;
+  public.my_board(int), public.delete_my_data(), public.set_profile(uuid, text), public.invite_to_group(uuid, uuid, text),
+  public.decline_invite(uuid) from public, anon;
 grant execute on function public.join_group(uuid, text), public.leave_group(uuid), public.push_usage(jsonb, jsonb),
-  public.my_board(int), public.delete_my_data() to authenticated;
+  public.my_board(int), public.delete_my_data(), public.set_profile(uuid, text), public.invite_to_group(uuid, uuid, text),
+  public.decline_invite(uuid) to authenticated;

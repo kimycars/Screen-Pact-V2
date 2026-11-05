@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.screenpact.app.data.crypto.TOTPManager
 import com.screenpact.app.data.db.AppDatabase
-import com.screenpact.app.data.db.Friend
+import com.screenpact.app.data.crypto.GroupKeys
 import com.screenpact.app.ui.components.BackButton
 import com.screenpact.app.ui.components.OutlineButton
 import com.screenpact.app.ui.theme.Mono
@@ -46,24 +46,37 @@ import com.screenpact.app.ui.theme.Sizes
 import com.screenpact.app.ui.theme.Strokes
 import com.screenpact.app.ui.theme.TextStyles
 
+/** Para quién es la llave: un amigo del pacto o alguien de un grupo (por su id de instalación). */
+sealed class KeyFor {
+    data class Friend(val friendId: Long) : KeyFor()
+    data class GroupMember(val groupId: String, val installId: String, val name: String) : KeyFor()
+}
+
 @Composable
-fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
+fun GenerateCodeScreen(target: KeyFor, onBack: () -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val clipboard = LocalClipboardManager.current
-    var friend by remember { mutableStateOf<Friend?>(null) }
+    var name by remember { mutableStateOf("") }
+    var key by remember { mutableStateOf<ByteArray?>(null) }
     var code by remember { mutableStateOf("------") }
     var seconds by remember { mutableIntStateOf(30) }
     var copied by remember { mutableStateOf(false) }
 
-    LaunchedEffect(friendId) {
-        friend = db.friendDao().getAll().firstOrNull { it.id == friendId }
+    LaunchedEffect(target) {
+        when (target) {
+            is KeyFor.Friend -> db.friendDao().getAll().firstOrNull { it.id == target.friendId }?.let { name = it.name; key = it.generateKey }
+            is KeyFor.GroupMember -> db.pactGroupDao().getAll().firstOrNull { it.id == target.groupId }?.let {
+                name = target.name
+                key = GroupKeys.unlockKey(it.secret, target.installId)
+            }
+        }
     }
 
-    LaunchedEffect(friend) {
-        val f = friend ?: return@LaunchedEffect
+    LaunchedEffect(key) {
+        val k = key ?: return@LaunchedEffect
         while (true) {
-            val next = TOTPManager.currentCode(f.generateKey)
+            val next = TOTPManager.currentCode(k)
             if (next != code) copied = false
             code = next
             seconds = TOTPManager.secondsRemaining()
@@ -78,7 +91,7 @@ fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
         Box(Modifier.fillMaxWidth()) { BackButton(onBack) }
         Spacer(Modifier.height(Space.xxl))
         Text("Llave para", style = MaterialTheme.typography.bodyMedium, color = Sp.TextoSuave)
-        Text(friend?.name ?: "", style = MaterialTheme.typography.headlineLarge)
+        Text(name, style = MaterialTheme.typography.headlineLarge)
 
         Spacer(Modifier.height(Space.xxxl))
         UsageRing(seconds / 30f, Sp.Llave, size = Sizes.keyRing, track = Sp.Superficie) {
@@ -96,7 +109,7 @@ fun GenerateCodeScreen(friendId: Long, onBack: () -> Unit) {
 
         Spacer(Modifier.height(Space.xxxl))
         Text(
-            "Esta llave solo abre el bloqueo de ${friend?.name ?: "tu amigo"}. Dásela si de verdad crees que le toca.",
+            "Esta llave solo abre el bloqueo de ${name.ifBlank { "tu amigo" }}. Dásela si de verdad crees que le toca.",
             style = MaterialTheme.typography.bodyMedium,
             color = Sp.TextoSuave,
             textAlign = TextAlign.Center

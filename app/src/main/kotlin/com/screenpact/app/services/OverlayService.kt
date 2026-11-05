@@ -114,9 +114,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
 
         // Nombres de los amigos que pueden dar la llave ahora mismo, para la pantalla.
         scope.launch {
-            val db = AppDatabase.get(applicationContext)
-            val all = db.friendDao().getAll()
-            friendNames.value = all.sortedBy { it.addedAt }.filter { FriendCodes.canUnlock(it, all) }.map { it.name }
+            friendNames.value = FriendCodes.keyholderNames(applicationContext)
         }
 
         val params = WindowManager.LayoutParams().apply {
@@ -195,7 +193,7 @@ class OverlayService : Service(), LifecycleOwner, ViewModelStoreOwner, SavedStat
     ) {
         scope.launch {
             val db = AppDatabase.get(applicationContext)
-            val match = FriendCodes.redeem(db, code)
+            val match = FriendCodes.redeem(applicationContext, code)
             if (match != null) {
                 // El código de un amigo también perdona una trampa guardada (permisos, servicio parado).
                 TamperGuard.clear(applicationContext)

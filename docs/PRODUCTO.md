@@ -267,15 +267,25 @@ Segunda tanda, con Supabase (hecho el 05-11-2026, probado en el emulador con un 
 - **Opcional y apagado de inicio**: en Juntos sale "Ranking con tus amigos" con lo que se comparte explicado antes de pulsar "Activar el ranking". En Ajustes hay un interruptor; al apagarlo se borra del servidor la identidad y todo lo suyo.
 - **Cuándo sube**: el servicio sube cada 15 minutos mientras funciona (aparte del bucle de bloqueo, para que la red nunca retrase un bloqueo), y la pantalla Juntos sube y pide el grupo al abrirse y cada minuto mientras está abierta.
 - **En Juntos**: lo que habéis recuperado juntos en los últimos 30 días (con botón de compartir); el ranking de los últimos 7 días por uso de las apps con límite, de menos a más, con lo que ha recuperado cada uno; quien no ha activado el ranking sale al final sin cifras; los retos de los amigos con sus días y "Unirme al reto" si tienes límite en esa app; tu reto dice "Con Lucía" si lo hacéis juntos. Romper un pacto saca del grupo.
-- **Unirse a un reto**: es el mismo reto con las mismas fechas, así que los días que ya pasaron cuentan con tu propio historial (si no tenías límite en esa app, salen como no cumplidos). Revisar con Kimy si prefiere que cuente solo desde que te unes.
+- **Unirse a un reto** (Kimy, 05-11-2026): cuenta desde que te unes. Es el mismo reto (mismo id, app y tope) y acaba el mismo día que el de tu amigo, pero para ti empieza hoy (o mañana si hoy ya te has pasado del tope), así que tiene menos días. La tarjeta lo avisa: "Si te unes, cuenta desde hoy: quedan 5 días".
 - El código de Supabase vive en `data/cloud/` (`Cloud.kt` es la única conexión con el servidor; `Together.kt`, la lógica). La cuenta del tiempo ganado y del progreso de los retos sirve igual para tus datos y los de un amigo (`TimeWon.summaryOf`, `Challenges.progressOf`).
 
-Pendiente de esta parte: política de privacidad (antes de lanzar), decidir si hace falta captcha contra registros falsos, limpiar identidades anónimas abandonadas (por ejemplo, una tarea mensual que borre las que llevan 90 días sin subir nada), probar con dos móviles reales. Después: grupos de 3 o más y pacto mixto con iPhone.
+Tercera tanda: grupos de 3 o más (hecho el 05-11-2026, probado en el emulador con dos amigos simulados y con pruebas directas al servidor):
+- **Cómo se forma**: con el ranking activado, cualquiera crea un grupo con un nombre y mete a amigos con los que ya tiene pacto. El invitado ve la invitación en Juntos ("Lucía te invita a su grupo") y decide si entra. Tope de 8 personas contando invitaciones pendientes. Solo se puede invitar a alguien con quien ya compartes un pacto (lo comprueba el servidor), cuyo pacto ya da llaves (pasó la espera de 24 h) y que tiene el ranking activado.
+- **Llaves**: cualquiera del grupo puede darte la llave. Cada grupo tiene un secreto de 32 bytes; la llave de cada miembro sale de ese secreto y de su id de instalación (`data/crypto/GroupKeys.kt`). Las llaves de un grupo valen 24 h después de entrar en él, siempre (`FriendCodes.canUnlock(group)`). Si alguien del grupo también tiene pacto contigo, se le da la llave del pacto. La pantalla de bloqueo nombra también a los grupos ("Pídele la llave a … o a alguien del grupo Piso").
+- **Qué viaja y cifrado**: el secreto del grupo pasa de quien invita al invitado por el servidor, cifrado con una clave que sale de su pacto (AES-GCM). Cada miembro sube su nombre y su id de instalación cifrados con el secreto del grupo, para que el resto le vea aunque no tenga pacto con él. El servidor guarda esas cajas cifradas y el hash del secreto, pero no puede leer nada. Es un dato nuevo que sube (cifrado): hay que contarlo en la política de privacidad.
+- **Salir**: salir de un grupo pide llave, igual que romper un pacto (te deja con menos gente que pueda dártela). Apagar el ranking borra todo del servidor pero los grupos se quedan en el móvil y sus llaves siguen valiendo; al volver a activarlo se vuelve a entrar.
+- **En Juntos**: invitaciones arriba; el ranking y lo recuperado juntos incluyen a la gente de tus grupos aunque no tengas pacto con ella; sus retos salen y te puedes unir; cada grupo es una tarjeta con sus miembros, "Darle su llave", "Añadir a un amigo" y "Salir del grupo".
+- **Servidor**: columna `profile` en `group_members`, tabla `group_invites` y funciones `set_profile`, `invite_to_group` y `decline_invite` (en `supabase/schema.sql`, ya ejecutado). `join_group` borra la invitación al entrar y `my_board` devuelve los perfiles cifrados y las invitaciones.
+- Base de datos v7 (tabla `pact_groups`, con su migración).
+
+Pendiente de esta parte: política de privacidad (antes de lanzar), decidir si hace falta captcha contra registros falsos, limpiar identidades anónimas abandonadas (por ejemplo, una tarea mensual que borre las que llevan 90 días sin subir nada), probar con dos móviles reales. Siguiente: pacto mixto con iPhone.
 
 ## 9. Pendientes
 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
-- Servidor de grupos en Supabase: hecho el 05-11-2026; falta probarlo con dos móviles reales.
+- Servidor de grupos en Supabase y grupos de 3 o más: hecho el 05-11-2026; falta probarlo con dos móviles reales.
+- Pacto mixto con iPhone.
 - Política de privacidad y textos de la app con el nuevo reparto de datos.
 - Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
 - Confirmar el plan de Vercel de kimycars.com.

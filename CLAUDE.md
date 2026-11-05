@@ -21,17 +21,21 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: de
 ## Reglas de producto que el código debe respetar
 
 - Endurecer es libre, aflojar pide llave: añadir apps, bajar límites y reactivar son libres; subir límites, pausar, quitar apps y romper pactos piden la llave de un amigo (`FriendCodeDialog`).
-- La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`.
+- La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`. Vale la llave de un amigo con pacto o la de un grupo de 3 o más (24 h después de entrar en él). Salir de un grupo pide llave, como romper un pacto.
 - Los pactos se sellan solo en `data/Pairing.kt` (en persona por QR o a distancia por enlace). Las llaves salen de Diffie-Hellman (`data/crypto/PactKeys.kt`): ni el QR ni el enlace llevan nada secreto. No se acepta una invitación propia ni una creada en el mismo móvil (apps clonadas), y un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
 - Privacidad: los datos de la persona no salen del móvil salvo lo que ella active. Las conexiones a Internet son:
   - Estadísticas anónimas de `data/Stats.kt` (encendidas en la bienvenida, se apagan en Ajustes).
   - Renovación de la licencia de Pro en `data/Pro.kt` (manda solo el id de licencia).
-  - Ranking con amigos en Supabase (`data/cloud/`, desde el 05-11-2026): apagado de inicio. Si se activa, suben los minutos por día de las apps con límite, las llaves usadas, la media de antes y el reto, y solo los ve la gente con la que hay pacto. Nunca suben nombres ni llaves. Apagarlo borra todo del servidor. `data/cloud/Cloud.kt` es la única conexión con Supabase y la estructura del servidor está en `supabase/schema.sql`.
+  - Ranking con amigos en Supabase (`data/cloud/`, desde el 05-11-2026): apagado de inicio. Si se activa, suben los minutos por día de las apps con límite, las llaves usadas, la media de antes y el reto, y solo los ve la gente con la que hay pacto o grupo. Nunca suben nombres ni llaves en claro: en los grupos de 3 o más, el nombre y el id de instalación suben cifrados con el secreto del grupo, y el secreto viaja cifrado con la clave del pacto (`data/crypto/GroupKeys.kt`). Apagarlo borra todo del servidor. `data/cloud/Cloud.kt` es la única conexión con Supabase y la estructura del servidor está en `supabase/schema.sql`.
   Cualquier dato nuevo que se quiera enviar pasa por uno de esos sitios, se añade a la política de privacidad (kimycars.com/screenpact/privacidad, en la web de kimycars) y se habla antes con Kimy. La política aún no recoge el ranking: hay que actualizarla antes de lanzar.
 - Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.
 - Pro: `data/Pro.kt` es la única fuente de verdad (`Pro.isPro`, `rememberIsPro()` en la interfaz). Las licencias las firma el servidor de kimycars.com (`api/sp-stripe-webhook.js`, `api/sp-license.js`, `lib/sp-license.js`) con la clave privada de `Documents\claves\screenpact-license-private.pem`; la app solo lleva la pública. En la versión de pruebas hay un interruptor "Pro de prueba" en Ajustes.
 - Base de datos: cada cambio de estructura sube la versión de `AppDatabase` y lleva su `Migration`. Nunca `fallbackToDestructiveMigration`: borraría los pactos de la gente al actualizar.
+
+## Commit y despliegue (Kimy, 05-11-2026)
+
+Commit y push a GitHub (`origin main`) cada vez que se termina algo, sin preguntar. Lo que se ejecuta en Supabase se guarda también en `supabase/schema.sql` en el mismo commit.
 
 ## Compilar
 

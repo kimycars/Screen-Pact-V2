@@ -2,10 +2,15 @@ package com.screenpact.app.data.cloud
 
 import android.content.Context
 import com.screenpact.app.data.History
+import com.screenpact.app.data.Prefs
+import com.screenpact.app.data.crypto.GroupKeys
+import com.screenpact.app.data.crypto.PactKeys
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Challenge
 import com.screenpact.app.data.db.DayRecord
 import com.screenpact.app.data.db.Friend
+import com.screenpact.app.data.db.PactGroup
+import java.util.UUID
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -24,6 +29,11 @@ import java.util.Base64
  * Cada pacto es un grupo de 2. Los dos móviles calculan por su cuenta el mismo id de grupo y el
  * mismo secreto a partir de las llaves del pacto, así que no hace falta mandar nada más. El
  * servidor solo guarda el hash del secreto y nunca ve las llaves.
+ *
+ * Además hay grupos de 3 o más ([PactGroup]). Quien lo crea inventa su secreto; para meter a un
+ * amigo con pacto, se lo manda cifrado con la clave de su pacto a través del servidor
+ * ([invite]). Cada miembro sube su nombre cifrado con el secreto del grupo, así el resto sabe
+ * quién es aunque no tenga pacto con él (ver data/crypto/GroupKeys.kt).
  */
 object Together {
 
@@ -40,6 +50,10 @@ object Together {
 
     /** Días que se piden al servidor (el tiempo ganado del grupo mira 30). */
     const val BOARD_DAYS = 31
+
+    /** Largo máximo del nombre de un grupo y del de una persona. */
+    const val MAX_GROUP_NAME = 30
+    private const val MAX_NAME = 40
 
     private val syncLock = Mutex()
 
@@ -89,8 +103,10 @@ object Together {
         val db = AppDatabase.get(context)
 
         val joined = p.getStringSet(KEY_JOINED, emptySet())!!.toMutableSet()
-        for (f in db.friendDao().getAll()) {
-            val (id, secret) = groupOf(f)
+        val before = joined.toSet()
+        val toJoin = db.friendDao().getAll().map { groupOf(it) } +
+            db.pactGroupDao().getAll().map { it.id to GroupKeys.joinSecret(it.secret) }
+        for ((id, secret) in toJoin) {
             if (id in joined) continue
             try {
                 Cloud.rpc(context, "join_group", JSONObject().put("p_group", id).put("p_secret", secret))
@@ -101,6 +117,9 @@ object Together {
             joined += id
             p.edit().putStringSet(KEY_JOINED, joined.toSet()).apply()
         }
+        // Tu nombre, cifrado para el resto de cada grupo de 3 o más.
+        // Al entrar, y en cada subida forzada por si ha cambiado el nombre.
+        db.pactGroupDao().getAll().filter { it.id in joined && (force || it.id !in before) }.forEach { setProfile(context, it) }
 
         val names = db.appLimitDao().observeAll().first().associate { it.packageName to it.appName }
         val baselines = db.baselineDao().getAll().associate { it.packageName to it.avgDailyMs }
@@ -131,13 +150,75 @@ object Together {
         p.edit().putLong(KEY_LAST_PUSH, System.currentTimeMillis()).apply()
     }
 
+    private suspend fun setProfile(context: Context, g: PactGroup) {
+        val profile = JSONObject().put("n", Prefs.getOwnName(context).ifBlank { "Sin nombre" }).put("i", Prefs.getInstallId(context))
+        Cloud.rpc(context, "set_profile", JSONObject().put("p_group", g.id).put("p_profile", GroupKeys.sealForGroup(g.secret, profile.toString())))
+    }
+
+    private fun markJoined(context: Context, id: String, joinedNow: Boolean) {
+        val p = prefs(context)
+        val set = p.getStringSet(KEY_JOINED, emptySet())!!
+        p.edit().putStringSet(KEY_JOINED, if (joinedNow) set + id else set - id).apply()
+    }
+
+    /** Entra en un grupo del servidor y sube tu nombre. Lanza excepción si falla (400 = lleno). */
+    private suspend fun joinNow(context: Context, g: PactGroup) {
+        Cloud.rpc(context, "join_group", JSONObject().put("p_group", g.id).put("p_secret", GroupKeys.joinSecret(g.secret)))
+        markJoined(context, g.id, true)
+        setProfile(context, g)
+    }
+
+    /** Crea un grupo de 3 o más llamado [name]. Lanza excepción si no hay conexión. */
+    suspend fun createGroup(context: Context, name: String): PactGroup {
+        val g = PactGroup(UUID.randomUUID().toString(), name.trim().take(MAX_GROUP_NAME), GroupKeys.newSecret())
+        val dao = AppDatabase.get(context).pactGroupDao()
+        dao.insert(g)
+        try {
+            joinNow(context, g)
+        } catch (e: Exception) {
+            dao.delete(g.id)
+            throw e
+        }
+        return g
+    }
+
+    /** Invita a [friend] (con pacto, y en el servidor como [friendUid]) al grupo [g]. */
+    suspend fun invite(context: Context, g: PactGroup, friend: Friend, friendUid: String) {
+        val box = GroupKeys.sealForFriend(friend, JSONObject().put("g", g.id).put("s", PactKeys.b64(g.secret)).put("n", g.name).toString())
+        Cloud.rpc(context, "invite_to_group", JSONObject().put("p_group", g.id).put("p_to", friendUid).put("p_box", box))
+    }
+
+    /** Acepta una invitación y entra en el grupo. Lanza excepción si falla (400 = el grupo está lleno). */
+    suspend fun accept(context: Context, inv: GroupInvite) {
+        val g = PactGroup(inv.groupId, inv.name, inv.secret)
+        val dao = AppDatabase.get(context).pactGroupDao()
+        // Primero en el móvil: si se corta la conexión a medias, la próxima subida termina de entrar.
+        dao.insert(g)
+        try {
+            joinNow(context, g)
+        } catch (e: Cloud.CloudException) {
+            if (e.code == 400) dao.delete(g.id)
+            throw e
+        }
+    }
+
+    suspend fun decline(context: Context, inv: GroupInvite) {
+        Cloud.rpc(context, "decline_invite", JSONObject().put("p_group", inv.groupId))
+    }
+
+    /** Sale de un grupo de 3 o más. Sin conexión sale igual en el móvil: sus llaves dejan de valer. */
+    suspend fun leaveGroup(context: Context, g: PactGroup) {
+        if (isEnabled(context)) runCatching { Cloud.rpc(context, "leave_group", JSONObject().put("p_group", g.id)) }
+        markJoined(context, g.id, false)
+        AppDatabase.get(context).pactGroupDao().delete(g.id)
+    }
+
     /** Al romper un pacto: sale de su grupo. Si no hay conexión, no pasa nada grave (el grupo deja de verse en la app). */
     suspend fun leave(context: Context, friend: Friend) {
         if (!isEnabled(context)) return
         val (id, _) = groupOf(friend)
         runCatching { Cloud.rpc(context, "leave_group", JSONObject().put("p_group", id)) }
-        val p = prefs(context)
-        p.edit().putStringSet(KEY_JOINED, p.getStringSet(KEY_JOINED, emptySet())!! - id).apply()
+        markJoined(context, id, false)
     }
 
     /** Lo que se sabe de una persona del grupo: sus días, su media de antes por app y su reto. */
@@ -147,8 +228,26 @@ object Together {
         val challenges: List<Challenge>,
     )
 
-    /** Tú y cada amigo con el que compartes grupo (por id local del amigo). */
-    data class Board(val me: Person, val friends: Map<Long, Person>)
+    /** Alguien de un grupo de 3 o más. [friendId]: si también tienes pacto con esa persona. */
+    data class Member(val uid: String, val name: String, val installId: String?, val friendId: Long?)
+
+    /** Invitación a un grupo de 3 o más, ya descifrada. [from] es el amigo que invita. */
+    class GroupInvite(val groupId: String, val name: String, val secret: ByteArray, val from: Friend)
+
+    /**
+     * Lo que se ve en Juntos.
+     * [friends]: los datos de cada amigo con pacto (por id local del amigo); [friendUids], su id
+     * en el servidor. [groups]: el resto de miembros de cada grupo de 3 o más (sin contarte).
+     * [people]: los datos de todas las personas con las que compartes algo, por id del servidor.
+     */
+    data class Board(
+        val me: Person,
+        val friends: Map<Long, Person>,
+        val friendUids: Map<Long, String> = emptyMap(),
+        val groups: Map<String, List<Member>> = emptyMap(),
+        val people: Map<String, Person> = emptyMap(),
+        val invites: List<GroupInvite> = emptyList(),
+    )
 
     /** Pide al servidor lo de tus amigos. Lanza excepción si no hay conexión. */
     suspend fun board(context: Context): Board {
@@ -182,15 +281,45 @@ object Together {
         }
         fun person(u: String) = Person(records[u] ?: emptyList(), baselines[u] ?: emptyMap(), challenges[u] ?: emptyList())
 
-        val membersByGroup = HashMap<String, MutableList<String>>()
-        json.getJSONArray("members").forEachObject { o -> membersByGroup.getOrPut(o.getString("g")) { mutableListOf() } += o.getString("u") }
-
-        val friends = HashMap<Long, Person>()
-        for (f in AppDatabase.get(context).friendDao().getAll()) {
-            val other = membersByGroup[groupOf(f).first]?.firstOrNull { it != me } ?: continue
-            friends[f.id] = person(other)
+        // Por grupo: (id del miembro, su nombre cifrado si es un grupo de 3 o más).
+        val membersByGroup = HashMap<String, MutableList<Pair<String, String?>>>()
+        json.getJSONArray("members").forEachObject { o ->
+            val box = if (o.isNull("p")) null else o.getString("p")
+            membersByGroup.getOrPut(o.getString("g")) { mutableListOf() } += o.getString("u") to box
         }
-        return Board(person(me), friends)
+
+        val db = AppDatabase.get(context)
+        val allFriends = db.friendDao().getAll()
+        val friends = HashMap<Long, Person>()
+        val friendUids = HashMap<Long, String>()
+        for (f in allFriends) {
+            val other = membersByGroup[groupOf(f).first]?.firstOrNull { it.first != me }?.first ?: continue
+            friends[f.id] = person(other)
+            friendUids[f.id] = other
+        }
+        val friendByUid = allFriends.filter { it.id in friendUids }.associateBy { friendUids.getValue(it.id) }
+
+        val groups = HashMap<String, List<Member>>()
+        for (g in db.pactGroupDao().getAll()) {
+            groups[g.id] = membersByGroup[g.id].orEmpty().filter { it.first != me }.map { (uid, box) ->
+                val profile = box?.let { GroupKeys.openFromGroup(g.secret, it) }?.let { runCatching { JSONObject(it) }.getOrNull() }
+                val friend = friendByUid[uid]
+                val name = friend?.name ?: profile?.optString("n")?.trim()?.take(MAX_NAME)?.ifBlank { null } ?: "Alguien"
+                Member(uid, name, profile?.optString("i")?.ifBlank { null }, friend?.id)
+            }
+        }
+        val people = (friendUids.values + groups.values.flatten().map { it.uid }).toSet().associateWith { person(it) }
+
+        // Invitaciones: solo valen las de un amigo con pacto y que se abren con la clave de ese pacto.
+        val invites = ArrayList<GroupInvite>()
+        json.optJSONArray("invites")?.forEachObject { o ->
+            val from = friendByUid[o.getString("from")] ?: return@forEachObject
+            val inner = GroupKeys.openFromFriend(from, o.getString("box"))?.let { runCatching { JSONObject(it) }.getOrNull() } ?: return@forEachObject
+            if (inner.optString("g") != o.getString("g")) return@forEachObject
+            val secret = runCatching { PactKeys.unb64(inner.getString("s")) }.getOrNull() ?: return@forEachObject
+            invites += GroupInvite(o.getString("g"), inner.optString("n").trim().take(MAX_GROUP_NAME).ifBlank { "Grupo" }, secret, from)
+        }
+        return Board(person(me), friends, friendUids, groups, people, invites)
     }
 
     private inline fun JSONArray.forEachObject(block: (JSONObject) -> Unit) {

@@ -1,5 +1,7 @@
 package com.screenpact.app.ui
 
+import android.net.Uri
+
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -37,6 +39,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import com.screenpact.app.ui.friends.FriendsScreen
 import com.screenpact.app.ui.friends.GenerateCodeScreen
+import com.screenpact.app.ui.friends.KeyFor
 import com.screenpact.app.ui.home.HomeScreen
 import com.screenpact.app.ui.home.OnboardingScreen
 import com.screenpact.app.ui.pro.ProFeature
@@ -54,12 +57,14 @@ object Routes {
     const val FRIENDS = "friends"
     const val PAIR = "pair"
     const val GENERATE_CODE = "generate/{friendId}"
+    const val GROUP_KEY = "groupkey/{groupId}/{installId}?name={name}"
     const val PRO = "pro/{feature}"
     const val SETTINGS = "settings"
     const val HISTORY = "history"
     const val ACCEPT = "accept"
 
     fun generate(friendId: Long) = "generate/$friendId"
+    fun groupKey(groupId: String, installId: String, name: String) = "groupkey/$groupId/$installId?name=${Uri.encode(name)}"
     fun pro(feature: ProFeature) = "pro/${feature.id}"
 }
 
@@ -111,7 +116,8 @@ fun MainNav() {
             composable(Routes.FRIENDS) {
                 FriendsScreen(
                     onAdd = { nav.navigate(Routes.PAIR) },
-                    onOpenFriend = { id -> nav.navigate(Routes.generate(id)) }
+                    onOpenFriend = { id -> nav.navigate(Routes.generate(id)) },
+                    onOpenMember = { g, m -> m.installId?.let { nav.navigate(Routes.groupKey(g, it, m.name)) } }
                 )
             }
             composable(Routes.PAIR) {
@@ -122,7 +128,14 @@ fun MainNav() {
             }
             composable(Routes.GENERATE_CODE) { backStack ->
                 val id = backStack.arguments?.getString("friendId")?.toLongOrNull() ?: -1L
-                GenerateCodeScreen(friendId = id, onBack = { nav.popBackStack() })
+                GenerateCodeScreen(KeyFor.Friend(id), onBack = { nav.popBackStack() })
+            }
+            composable(Routes.GROUP_KEY) { backStack ->
+                val a = backStack.arguments
+                GenerateCodeScreen(
+                    KeyFor.GroupMember(a?.getString("groupId").orEmpty(), a?.getString("installId").orEmpty(), a?.getString("name").orEmpty()),
+                    onBack = { nav.popBackStack() }
+                )
             }
             composable(Routes.SETTINGS) {
                 SettingsScreen(onBack = { nav.popBackStack() }, onOpenPro = { nav.navigate(Routes.pro(it)) })

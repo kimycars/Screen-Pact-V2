@@ -45,17 +45,36 @@ object Challenges {
      * con un día perdido. Devuelve el reto creado.
      */
     suspend fun start(db: AppDatabase, packageName: String, appName: String, dailyMinutes: Int, days: Int): Challenge {
-        val today = History.dayKey()
-        val usedToday = db.dayRecordDao().get(today, packageName)?.usedMs ?: 0L
-        val startDay = if (usedToday <= capMs(dailyMinutes)) today else History.daysAgo(-1)
-        val c = Challenge(UUID.randomUUID().toString(), packageName, appName, dailyMinutes, startDay, days)
+        val c = Challenge(UUID.randomUUID().toString(), packageName, appName, dailyMinutes, firstDay(db, packageName, dailyMinutes), days)
         db.challengeDao().upsert(c)
         return c
     }
 
-    /** Se une al reto de un amigo: el mismo reto (mismo id, app, tope y fechas), medido en tu móvil. */
-    suspend fun join(db: AppDatabase, c: Challenge) {
-        db.challengeDao().upsert(c.copy(createdAt = System.currentTimeMillis()))
+    /**
+     * Se une al reto de un amigo: el mismo reto (mismo id, app y tope), medido en tu móvil. Si ya
+     * había empezado, para ti cuenta desde que te unes (hoy, o mañana si hoy ya te has pasado) y
+     * termina el mismo día que el de tu amigo. Devuelve false si ya no le quedan días.
+     */
+    suspend fun join(db: AppDatabase, c: Challenge): Boolean {
+        val today = History.dayKey()
+        val mine = if (c.startDay >= today) c else {
+            val start = firstDay(db, c.packageName, c.dailyMinutes)
+            val left = daysLeftFrom(c, start)
+            if (left < 1) return false
+            c.copy(startDay = start, days = left)
+        }
+        db.challengeDao().upsert(mine.copy(createdAt = System.currentTimeMillis()))
+        return true
+    }
+
+    /** Días del reto [c] que quedan contando desde [day] (incluido). */
+    fun daysLeftFrom(c: Challenge, day: String): Int = dayKeys(c.startDay, c.days).count { it >= day }
+
+    /** Hoy si hoy aún vas dentro del tope; si no, mañana, para no nacer con un día perdido. */
+    private suspend fun firstDay(db: AppDatabase, packageName: String, dailyMinutes: Int): String {
+        val today = History.dayKey()
+        val usedToday = db.dayRecordDao().get(today, packageName)?.usedMs ?: 0L
+        return if (usedToday <= capMs(dailyMinutes)) today else History.daysAgo(-1)
     }
 
     suspend fun progress(db: AppDatabase, c: Challenge): Progress = progressOf(c, db.dayRecordDao().since(c.startDay))

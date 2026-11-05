@@ -112,3 +112,25 @@ data class Challenge(
     val days: Int,
     val createdAt: Long = System.currentTimeMillis()
 )
+
+/**
+ * Grupo de 3 o más (desde la v7). Todos los miembros guardan el mismo [secret]: de él salen la
+ * llave de cada miembro, el secreto para entrar en el grupo del servidor y el cifrado de los
+ * nombres. Llega cifrado de un amigo con pacto (ver data/cloud/Together.kt) y nunca va en claro
+ * por ningún enlace ni al servidor. Sus llaves valen a las 24 h de entrar ([joinedAt]).
+ */
+@Entity(tableName = "pact_groups")
+data class PactGroup(
+    @PrimaryKey val id: String,
+    val name: String,
+    val secret: ByteArray,
+    val joinedAt: Long = System.currentTimeMillis(),
+    /** Llaves que te ha dado alguien del grupo. */
+    @ColumnInfo(defaultValue = "0") val keysGiven: Int = 0
+) {
+    override fun equals(other: Any?): Boolean =
+        other is PactGroup && id == other.id && name == other.name && secret.contentEquals(other.secret) &&
+            joinedAt == other.joinedAt && keysGiven == other.keysGiven
+
+    override fun hashCode(): Int = id.hashCode()
+}

@@ -17,7 +17,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.screenpact.app.data.FriendCodes
-import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.ui.components.CodeInput
 import com.screenpact.app.ui.theme.Sp
 import kotlinx.coroutines.launch
@@ -35,7 +34,6 @@ fun FriendCodeDialog(
     onVerified: () -> Unit
 ) {
     val context = LocalContext.current
-    val db = remember { AppDatabase.get(context) }
     val scope = rememberCoroutineScope()
     var code by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
@@ -58,7 +56,7 @@ fun FriendCodeDialog(
             TextButton(
                 onClick = {
                     scope.launch {
-                        if (FriendCodes.redeem(db, code) != null) onVerified()
+                        if (FriendCodes.redeem(context, code) != null) onVerified()
                         else {
                             error = "Esa llave no vale. Puede que haya caducado: pide la que sale ahora."
                             code = ""

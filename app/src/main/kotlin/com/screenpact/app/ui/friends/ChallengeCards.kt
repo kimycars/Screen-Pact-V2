@@ -25,6 +25,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import com.screenpact.app.data.Challenges
+import com.screenpact.app.data.History
 import com.screenpact.app.data.Challenges.DayResult
 import com.screenpact.app.data.db.AppLimit
 import com.screenpact.app.data.db.Challenge
@@ -78,7 +79,7 @@ fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -
             Text("Con ${partners.joinToString(" y ")}", style = MaterialTheme.typography.bodyMedium, color = Sp.Pacto)
         }
         Spacer(Modifier.height(Space.xxs))
-        val today = progress.days.firstOrNull { it.first == com.screenpact.app.data.History.dayKey() }?.second
+        val today = progress.days.firstOrNull { it.first == History.dayKey() }?.second
         Text(
             when {
                 progress.finished -> "${progress.done} de ${progress.days.size} días cumplidos."
@@ -150,6 +151,16 @@ fun FriendChallengeCard(name: String, progress: Challenges.Progress, canJoin: Bo
         ChallengeDays(progress)
         if (!progress.finished) {
             if (canJoin) {
+                // A mitad de reto, para quien se une cuenta desde hoy y acaba el mismo día.
+                val left = Challenges.daysLeftFrom(c, History.dayKey())
+                if (left < c.days) {
+                    Text(
+                        if (left == 1) "Si te unes, cuenta desde hoy: queda 1 día." else "Si te unes, cuenta desde hoy: quedan $left días.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Sp.TextoSuave
+                    )
+                    Spacer(Modifier.height(Space.xs))
+                }
                 ChipButton("Unirme al reto", onJoin)
             } else {
                 Text(

@@ -42,6 +42,9 @@ import androidx.compose.runtime.LaunchedEffect
 import kotlinx.coroutines.delay
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Friend
+import com.screenpact.app.data.db.PactGroup
+import com.screenpact.app.data.cloud.Cloud
+import androidx.compose.runtime.mutableIntStateOf
 import com.screenpact.app.ui.common.FriendCodeDialog
 import com.screenpact.app.ui.components.IconAction
 import com.screenpact.app.ui.components.Avatar
@@ -65,7 +68,7 @@ import androidx.compose.material.icons.filled.People
 import androidx.compose.material.icons.filled.QrCodeScanner
 
 @Composable
-fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
+fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember: (String, Together.Member) -> Unit) {
     val context = LocalContext.current
     val db = remember { AppDatabase.get(context) }
     val friends by db.friendDao().observeAll().collectAsState(initial = emptyList())
@@ -82,8 +85,19 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
     var enabling by remember { mutableStateOf(false) }
     var enableFailed by remember { mutableStateOf(false) }
     var board by remember { mutableStateOf<Together.Board?>(null) }
-    LaunchedEffect(togetherOn, friends.size, challenge?.id) {
-        if (!togetherOn || friends.isEmpty()) return@LaunchedEffect
+    // Grupos de 3 o más.
+    val groups by db.pactGroupDao().observeAll().collectAsState(initial = emptyList())
+    var refresh by remember { mutableIntStateOf(0) }
+    var creatingGroup by remember { mutableStateOf(false) }
+    var invitingTo by remember { mutableStateOf<PactGroup?>(null) }
+    var leavingGroup by remember { mutableStateOf<PactGroup?>(null) }
+    var busy by remember { mutableStateOf(false) }
+    var actionError by remember { mutableStateOf<String?>(null) }
+    var joiningId by remember { mutableStateOf<String?>(null) }
+    var joinError by remember { mutableStateOf<Pair<String, String>?>(null) }
+    var declined by remember { mutableStateOf(setOf<String>()) }
+    LaunchedEffect(togetherOn, friends.size, groups.size, challenge?.id, refresh) {
+        if (!togetherOn || (friends.isEmpty() && groups.isEmpty())) return@LaunchedEffect
         var force = true
         while (true) {
             runCatching {
@@ -119,6 +133,31 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
         }
 
         val b = board
+        // Invitaciones a grupos: lo primero, porque esperan una respuesta.
+        b?.invites?.filter { inv -> inv.groupId !in declined && groups.none { it.id == inv.groupId } }?.forEach { inv ->
+            item(key = "inv-${inv.groupId}") {
+                GroupInviteCard(
+                    inv,
+                    busy = joiningId == inv.groupId,
+                    error = joinError?.takeIf { it.first == inv.groupId }?.second,
+                    onJoin = {
+                        joiningId = inv.groupId
+                        joinError = null
+                        scope.launch {
+                            runCatching { Together.accept(context, inv) }.onFailure {
+                                joinError = inv.groupId to (if ((it as? Cloud.CloudException)?.code == 400) "El grupo ya está lleno." else "No se ha podido conectar. Vuelve a probar.")
+                            }
+                            joiningId = null
+                            refresh++
+                        }
+                    },
+                    onDecline = {
+                        declined = declined + inv.groupId
+                        scope.launch { runCatching { Together.decline(context, inv) } }
+                    }
+                )
+            }
+        }
         if (friends.isNotEmpty()) {
             if (!togetherOn) {
                 item {
@@ -135,16 +174,17 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
                 }
             } else if (b != null) {
                 item {
+                    val others = friends.map { f -> f.name to b.friends[f.id] } +
+                        groupOnlyMembers(b).map { m -> m.name to b.people[m.uid] }
                     val rows = listOf(RankRow("Tú", true, b.me.weekUsedMs().takeIf { b.me.hasData }, TimeWon.summaryOf(b.me.records, b.me.baselines).wonMs)) +
-                        friends.map { f ->
-                            val person = b.friends[f.id]
+                        others.map { (name, person) ->
                             RankRow(
-                                f.name, false,
+                                name, false,
                                 person?.takeIf { it.hasData }?.weekUsedMs(),
                                 person?.let { TimeWon.summaryOf(it.records, it.baselines).wonMs } ?: 0L
                             )
                         }
-                    val people = listOf(b.me) + b.friends.values
+                    val people = listOf(b.me) + b.people.values
                     val groupWon = people.sumOf { TimeWon.summaryOf(it.records, it.baselines, window = 30).wonMs }
                     RankingCard(rows, groupWon)
                 }
@@ -154,7 +194,7 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
         // El reto va arriba: es lo que cambia cada día. Solo se mide en apps con límite.
         val p = progress
         if (p != null) {
-            val partners = if (b == null) emptyList() else friends.filter { f -> b.friends[f.id]?.challenges?.any { it.id == p.challenge.id } == true }.map { it.name }
+            val partners = if (b == null) emptyList() else namedPeople(friends, b).filter { (_, person) -> person.challenges.any { it.id == p.challenge.id } }.map { it.first }
             item { ChallengeCard(p, onNew = { creating = true }, onQuit = { quitting = p.challenge }, partners = partners) }
         } else if (limits.isNotEmpty()) {
             item { NoChallengeCard(onStart = { creating = true }) }
@@ -162,20 +202,45 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
 
         // Los retos de tus amigos que no son el tuyo.
         if (b != null) {
-            friends.forEach { f ->
-                val person = b.friends[f.id] ?: return@forEach
+            namedPeople(friends, b).forEachIndexed { i, (name, person) ->
                 person.challenges.filter { it.id != p?.challenge?.id }.forEach { c ->
                     val fp = Challenges.progressOf(c, person.records)
                     if (fp.finished && fp.days.last().first < History.daysAgo(3)) return@forEach
-                    item(key = "fc-${f.id}-${c.id}") {
+                    item(key = "fc-$i-${c.id}") {
                         FriendChallengeCard(
-                            name = f.name,
+                            name = name,
                             progress = fp,
                             canJoin = limits.any { it.packageName == c.packageName && it.enabled },
                             onJoin = { scope.launch { Challenges.join(db, c) } }
                         )
                     }
                 }
+            }
+        }
+
+        // Grupos de 3 o más: hacen falta el ranking (para invitar) y al menos un pacto.
+        if (togetherOn && b != null && friends.isNotEmpty()) {
+            groups.forEach { g ->
+                item(key = "g-${g.id}") {
+                    GroupCard(
+                        group = g,
+                        members = b.groups[g.id].orEmpty(),
+                        waitMs = FriendCodes.cooldownLeftMs(g),
+                        canInvite = true,
+                        onGiveKey = { m -> m.friendId?.let(onOpenFriend) ?: onOpenMember(g.id, m) },
+                        onInvite = { actionError = null; invitingTo = g },
+                        onLeave = { leavingGroup = g }
+                    )
+                }
+            }
+            item(key = "g-new") {
+                if (groups.isEmpty()) NoGroupCard { actionError = null; creatingGroup = true }
+                else QuietButton("Crear otro grupo", { actionError = null; creatingGroup = true }, modifier = Modifier.fillMaxWidth())
+            }
+        } else if (groups.isNotEmpty()) {
+            // Sin ranking los grupos siguen dando llaves, pero no se ve quién está.
+            items(groups, key = { "g-${it.id}" }) { g ->
+                GroupCard(g, emptyList(), FriendCodes.cooldownLeftMs(g), canInvite = false, onGiveKey = {}, onInvite = {}, onLeave = { leavingGroup = g })
             }
         }
 
@@ -224,6 +289,48 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
             quitting = null
             scope.launch { db.challengeDao().delete(c.id) }
         })
+    }
+
+    if (creatingGroup) {
+        CreateGroupDialog(busy = busy, error = actionError, onDismiss = { creatingGroup = false }, onCreate = { name ->
+            busy = true
+            actionError = null
+            scope.launch {
+                runCatching { Together.createGroup(context, name) }
+                    .onSuccess { creatingGroup = false; refresh++ }
+                    .onFailure { actionError = "No se ha podido conectar. Vuelve a probar." }
+                busy = false
+            }
+        })
+    }
+
+    invitingTo?.let { g ->
+        val bb = board ?: return@let
+        val (candidates, missing) = inviteCandidates(friends, bb, bb.groups[g.id].orEmpty())
+        InviteToGroupDialog(g.name, candidates, missing, busy, actionError, onDismiss = { invitingTo = null }, onInvite = { f ->
+            busy = true
+            actionError = null
+            scope.launch {
+                runCatching { Together.invite(context, g, f, bb.friendUids.getValue(f.id)) }
+                    .onSuccess { invitingTo = null }
+                    .onFailure {
+                        actionError = if ((it as? Cloud.CloudException)?.code == 400) "El grupo ya está lleno." else "No se ha podido conectar. Vuelve a probar."
+                    }
+                busy = false
+            }
+        })
+    }
+
+    // Salir de un grupo pide llave, como romper un pacto: te deja con menos gente que pueda dártela.
+    leavingGroup?.let { g ->
+        FriendCodeDialog(
+            reason = "Para salir de ${g.name} necesitas una llave (puede ser de alguien del grupo).",
+            onDismiss = { leavingGroup = null },
+            onVerified = {
+                leavingGroup = null
+                scope.launch { Together.leaveGroup(context, g); refresh++ }
+            }
+        )
     }
 
     toDelete?.let { f ->
@@ -276,3 +383,12 @@ private fun FriendCard(friend: Friend, waitMs: Long, onGiveKey: () -> Unit, onBr
         PrimaryButton("Darle su llave", onGiveKey)
     }
 }
+
+/** Gente de tus grupos con la que no tienes pacto (sin repetir a nadie). */
+private fun groupOnlyMembers(b: Together.Board): List<Together.Member> =
+    b.groups.values.flatten().filter { it.friendId == null }.distinctBy { it.uid }
+
+/** Cada persona con su nombre: tus amigos y la gente de tus grupos. */
+private fun namedPeople(friends: List<Friend>, b: Together.Board): List<Pair<String, Together.Person>> =
+    friends.mapNotNull { f -> b.friends[f.id]?.let { f.name to it } } +
+        groupOnlyMembers(b).mapNotNull { m -> b.people[m.uid]?.let { m.name to it } }

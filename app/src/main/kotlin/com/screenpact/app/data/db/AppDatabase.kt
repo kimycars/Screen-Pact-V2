@@ -8,8 +8,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class, Baseline::class, Challenge::class],
-    version = 6,
+    entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class, Baseline::class, Challenge::class, PactGroup::class],
+    version = 7,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +19,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun dayRecordDao(): DayRecordDao
     abstract fun baselineDao(): BaselineDao
     abstract fun challengeDao(): ChallengeDao
+    abstract fun pactGroupDao(): PactGroupDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -69,6 +70,17 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v7: grupos de 3 o más. */
+        val MIGRATION_6_7 = object : Migration(6, 7) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS pact_groups (" +
+                        "id TEXT NOT NULL, name TEXT NOT NULL, secret BLOB NOT NULL, joinedAt INTEGER NOT NULL, " +
+                        "keysGiven INTEGER NOT NULL DEFAULT 0, PRIMARY KEY(id))"
+                )
+            }
+        }
+
         fun get(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -78,7 +90,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Cada cambio de estructura lleva su migración: actualizar la app NUNCA
                     // borra pactos ni límites. Solo se borra si se instala una versión más vieja.
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6, MIGRATION_6_7)
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build().also { INSTANCE = it }
             }

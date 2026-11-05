@@ -95,3 +95,21 @@ interface ChallengeDao {
     @Query("DELETE FROM challenges WHERE id = :id")
     suspend fun delete(id: String)
 }
+
+@Dao
+interface PactGroupDao {
+    @Query("SELECT * FROM pact_groups ORDER BY joinedAt")
+    fun observeAll(): Flow<List<PactGroup>>
+
+    @Query("SELECT * FROM pact_groups")
+    suspend fun getAll(): List<PactGroup>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(group: PactGroup)
+
+    @Query("DELETE FROM pact_groups WHERE id = :id")
+    suspend fun delete(id: String)
+
+    @Query("UPDATE pact_groups SET keysGiven = keysGiven + 1 WHERE id = :id")
+    suspend fun countKey(id: String)
+}
