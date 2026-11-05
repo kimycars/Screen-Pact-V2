@@ -291,6 +291,14 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 
 ## 9. Pendientes
 
+- **Renombrar todo a ScrollBan antes de montar Stripe** (Kimy, 05-11-2026). Se escribe **ScrollBan**, con B mayúscula: separa las dos palabras al leerlo. En direcciones, ids y código va en minúsculas (`scrollban`). Qué cambia:
+  - Textos de la app donde aún pone ScreenPact.
+  - Paquete Kotlin de `com.screenpact.app` a `com.scrollban.app`. El applicationId ya es `com.scrollban.app`, así que no se pierden datos.
+  - La web pasa de `kimycars.com/screenpact` a `kimycars.com/scrollban`, con redirecciones desde las rutas viejas para que los enlaces de pacto ya mandados sigan funcionando.
+  - Enlace de la app `scrollban://`, aceptando también `screenpact://`.
+  - Docs y nombres del servidor de licencias.
+  - Al dar de alta Stripe, la web de la empresa será `https://www.kimycars.com/scrollban`.
+
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
 - Servidor de grupos en Supabase y grupos de 3 o más: hecho el 05-11-2026; falta probarlo con dos móviles reales.
 - Pacto mixto con iPhone: hecho el 05-11-2026. Páginas web desplegadas el mismo día; falta probarlo con un iPhone real. Baja prioridad.
