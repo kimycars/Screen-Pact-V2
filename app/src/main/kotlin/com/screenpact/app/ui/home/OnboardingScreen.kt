@@ -132,7 +132,7 @@ private fun WelcomeStep(onStart: () -> Unit) {
         ) {
             Icon(Icons.Default.Lock, null, tint = Sp.TextoSuave, modifier = Modifier.size(Sizes.iconS))
             Spacer(Modifier.width(Space.xs))
-            Text("Sin cuenta. Nada sale de tu móvil.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
+            Text("Sin cuenta ni correo. Tus minutos no salen del móvil salvo que actives el ranking con tus amigos.", style = MaterialTheme.typography.bodySmall, color = Sp.TextoSuave)
         }
     }
 }
@@ -167,7 +167,7 @@ private fun PermissionsStep(onDone: () -> Unit) {
         Text("Dos permisos", style = MaterialTheme.typography.headlineLarge)
         Spacer(Modifier.height(Space.xs))
         Text(
-            "Sin ellos ${Brand.NAME} no puede saber cuánto llevas ni pararte. Nada de esto sale de tu móvil.",
+            "Sin ellos ${Brand.NAME} no puede saber cuánto llevas ni pararte. Tus minutos no salen del móvil salvo que actives el ranking con tus amigos.",
             style = MaterialTheme.typography.bodyMedium,
             color = Sp.TextoSuave
         )

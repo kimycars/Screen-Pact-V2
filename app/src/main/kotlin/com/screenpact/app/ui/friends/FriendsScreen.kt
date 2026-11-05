@@ -31,6 +31,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.screenpact.app.data.FriendCodes
+import com.screenpact.app.data.History
+import com.screenpact.app.data.TimeWon
+import com.screenpact.app.data.cloud.Together
+import com.screenpact.app.data.cloud.hasData
+import com.screenpact.app.data.cloud.weekUsedMs
 import com.screenpact.app.data.Challenges
 import com.screenpact.app.data.db.Challenge
 import androidx.compose.runtime.LaunchedEffect
@@ -72,6 +77,23 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
     var progress by remember { mutableStateOf<Challenges.Progress?>(null) }
     var creating by remember { mutableStateOf(false) }
     var quitting by remember { mutableStateOf<Challenge?>(null) }
+    // Juntos en el servidor (ranking, tiempo del grupo y retos de los amigos). Opcional.
+    var togetherOn by remember { mutableStateOf(Together.isEnabled(context)) }
+    var enabling by remember { mutableStateOf(false) }
+    var enableFailed by remember { mutableStateOf(false) }
+    var board by remember { mutableStateOf<Together.Board?>(null) }
+    LaunchedEffect(togetherOn, friends.size, challenge?.id) {
+        if (!togetherOn || friends.isEmpty()) return@LaunchedEffect
+        var force = true
+        while (true) {
+            runCatching {
+                Together.sync(context, force)
+                Together.board(context)
+            }.onSuccess { board = it }
+            force = false
+            delay(60_000)
+        }
+    }
     LaunchedEffect(challenge) {
         val c = challenge
         if (c == null) { progress = null; return@LaunchedEffect }
@@ -96,12 +118,65 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
             )
         }
 
+        val b = board
+        if (friends.isNotEmpty()) {
+            if (!togetherOn) {
+                item {
+                    TogetherOffCard(busy = enabling, error = enableFailed, onEnable = {
+                        enabling = true
+                        scope.launch {
+                            val ok = runCatching { Together.enable(context) }.isSuccess
+                            enabling = false
+                            enableFailed = !ok
+                            togetherOn = ok
+                            if (!ok) runCatching { Together.disable(context) }
+                        }
+                    })
+                }
+            } else if (b != null) {
+                item {
+                    val rows = listOf(RankRow("Tú", true, b.me.weekUsedMs().takeIf { b.me.hasData }, TimeWon.summaryOf(b.me.records, b.me.baselines).wonMs)) +
+                        friends.map { f ->
+                            val person = b.friends[f.id]
+                            RankRow(
+                                f.name, false,
+                                person?.takeIf { it.hasData }?.weekUsedMs(),
+                                person?.let { TimeWon.summaryOf(it.records, it.baselines).wonMs } ?: 0L
+                            )
+                        }
+                    val people = listOf(b.me) + b.friends.values
+                    val groupWon = people.sumOf { TimeWon.summaryOf(it.records, it.baselines, window = 30).wonMs }
+                    RankingCard(rows, groupWon)
+                }
+            }
+        }
+
         // El reto va arriba: es lo que cambia cada día. Solo se mide en apps con límite.
         val p = progress
         if (p != null) {
-            item { ChallengeCard(p, onNew = { creating = true }, onQuit = { quitting = p.challenge }) }
+            val partners = if (b == null) emptyList() else friends.filter { f -> b.friends[f.id]?.challenges?.any { it.id == p.challenge.id } == true }.map { it.name }
+            item { ChallengeCard(p, onNew = { creating = true }, onQuit = { quitting = p.challenge }, partners = partners) }
         } else if (limits.isNotEmpty()) {
             item { NoChallengeCard(onStart = { creating = true }) }
+        }
+
+        // Los retos de tus amigos que no son el tuyo.
+        if (b != null) {
+            friends.forEach { f ->
+                val person = b.friends[f.id] ?: return@forEach
+                person.challenges.filter { it.id != p?.challenge?.id }.forEach { c ->
+                    val fp = Challenges.progressOf(c, person.records)
+                    if (fp.finished && fp.days.last().first < History.daysAgo(3)) return@forEach
+                    item(key = "fc-${f.id}-${c.id}") {
+                        FriendChallengeCard(
+                            name = f.name,
+                            progress = fp,
+                            canJoin = limits.any { it.packageName == c.packageName && it.enabled },
+                            onJoin = { scope.launch { Challenges.join(db, c) } }
+                        )
+                    }
+                }
+            }
         }
 
         if (friends.isEmpty()) {
@@ -157,7 +232,10 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
             onDismiss = { toDelete = null },
             onVerified = {
                 toDelete = null
-                scope.launch { db.friendDao().delete(f) }
+                scope.launch {
+                    Together.leave(context, f)
+                    db.friendDao().delete(f)
+                }
             }
         )
     }

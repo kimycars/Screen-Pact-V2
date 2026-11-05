@@ -24,6 +24,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.screenpact.app.data.History
 import com.screenpact.app.data.TimeWon
+import com.screenpact.app.data.cloud.Together
 import com.screenpact.app.data.Pro
 import com.screenpact.app.data.Schedules
 
@@ -82,6 +83,8 @@ class UsageMonitorService : Service() {
                         TimeWon.ensureBaselines(this, db, enabled)
                         History.recordToday(db, enabled, snap.todayMs)
                         lastHistoryAt = now
+                        // Aparte, para que la red nunca retrase un bloqueo.
+                        scope.launch { Together.maybeSync(applicationContext) }
                     }
                     if (current != null && current != packageName) {
                         val limit = db.appLimitDao().get(current)

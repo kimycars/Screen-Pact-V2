@@ -33,6 +33,7 @@ import com.screenpact.app.data.rememberIsPro
 import com.screenpact.app.ui.common.FriendCodeDialog
 import com.screenpact.app.ui.common.LicenseDialog
 import com.screenpact.app.ui.common.StatsConsentCard
+import com.screenpact.app.ui.common.TogetherSettingCard
 import com.screenpact.app.ui.components.BackButton
 import com.screenpact.app.ui.components.ChipButton
 import com.screenpact.app.ui.components.QuietButton
@@ -159,6 +160,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
             }
         }
 
+        item { TogetherSettingCard() }
         item { StatsConsentCard() }
 
         item {

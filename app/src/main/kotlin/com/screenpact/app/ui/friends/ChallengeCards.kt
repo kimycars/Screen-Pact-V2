@@ -58,7 +58,7 @@ fun NoChallengeCard(onStart: () -> Unit) {
 
 /** El reto en curso o recién terminado: los días como círculos y qué hacer ahora. */
 @Composable
-fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -> Unit) {
+fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -> Unit, partners: List<String> = emptyList()) {
     val context = LocalContext.current
     val c = progress.challenge
     val share = { Invite.shareAchievement(context, Challenges.shareText(progress)) }
@@ -74,6 +74,9 @@ fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -
         )
         Spacer(Modifier.height(Space.xxs))
         Text(Challenges.title(c), style = MaterialTheme.typography.titleLarge)
+        if (partners.isNotEmpty()) {
+            Text("Con ${partners.joinToString(" y ")}", style = MaterialTheme.typography.bodyMedium, color = Sp.Pacto)
+        }
         Spacer(Modifier.height(Space.xxs))
         val today = progress.days.firstOrNull { it.first == com.screenpact.app.data.History.dayKey() }?.second
         Text(
@@ -87,13 +90,7 @@ fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -
             color = if (today == DayResult.TODAY_OVER) Sp.Llave else Sp.TextoSuave
         )
         Spacer(Modifier.height(Space.l))
-        progress.days.chunked(7).forEach { week ->
-            // Una semana entera ocupa todo el ancho, como la tira de la racha; un reto corto va a la izquierda.
-            Row(Modifier.fillMaxWidth(), horizontalArrangement = if (week.size == 7) Arrangement.SpaceBetween else Arrangement.spacedBy(Space.s)) {
-                week.forEach { (day, result) -> DayCircle(day, lookOf(result), describe(result)) }
-            }
-            Spacer(Modifier.height(Space.s))
-        }
+        ChallengeDays(progress)
         Spacer(Modifier.height(Space.xs))
         if (progress.finished) {
             PrimaryButton("Otro reto", onNew)
@@ -104,6 +101,62 @@ fun ChallengeCard(progress: Challenges.Progress, onNew: () -> Unit, onQuit: () -
                 ChipButton("Compartir", share)
                 Spacer(Modifier.weight(1f))
                 QuietButton("Dejar el reto", onQuit)
+            }
+        }
+    }
+}
+
+/** Los días del reto como círculos, en filas de una semana. */
+@Composable
+private fun ChallengeDays(progress: Challenges.Progress) {
+    progress.days.chunked(7).forEach { week ->
+        // Una semana entera ocupa todo el ancho, como la tira de la racha; un reto corto va a la izquierda.
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = if (week.size == 7) Arrangement.SpaceBetween else Arrangement.spacedBy(Space.s)) {
+            week.forEach { (day, result) -> DayCircle(day, lookOf(result), describe(result)) }
+        }
+        Spacer(Modifier.height(Space.s))
+    }
+}
+
+/**
+ * El reto de un amigo, con sus días. [canJoin]: tienes límite en esa app (si no, no se puede
+ * medir y se explica). Unirse lo hace también tuyo, con las mismas fechas.
+ */
+@Composable
+fun FriendChallengeCard(name: String, progress: Challenges.Progress, canJoin: Boolean, onJoin: () -> Unit) {
+    val c = progress.challenge
+    SpCard {
+        Text(
+            when {
+                progress.won -> "$name ha superado su reto"
+                progress.finished -> "Reto de $name, terminado"
+                else -> "Reto de $name"
+            },
+            style = MaterialTheme.typography.labelMedium,
+            color = if (progress.won) Sp.Pacto else Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(Challenges.title(c), style = MaterialTheme.typography.titleMedium)
+        Text(
+            when {
+                progress.finished -> "${progress.done} de ${progress.days.size} días cumplidos."
+                progress.todayIndex == null -> "Empieza mañana."
+                else -> "Día ${progress.todayIndex} de ${progress.days.size}. Lleva ${progress.done} cumplidos."
+            },
+            style = MaterialTheme.typography.bodySmall,
+            color = Sp.TextoSuave
+        )
+        Spacer(Modifier.height(Space.m))
+        ChallengeDays(progress)
+        if (!progress.finished) {
+            if (canJoin) {
+                ChipButton("Unirme al reto", onJoin)
+            } else {
+                Text(
+                    "Para unirte, ponle un límite a ${c.appName}.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Sp.TextoSuave
+                )
             }
         }
     }

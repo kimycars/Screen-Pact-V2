@@ -259,12 +259,23 @@ Hecho sin servidor (05-11-2026):
 - **Amigos pasa a llamarse Juntos** y va en medio de la barra: Hoy, Juntos, Límites.
 - Base de datos v6 (tablas `baselines` y `challenges`, con su migración).
 
-Siguiente tanda (con Supabase): identidad anónima, cada pacto como grupo de 2, subir minutos diarios, ranking, retos compartidos y tiempo ganado juntos. Después, grupos de 3 o más y pacto mixto con iPhone.
+Segunda tanda, con Supabase (hecho el 05-11-2026, probado en el emulador con un amigo simulado y con pruebas directas al servidor):
+- **Proyecto**: ScrollBan (`rsdtrjecytejtlihulof`), plan gratuito. Tablas y funciones en `supabase/schema.sql`, ejecutado desde el editor SQL. Inicio de sesión anónimo activado. Sin captcha por ahora.
+- **Acceso**: ninguna tabla se lee ni se escribe directamente (RLS sin políticas y permisos retirados). Todo pasa por cinco funciones que comprueban la identidad: `join_group`, `leave_group`, `push_usage`, `my_board` y `delete_my_data`. Comprobado que una identidad ajena no ve nada, que un secreto equivocado no entra en un grupo y que la clave publishable sola no puede llamar a nada.
+- **Grupos**: cada pacto es un grupo de 2. Los dos móviles calculan el mismo id de grupo y el mismo secreto con las llaves del pacto (`Together.groupOf`), así que vale también para los pactos ya sellados y no hay que mandar nada más. El servidor guarda solo el hash del secreto. Tope de 8 personas por grupo y 50 grupos por persona, pensado para los grupos de 3 o más.
+- **Qué sube**: por día y app con límite, los minutos, el límite, las llaves usadas y la media de antes; y el reto activo. No suben nombres (cada móvil usa el nombre que ya tiene del amigo) ni llaves. Se guarda 60 días.
+- **Opcional y apagado de inicio**: en Juntos sale "Ranking con tus amigos" con lo que se comparte explicado antes de pulsar "Activar el ranking". En Ajustes hay un interruptor; al apagarlo se borra del servidor la identidad y todo lo suyo.
+- **Cuándo sube**: el servicio sube cada 15 minutos mientras funciona (aparte del bucle de bloqueo, para que la red nunca retrase un bloqueo), y la pantalla Juntos sube y pide el grupo al abrirse y cada minuto mientras está abierta.
+- **En Juntos**: lo que habéis recuperado juntos en los últimos 30 días (con botón de compartir); el ranking de los últimos 7 días por uso de las apps con límite, de menos a más, con lo que ha recuperado cada uno; quien no ha activado el ranking sale al final sin cifras; los retos de los amigos con sus días y "Unirme al reto" si tienes límite en esa app; tu reto dice "Con Lucía" si lo hacéis juntos. Romper un pacto saca del grupo.
+- **Unirse a un reto**: es el mismo reto con las mismas fechas, así que los días que ya pasaron cuentan con tu propio historial (si no tenías límite en esa app, salen como no cumplidos). Revisar con Kimy si prefiere que cuente solo desde que te unes.
+- El código de Supabase vive en `data/cloud/` (`Cloud.kt` es la única conexión con el servidor; `Together.kt`, la lógica). La cuenta del tiempo ganado y del progreso de los retos sirve igual para tus datos y los de un amigo (`TimeWon.summaryOf`, `Challenges.progressOf`).
+
+Pendiente de esta parte: política de privacidad (antes de lanzar), decidir si hace falta captcha contra registros falsos, limpiar identidades anónimas abandonadas (por ejemplo, una tarea mensual que borre las que llevan 90 días sin subir nada), probar con dos móviles reales. Después: grupos de 3 o más y pacto mixto con iPhone.
 
 ## 9. Pendientes
 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
-- Servidor de grupos en Supabase (cuenta nueva de Kimy).
+- Servidor de grupos en Supabase: hecho el 05-11-2026; falta probarlo con dos móviles reales.
 - Política de privacidad y textos de la app con el nuevo reparto de datos.
 - Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
 - Confirmar el plan de Vercel de kimycars.com.

@@ -2,6 +2,7 @@ package com.screenpact.app.data
 
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Challenge
+import com.screenpact.app.data.db.DayRecord
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -52,9 +53,17 @@ object Challenges {
         return c
     }
 
-    suspend fun progress(db: AppDatabase, c: Challenge): Progress {
+    /** Se une al reto de un amigo: el mismo reto (mismo id, app, tope y fechas), medido en tu móvil. */
+    suspend fun join(db: AppDatabase, c: Challenge) {
+        db.challengeDao().upsert(c.copy(createdAt = System.currentTimeMillis()))
+    }
+
+    suspend fun progress(db: AppDatabase, c: Challenge): Progress = progressOf(c, db.dayRecordDao().since(c.startDay))
+
+    /** El progreso con los días de cualquier persona (tú, o un amigo con los datos del servidor). */
+    fun progressOf(c: Challenge, dayRecords: List<DayRecord>): Progress {
         val today = History.dayKey()
-        val records = db.dayRecordDao().since(c.startDay).filter { it.packageName == c.packageName }.associateBy { it.day }
+        val records = dayRecords.filter { it.packageName == c.packageName && it.day >= c.startDay }.associateBy { it.day }
         val cap = capMs(c.dailyMinutes)
         val days = dayKeys(c.startDay, c.days).map { day ->
             val used = records[day]?.usedMs

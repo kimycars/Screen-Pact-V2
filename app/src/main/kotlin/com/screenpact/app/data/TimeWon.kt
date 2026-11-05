@@ -44,9 +44,17 @@ object TimeWon {
 
     suspend fun summary(db: AppDatabase): Summary {
         val baselines = db.baselineDao().getAll().associate { it.packageName to it.avgDailyMs }
+        return summaryOf(db.dayRecordDao().since("0000-00-00"), baselines)
+    }
+
+    /**
+     * La cuenta, con los días y las medias de cualquier persona (tú, o un amigo con los datos del
+     * servidor). Mira los últimos [window] días terminados.
+     */
+    fun summaryOf(records: List<DayRecord>, baselines: Map<String, Long>, window: Int = WINDOW_DAYS): Summary {
         val today = History.dayKey()
-        val closed = db.dayRecordDao().since("0000-00-00").filter { it.day < today && it.packageName in baselines }
-        val recentDays = closed.map { it.day }.distinct().sortedDescending().take(WINDOW_DAYS).toSet()
+        val closed = records.filter { it.day < today && it.packageName in baselines }
+        val recentDays = closed.map { it.day }.distinct().sortedDescending().take(window).toSet()
         val recent = closed.filter { it.day in recentDays }
 
         fun won(recs: List<DayRecord>) = recs.sumOf { baselines.getValue(it.packageName) - it.usedMs }
