@@ -281,7 +281,7 @@ Tercera tanda: grupos de 3 o más (hecho el 05-11-2026, probado en el emulador c
 
 Pendiente de esta parte: política de privacidad (antes de lanzar), decidir si hace falta captcha contra registros falsos, limpiar identidades anónimas abandonadas (por ejemplo, una tarea mensual que borre las que llevan 90 días sin subir nada), probar con dos móviles reales.
 
-Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y probada en el emulador contra la página web servida en local; **las páginas web están sin desplegar** hasta que Kimy dé el OK):
+Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y probada en el emulador contra la página web servida en local; páginas web desplegadas en kimycars.com el 05-11-2026 con el OK de Kimy). Kimy cree que poca gente con iPhone lo usará y no hay dinero para una app de iPhone, así que no es prioridad:
 - **Cómo se sella**: en "Sellar un pacto" se elige "Tiene iPhone". El QR y el enlace abren `kimycars.com/screenpact/iphone`. Allí el amigo pone su nombre y pulsa "Sellar el pacto": su navegador hace el mismo Diffie-Hellman que la app (`screenpact/pacto-ios.js` en la web) y le enseña un QR con la respuesta (o se la manda por WhatsApp). El de Android la escanea o la abre y el pacto queda cerrado. La clave privada no sale del iPhone y nada pasa por ningún servidor.
 - **Él te da la llave a ti**: desde la página `kimycars.com/screenpact/llave`, con un código de 6 cifras que cambia cada 30 s, igual que en la app. La llave va tras "#" en el enlace y en el almacenamiento del navegador del iPhone; se recomienda añadir la página a la pantalla de inicio. Esa página no lleva analítica.
 - **Tú le das la llave a él**: con el código de 4 cifras de Tiempo de uso de su iPhone, que genera Scrollban (sin códigos fáciles) y que pones tú en su iPhone sin que lo vea. En Juntos, "Ver su código de Tiempo de uso" lo enseña con los pasos. "Cambiar el código" propone uno nuevo y solo lo guarda cuando confirmas que ya lo has cambiado en su iPhone, para no perder el que vale.
@@ -293,7 +293,7 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
 - Servidor de grupos en Supabase y grupos de 3 o más: hecho el 05-11-2026; falta probarlo con dos móviles reales.
-- Pacto mixto con iPhone: hecho el 05-11-2026. Falta desplegar `screenpact/iphone/`, `screenpact/llave/`, `screenpact/pacto-ios.js`, `vendor/qrcode-generator/` y el CSS en kimycars.com (con el OK de Kimy) y probarlo con un iPhone real.
+- Pacto mixto con iPhone: hecho el 05-11-2026. Páginas web desplegadas el mismo día; falta probarlo con un iPhone real. Baja prioridad.
 - Política de privacidad y textos de la app con el nuevo reparto de datos.
 - Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
 - Confirmar el plan de Vercel de kimycars.com.
