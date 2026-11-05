@@ -1,4 +1,4 @@
-# Scrollban (antes ScreenPact): definición de producto
+# ScrollBan (antes ScreenPact): definición de producto
 
 Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, nuevo posicionamiento y nuevas funciones. Lo que sigue es lo vigente; al final está el historial de cómo se llegó aquí y lo técnico que sigue valiendo de la etapa ScreenPact.
 
@@ -6,7 +6,7 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 
 | Tema | Decisión |
 |---|---|
-| Nombre | **Scrollban**. El código y la web todavía dicen ScreenPact: el cambio se hace en el rediseño. |
+| Nombre | **ScrollBan**. El código y la web todavía dicen ScreenPact: el cambio se hace en el rediseño. |
 | Dominio | No se compra hasta que haya ingresos. La web sigue en kimycars.com mientras tanto. Si alguien registra scrollban.com, se usa scrollban.app o scrollban.net. |
 | Objetivo | Un proyecto real de portfolio con usuarios activos de verdad. Los ingresos son secundarios al principio. |
 | Posicionamiento | El reto de soltar el móvil con tus amigos o tu pareja. No es un bloqueador ni un candado. |
@@ -14,7 +14,7 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 | Esencia | Entre juego o reto social y recuperar tiempo real. |
 | Base del producto | La llave entre amigos: solo otra persona puede darte más tiempo. |
 | Funciones nuevas | Pactos de 2 que se pueden ampliar a grupo, retos con fecha, tiempo ganado del grupo y pacto mixto con iPhone. |
-| Servidor | Supabase, plan gratuito, en una cuenta nueva solo para Scrollban (separada de Vestiarium). |
+| Servidor | Supabase, plan gratuito, en una cuenta nueva solo para ScrollBan (separada de Vestiarium). |
 | Gasto | Cero hasta que haya ingresos: ni Supabase Pro, ni Vercel Pro, ni dominio. |
 | Canal | Boca a boca (cada usuario invita al menos a otro) y colaboraciones con gente que ya habla a quien quiere usar menos el móvil. No depende de que Kimy haga contenido propio. |
 | Plataformas | Android. No hay recursos para una app de iPhone; los amigos con iPhone entran por el pacto mixto. |
@@ -23,13 +23,13 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 
 ## 1. Qué es y por qué existe
 
-**Una frase:** Scrollban es el reto de soltar el móvil con tus amigos o tu pareja. Si te pasas de tu límite, solo ellos pueden darte más tiempo, y juntos veis cuánto tiempo habéis recuperado.
+**Una frase:** ScrollBan es el reto de soltar el móvil con tus amigos o tu pareja. Si te pasas de tu límite, solo ellos pueden darte más tiempo, y juntos veis cuánto tiempo habéis recuperado.
 
 **El trabajo que el usuario contrata:** "quiero dejar de perder horas en TikTok e Instagram y sé que con fuerza de voluntad sola no basta; con mis amigos sí."
 
-**Por qué funciona:** los bloqueadores normales se saltan con un toque, porque la persona que bloquea y la que desbloquea es la misma. Scrollban separa esos dos papeles. Pedir la llave a un amigo cuesta un poco de vergüenza, y hacerlo en grupo convierte el esfuerzo en un pique. Esa fricción social es el producto.
+**Por qué funciona:** los bloqueadores normales se saltan con un toque, porque la persona que bloquea y la que desbloquea es la misma. ScrollBan separa esos dos papeles. Pedir la llave a un amigo cuesta un poco de vergüenza, y hacerlo en grupo convierte el esfuerzo en un pique. Esa fricción social es el producto.
 
-**Por qué es también el canal:** nadie puede usar Scrollban solo. Cada usuario trae, por diseño, al menos a otro. Esa es la diferencia con Vestiarium, donde la gente se registraba y no volvía porque usarlo sola no le daba nada.
+**Por qué es también el canal:** nadie puede usar ScrollBan solo. Cada usuario trae, por diseño, al menos a otro. Esa es la diferencia con Vestiarium, donde la gente se registraba y no volvía porque usarlo sola no le daba nada.
 
 ### Competencia
 
@@ -56,7 +56,7 @@ FriendLock es casi la misma app que era ScreenPact: llave en manos de un amigo, 
 
 ### Posicionamiento
 
-**Para** gente joven que quiere usar menos el móvil, **Scrollban es** el reto con tus amigos o tu pareja en el que **solo ellos pueden darte más tiempo**. **A diferencia de** FriendLock, que vende un candado, Scrollban es un pique entre amigos: grupos, retos con fecha y tiempo recuperado. **A diferencia de** Snitch, no te desbloqueas tú solo con un gesto: hace falta la llave real de un amigo.
+**Para** gente joven que quiere usar menos el móvil, **ScrollBan es** el reto con tus amigos o tu pareja en el que **solo ellos pueden darte más tiempo**. **A diferencia de** FriendLock, que vende un candado, ScrollBan es un pique entre amigos: grupos, retos con fecha y tiempo recuperado. **A diferencia de** Snitch, no te desbloqueas tú solo con un gesto: hace falta la llave real de un amigo.
 
 No es un océano azul del todo: es un mar morado. Hay competencia, pero ninguna junta la llave de un amigo, los grupos, los retos, el tiempo ganado y el pacto con amigos de iPhone, y sin anuncios.
 
@@ -85,7 +85,7 @@ Detalle y orden de construcción se deciden en el rediseño. Lo acordado hasta a
 - **Ranking del grupo.** Quién ha usado menos el móvil esta semana. Kimy cree que lo mirarían, pero que el perdedor no pagaría nada en la vida real: el ranking informa, no castiga.
 - **Tiempo ganado.** Lo que no gastas frente a tu media se acumula y se ve en grupo. Es el gancho de "recuperar tiempo real" y lo que se comparte en el chat.
 - **Retos con fecha.** Retos cortos que empiezan y acaban: "una semana sin TikTok", "un finde desconectados".
-- **Pacto mixto con iPhone.** El amigo con iPhone usa el Tiempo de uso que ya trae Apple, con un código que pone su amigo de Android y que guarda Scrollban. Es mutuo y no hay que pagar a Apple. Límite conocido: para darle más tiempo, el amigo tiene que meter el código en el iPhone o dictarlo, y si lo dicta hay que cambiarlo después en persona. Encaja bien con parejas y peor con amigos que no se ven.
+- **Pacto mixto con iPhone.** El amigo con iPhone usa el Tiempo de uso que ya trae Apple, con un código que pone su amigo de Android y que guarda ScrollBan. Es mutuo y no hay que pagar a Apple. Límite conocido: para darle más tiempo, el amigo tiene que meter el código en el iPhone o dictarlo, y si lo dicta hay que cambiarlo después en persona. Encaja bien con parejas y peor con amigos que no se ven.
 
 Lo que no cambia: la llave entre amigos sale de Diffie-Hellman y nunca sale del móvil; endurecer es libre y aflojar pide llave; las protecciones contra trampas siguen igual.
 
@@ -98,7 +98,7 @@ Hace falta un servidor pequeño para grupos, ranking, retos y tiempo ganado: los
 ### Cuotas (precios oficiales, consultados el 28-10-2026)
 
 - Plan gratuito: peticiones ilimitadas, 500 MB de base de datos por proyecto, 5 GB de tráfico de salida al mes y 50.000 usuarios activos al mes en Auth. 2 proyectos gratis por persona. Un proyecto se pausa tras 1 semana sin actividad.
-- El tráfico y los usuarios de Auth se cuentan por organización. Por eso Scrollban va en una cuenta propia, separada de Vestiarium.
+- El tráfico y los usuarios de Auth se cuentan por organización. Por eso ScrollBan va en una cuenta propia, separada de Vestiarium.
 - En el plan gratuito nunca se cobra: si se pasa una cuota, se restringe el servicio.
 - Plan Pro: 25 $ al mes con tope de gasto activado por defecto, 250 GB de salida, 8 GB de disco y 100.000 usuarios al mes.
 
@@ -140,7 +140,7 @@ Objetivos de los primeros 90 días tras el lanzamiento (orientativos, a revisar 
 - 30 % de los pactos siguen activos a los 7 días.
 - 3-5 % de los usuarios activos compran Pro.
 
-Medición (decidido el 19-10-2026): estadísticas anónimas dentro de la app, encendidas en la bienvenida y apagables ahí y en Ajustes. Una vez al día se envía a kimycars.com/api/sp-stats: versión, fabricante, número de amigos y límites, qué apps se limitan y contadores de eventos. Nunca nombres, llaves ni minutos. Con el servidor de grupos habrá que revisar si estas estadísticas pasan a Supabase.
+Medición (decidido el 19-10-2026): estadísticas anónimas dentro de la app, encendidas en la bienvenida y apagables ahí y en Ajustes. Una vez al día se envía a kimycars.com/api/scrollban-stats: versión, fabricante, número de amigos y límites, qué apps se limitan y contadores de eventos. Nunca nombres, llaves ni minutos. Con el servidor de grupos habrá que revisar si estas estadísticas pasan a Supabase.
 
 ---
 
@@ -198,12 +198,12 @@ Riesgo conocido: el plan Hobby de Vercel solo permite uso personal no comercial.
 
 ## 7. Nombre y dominio
 
-**Elegido: Scrollban** (Kimy, 28-10-2026). Es el más fácil de entender para un público que no habla inglés.
+**Elegido: ScrollBan** (Kimy, 28-10-2026). Es el más fácil de entender para un público que no habla inglés.
 
 Comprobado el 28-10-2026:
 - **Dominio:** scrollban.com está libre y a precio normal, no premium: 11,08 $ al año en Porkbun, renovación igual. scrollban.app cuesta 8,75 $ el primer año y 14,93 $ después. No se compra hasta que haya ingresos.
-- **Play Store:** no hay ninguna app con ese nombre. Lo más parecido es "Scrollbank".
-- **Marcas** (TMview: OEPM, EUIPO, USPTO y UKIPO): nada en España ni en la UE. En EE. UU. hay una solicitud de SCROLLBANE (USPTO 50110329, 15-09-2026, clase 9 de software, a nombre de una persona; no se ha encontrado app publicada) y en Reino Unido está registrada SCROLLBAND (clases 9 y 26). En España y la UE no hay choque; en EE. UU. Scrollbane podría oponerse si algún día se lanza allí.
+- **Play Store:** no hay ninguna app con ese nombre. Lo más parecido es "ScrollBank".
+- **Marcas** (TMview: OEPM, EUIPO, USPTO y UKIPO): nada en España ni en la UE. En EE. UU. hay una solicitud de SCROLLBANE (USPTO 50110329, 15-09-2026, clase 9 de software, a nombre de una persona; no se ha encontrado app publicada) y en Reino Unido está registrada SCROLLBAND (clases 9 y 26). En España y la UE no hay choque; en EE. UU. ScrollBane podría oponerse si algún día se lanza allí.
 - **Pendiente:** App Store y cuentas de Instagram y TikTok.
 
 Cómo se llegó al nombre: se descartaron nombres en español (Kimy prefiere inglés porque casi ninguna app usa una palabra en español), nombres con "scroll" que sonaban a hacer más scroll (Scrollduel, Outscrolled), Scrollquitters (existe ScrollQuitter en iOS), Scrollvow (en España no se entendería) y Scrolldiet (existe una extensión de Chrome "Scroll Diet" y es más genérico). Ojo: hay muchas apps con "scroll" en el nombre (ScrollStop, ScrollFree, ScrollGuard, ScrollToll, Scroll Brake…), así que la marca tiene que distinguirse por el producto y el tono.
@@ -219,7 +219,7 @@ Cómplice, directa, con algo de humor y nunca de sermón. Habla como el amigo qu
 - No: "Has superado tu límite de uso diario. Introduce el código de verificación."
 
 ### Metáfora
-La llave: tú tienes la de tu amigo y él tiene la tuya. Se habla de llave y de pacto, no de código ni de emparejamiento. Con Scrollban se suma la idea de reto y de grupo.
+La llave: tú tienes la de tu amigo y él tiene la tuya. Se habla de llave y de pacto, no de código ni de emparejamiento. Con ScrollBan se suma la idea de reto y de grupo.
 
 ### Color, tipografía y forma (actuales)
 
@@ -239,9 +239,9 @@ Tipografías: Bricolage Grotesque (titulares y cifras), Figtree (texto e interfa
 ## Rediseño: decisiones de partida (Kimy, 28-10-2026)
 
 - Identidad: se evoluciona la actual (tinta y amarillo Llave) con el nombre nuevo. El logo se mantiene: el "candado de dos" actual (Kimy, 28-10-2026; se descartaron "prohibido con llave" y "dos llaves en X"). No se rehace el sistema de diseño.
-- Id de la app: pasa de com.screenpact.app a com.scrollban.app (hecho el 28-10-2026). La versión de pruebas anterior hay que desinstalarla; sus datos se pierden. El paquete de Kotlin sigue siendo com.screenpact.app porque es interno.
+- Id de la app: pasa de com.scrollban.app a com.scrollban.app (hecho el 28-10-2026). La versión de pruebas anterior hay que desinstalarla; sus datos se pierden. El paquete de Kotlin sigue siendo com.scrollban.app porque es interno.
 - El nombre visible sale de una sola constante, `Brand.NAME`, y del `app_name` de strings.xml.
-- Los esquemas de enlace (`screenpact://license`, `screenpact://pair`) y la ruta web `kimycars.com/screenpact/...` no cambian hasta rehacer la web, para no romper las licencias ni las invitaciones.
+- Los esquemas de enlace (`scrollban://license`, `scrollban://pair`) y la ruta web `kimycars.com/scrollban/...` no cambian hasta rehacer la web, para no romper las licencias ni las invitaciones.
 - Orden: primero identidad y pantallas con lo que funciona sin servidor (tiempo ganado propio y retos de dos); mientras, Kimy crea la cuenta de Supabase; después grupos y ranking.
 - La web (landing, página del pacto y privacidad) se rehace después de la app.
 
@@ -282,9 +282,9 @@ Tercera tanda: grupos de 3 o más (hecho el 05-11-2026, probado en el emulador c
 Pendiente de esta parte: política de privacidad (antes de lanzar), decidir si hace falta captcha contra registros falsos, limpiar identidades anónimas abandonadas (por ejemplo, una tarea mensual que borre las que llevan 90 días sin subir nada), probar con dos móviles reales.
 
 Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y probada en el emulador contra la página web servida en local; páginas web desplegadas en kimycars.com el 05-11-2026 con el OK de Kimy). Kimy cree que poca gente con iPhone lo usará y no hay dinero para una app de iPhone, así que no es prioridad:
-- **Cómo se sella**: en "Sellar un pacto" se elige "Tiene iPhone". El QR y el enlace abren `kimycars.com/screenpact/iphone`. Allí el amigo pone su nombre y pulsa "Sellar el pacto": su navegador hace el mismo Diffie-Hellman que la app (`screenpact/pacto-ios.js` en la web) y le enseña un QR con la respuesta (o se la manda por WhatsApp). El de Android la escanea o la abre y el pacto queda cerrado. La clave privada no sale del iPhone y nada pasa por ningún servidor.
-- **Él te da la llave a ti**: desde la página `kimycars.com/screenpact/llave`, con un código de 6 cifras que cambia cada 30 s, igual que en la app. La llave va tras "#" en el enlace y en el almacenamiento del navegador del iPhone; se recomienda añadir la página a la pantalla de inicio. Esa página no lleva analítica.
-- **Tú le das la llave a él**: con el código de 4 cifras de Tiempo de uso de su iPhone, que genera Scrollban (sin códigos fáciles) y que pones tú en su iPhone sin que lo vea. En Juntos, "Ver su código de Tiempo de uso" lo enseña con los pasos. "Cambiar el código" propone uno nuevo y solo lo guarda cuando confirmas que ya lo has cambiado en su iPhone, para no perder el que vale.
+- **Cómo se sella**: en "Sellar un pacto" se elige "Tiene iPhone". El QR y el enlace abren `kimycars.com/scrollban/iphone`. Allí el amigo pone su nombre y pulsa "Sellar el pacto": su navegador hace el mismo Diffie-Hellman que la app (`scrollban/pacto-ios.js` en la web) y le enseña un QR con la respuesta (o se la manda por WhatsApp). El de Android la escanea o la abre y el pacto queda cerrado. La clave privada no sale del iPhone y nada pasa por ningún servidor.
+- **Él te da la llave a ti**: desde la página `kimycars.com/scrollban/llave`, con un código de 6 cifras que cambia cada 30 s, igual que en la app. La llave va tras "#" en el enlace y en el almacenamiento del navegador del iPhone; se recomienda añadir la página a la pantalla de inicio. Esa página no lleva analítica.
+- **Tú le das la llave a él**: con el código de 4 cifras de Tiempo de uso de su iPhone, que genera ScrollBan (sin códigos fáciles) y que pones tú en su iPhone sin que lo vea. En Juntos, "Ver su código de Tiempo de uso" lo enseña con los pasos. "Cambiar el código" propone uno nuevo y solo lo guarda cuando confirmas que ya lo has cambiado en su iPhone, para no perder el que vale.
 - **Seguridad**: un pacto con iPhone espera siempre 24 h antes de dar llaves, aunque se haga en persona, porque la página web la puede abrir cualquiera (también tú mismo en otro navegador). Los amigos con iPhone no tienen la app, así que no salen en el ranking ni se pueden meter en grupos.
 - Base de datos v8 (columnas `ios` y `screenTimeCode` en `friends`). La respuesta del iPhone lleva `"o": "ios"` (`PairingPayload.platform`). Código de Tiempo de uso en `data/IosCodes.kt` y `ui/friends/IosCodeScreen.kt`.
 - **Por comprobar con un iPhone real**: los nombres exactos de los menús de Tiempo de uso en español (ahora dice "Bloquear ajustes de Tiempo de uso", "Límites de uso", "Bloquear al final del límite" y "Cambiar código de Tiempo de uso"); si al poner el código pide un Apple ID para recuperarlo (si se puede recuperar con el Apple ID del dueño, podría quitarse el código sin su amigo); y que "Añadir a pantalla de inicio" guarde el enlace de la llave con lo que va tras "#".
@@ -293,9 +293,9 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 
 - **Renombrar todo a ScrollBan antes de montar Stripe** (Kimy, 05-11-2026). Se escribe **ScrollBan**, con B mayúscula: separa las dos palabras al leerlo. En direcciones, ids y código va en minúsculas (`scrollban`). Qué cambia:
   - Textos de la app donde aún pone ScreenPact.
-  - Paquete Kotlin de `com.screenpact.app` a `com.scrollban.app`. El applicationId ya es `com.scrollban.app`, así que no se pierden datos.
-  - La web pasa de `kimycars.com/screenpact` a `kimycars.com/scrollban`, con redirecciones desde las rutas viejas para que los enlaces de pacto ya mandados sigan funcionando.
-  - Enlace de la app `scrollban://`, aceptando también `screenpact://`.
+  - Paquete Kotlin de `com.scrollban.app` a `com.scrollban.app`. El applicationId ya es `com.scrollban.app`, así que no se pierden datos.
+  - La web pasa de `kimycars.com/scrollban` a `kimycars.com/scrollban`, con redirecciones desde las rutas viejas para que los enlaces de pacto ya mandados sigan funcionando.
+  - Enlace de la app `scrollban://`, aceptando también `scrollban://`.
   - Docs y nombres del servidor de licencias.
   - Al dar de alta Stripe, la web de la empresa será `https://www.kimycars.com/scrollban`.
 
@@ -305,7 +305,7 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 - Política de privacidad y textos de la app con el nuevo reparto de datos.
 - Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
 - Confirmar el plan de Vercel de kimycars.com.
-- Comprobar App Store y cuentas de Instagram y TikTok para Scrollban.
+- Comprobar App Store y cuentas de Instagram y TikTok para ScrollBan.
 - Stripe: productos y Payment Links (Kimy, guía en `docs/STRIPE.md`).
 - Copia de la carpeta `Documents\claves` (Kimy).
 
@@ -344,12 +344,12 @@ Un pacto se puede sellar por enlace: A manda su invitación, B la abre y su app 
 
 ---
 
-## 11. Historial: cómo se llegó a Scrollban (28-10-2026)
+## 11. Historial: cómo se llegó a ScrollBan (28-10-2026)
 
 1. Kimy descubrió que ScreenPact y screenpact.com ya existían. Al revisar la competencia apareció FriendLock, casi la misma app en Android, además de Snitch y otras.
 2. Kimy pidió definir la estrategia para no entrar en un océano rojo. Respuestas clave: quiere un proyecto real de portfolio con usuarios activos (Vestiarium tiene unos 15 usuarios y ninguno activo, y Kimycars dos clientes amigos); hoy no llega a casi nadie; en su entorno hay mitad iPhone y mitad Android; le funcionan mejor las colaboraciones que las redes; está dispuesto a cambiar lo que haga falta.
 3. Se eligió el posicionamiento de reto social y las funciones nuevas (grupos, retos, tiempo ganado, pacto mixto con iPhone). Kimy aceptó un servidor siempre que se supiera cuántos usuarios caben gratis.
 4. Servidor: Kimy descartó Cloudflare y se calculó con Supabase. Vercel queda solo para la web.
-5. Nombre: tras varias rondas, Scrollban.
+5. Nombre: tras varias rondas, ScrollBan.
 
 Decisiones de partida que siguen vigentes (01-10-2026): modelo freemium con cobro por Stripe; distribución primero en Zapstore y APK desde la web; ningún coste fijo sin ingresos detrás. El público original (18-30) se amplía a jóvenes de unos 16-30, parejas y grupos.

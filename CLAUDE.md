@@ -1,15 +1,15 @@
-# Scrollban (antes ScreenPact): reglas del proyecto
+# ScrollBan (antes ScreenPact): reglas del proyecto
 
 App Android (Kotlin + Jetpack Compose): el reto de soltar el móvil con tus amigos o tu pareja, donde
-solo ellos pueden darte más tiempo. El 28-10-2026 cambiaron el nombre (ScreenPact pasa a Scrollban),
+solo ellos pueden darte más tiempo. El 28-10-2026 cambiaron el nombre (ScreenPact pasa a ScrollBan),
 el posicionamiento y las funciones previstas (grupos, retos, tiempo ganado, pacto mixto con iPhone,
-servidor en Supabase). El código y la web todavía dicen ScreenPact hasta el rediseño.
+servidor en Supabase). El 05-11-2026 se renombró todo a ScrollBan (se escribe así, con B mayúscula; en direcciones e identificadores, `scrollban`): paquete `com.scrollban.app`, enlaces `scrollban://` y web `kimycars.com/scrollban`. Los enlaces antiguos (`screenpact://`, `/screenpact/…`) se siguen aceptando y la web redirige. Quedan con el nombre viejo a propósito, porque cambiarlos borraría datos o rompería pactos: los nombres de almacenamiento de la app (`screenpact.db`, `screenpact_*`), la etiqueta `screenpact-unlock:` de `PactKeys` y `pacto-ios.js`, las rutas del Blob (`sp-stats/`, `sp-licenses/`…), los ficheros de `Documents\claves` y la carpeta local del repo. Ver `Brand.kt`.
 Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: decisiones vigentes).
 `docs/screenpact-resumen.html` y `docs/LANZAMIENTO.md` son de la etapa ScreenPact y están desfasados.
 
 ## Sistema de diseño: nada escrito a mano
 
-- Todos los valores de diseño salen de `app/src/main/kotlin/com/screenpact/app/ui/theme/`:
+- Todos los valores de diseño salen de `app/src/main/kotlin/com/scrollban/app/ui/theme/`:
   - `Theme.kt`: colores (`Sp.Tinta`, `Sp.Llave`…) y tipografía (`MaterialTheme.typography.*`).
   - `Tokens.kt`: espaciado (`Space`), tamaños (`Sizes`), trazos (`Strokes`), formas (`Shapes`) y estilos de la llave (`TextStyles`).
 - Fuera de `ui/theme` no se escribe ningún número con `.dp`/`.sp` ni ningún `Color(0x…)`. La tarea de Gradle `checkDesignTokens` corre antes de cada build y lo hace fallar si pasa.
@@ -22,15 +22,15 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: de
 
 - Endurecer es libre, aflojar pide llave: añadir apps, bajar límites y reactivar son libres; subir límites, pausar, quitar apps y romper pactos piden la llave de un amigo (`FriendCodeDialog`).
 - La única fuente de verdad para decidir si una llave vale es `data/FriendCodes.kt`. Vale la llave de un amigo con pacto o la de un grupo de 3 o más (24 h después de entrar en él). Salir de un grupo pide llave, como romper un pacto.
-- Los pactos se sellan solo en `data/Pairing.kt` (en persona por QR o a distancia por enlace). Las llaves salen de Diffie-Hellman (`data/crypto/PactKeys.kt`): ni el QR ni el enlace llevan nada secreto. No se acepta una invitación propia ni una creada en el mismo móvil (apps clonadas), y un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero. Un pacto con iPhone (la otra mitad la hace la página web `kimycars.com/screenpact/iphone`, con las mismas cuentas en `screenpact/pacto-ios.js` de la web) espera siempre 24 h, también en persona. Si se cambia `PactKeys.derive` o `PairingPayload`, hay que cambiar también `pacto-ios.js`.
+- Los pactos se sellan solo en `data/Pairing.kt` (en persona por QR o a distancia por enlace). Las llaves salen de Diffie-Hellman (`data/crypto/PactKeys.kt`): ni el QR ni el enlace llevan nada secreto. No se acepta una invitación propia ni una creada en el mismo móvil (apps clonadas), y un pacto a distancia espera siempre 24 h antes de poder dar llaves, aunque sea el primero. Un pacto con iPhone (la otra mitad la hace la página web `kimycars.com/scrollban/iphone`, con las mismas cuentas en `scrollban/pacto-ios.js` de la web) espera siempre 24 h, también en persona. Si se cambia `PactKeys.derive` o `PairingPayload`, hay que cambiar también `pacto-ios.js`.
 - Las trampas se detectan en `util/TamperGuard.kt`. No añadir caminos que se salten ninguna de las dos cosas.
 - Privacidad: los datos de la persona no salen del móvil salvo lo que ella active. Las conexiones a Internet son:
   - Estadísticas anónimas de `data/Stats.kt` (encendidas en la bienvenida, se apagan en Ajustes).
   - Renovación de la licencia de Pro en `data/Pro.kt` (manda solo el id de licencia).
   - Ranking con amigos en Supabase (`data/cloud/`, desde el 05-11-2026): apagado de inicio. Si se activa, suben los minutos por día de las apps con límite, las llaves usadas, la media de antes y el reto, y solo los ve la gente con la que hay pacto o grupo. Nunca suben nombres ni llaves en claro: en los grupos de 3 o más, el nombre y el id de instalación suben cifrados con el secreto del grupo, y el secreto viaja cifrado con la clave del pacto (`data/crypto/GroupKeys.kt`). Apagarlo borra todo del servidor. `data/cloud/Cloud.kt` es la única conexión con Supabase y la estructura del servidor está en `supabase/schema.sql`.
-  Cualquier dato nuevo que se quiera enviar pasa por uno de esos sitios, se añade a la política de privacidad (kimycars.com/screenpact/privacidad, en la web de kimycars) y se habla antes con Kimy. La política aún no recoge el ranking: hay que actualizarla antes de lanzar.
+  Cualquier dato nuevo que se quiera enviar pasa por uno de esos sitios, se añade a la política de privacidad (kimycars.com/scrollban/privacidad, en la web de kimycars) y se habla antes con Kimy. La política aún no recoge el ranking: hay que actualizarla antes de lanzar.
 - Precios: `data/Plans.kt` es la fuente dentro de la app; la landing y `docs/PRODUCTO.md` llevan los mismos.
-- Pro: `data/Pro.kt` es la única fuente de verdad (`Pro.isPro`, `rememberIsPro()` en la interfaz). Las licencias las firma el servidor de kimycars.com (`api/sp-stripe-webhook.js`, `api/sp-license.js`, `lib/sp-license.js`) con la clave privada de `Documents\claves\screenpact-license-private.pem`; la app solo lleva la pública. En la versión de pruebas hay un interruptor "Pro de prueba" en Ajustes.
+- Pro: `data/Pro.kt` es la única fuente de verdad (`Pro.isPro`, `rememberIsPro()` en la interfaz). Las licencias las firma el servidor de kimycars.com (`api/scrollban-stripe-webhook.js`, `api/scrollban-license.js`, `lib/scrollban-license.js`) con la clave privada de `Documents\claves\screenpact-license-private.pem`; la app solo lleva la pública. Las variables de Stripe de ScrollBan en Vercel llevan prefijo propio (`SCROLLBAN_STRIPE_SECRET_KEY`, `SCROLLBAN_STRIPE_WEBHOOK_SECRET`, `SCROLLBAN_LICENSE_PRIVATE_KEY`) porque `STRIPE_SECRET_KEY` ya es del cobro de webs de clientes (`api/pago.js`). En la versión de pruebas hay un interruptor "Pro de prueba" en Ajustes.
 - Base de datos: cada cambio de estructura sube la versión de `AppDatabase` y lleva su `Migration`. Nunca `fallbackToDestructiveMigration`: borraría los pactos de la gente al actualizar.
 
 ## Commit y despliegue (Kimy, 05-11-2026)

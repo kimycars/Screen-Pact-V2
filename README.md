@@ -1,4 +1,4 @@
-# ScreenPact
+# ScrollBan
 
 App Android de control de tiempo de pantalla **entre amigos**. Tú solo no puedes desbloquearte.
 
@@ -25,7 +25,7 @@ Sin servidor, sin cuenta, sin red — todo el emparejamiento y la verificación 
    git push -u origin main
    ```
 2. Ve a la pestaña **Actions** del repo. El workflow `Build APK` se lanza solo en cada push.
-3. Cuando termine (~3-5 min) entra al run y descarga el artefacto `ScreenPact-debug`. Dentro está el `.apk`.
+3. Cuando termine (~3-5 min) entra al run y descarga el artefacto `ScrollBan-debug`. Dentro está el `.apk`.
 4. Pásalo al móvil (correo, Drive, USB) y ábrelo. Permite instalación de orígenes desconocidos cuando lo pida.
 
 Para versionar releases, crea un tag `v0.1.0`: GitHub Actions adjunta el APK a una release automáticamente.
@@ -66,9 +66,9 @@ Todos se piden desde la pantalla de onboarding, abriendo Ajustes para que los ac
 ## Estructura
 
 ```
-app/src/main/kotlin/com/screenpact/app/
+app/src/main/kotlin/com/scrollban/app/
 ├── MainActivity.kt
-├── ScreenPactApplication.kt
+├── ScrollBanApplication.kt
 ├── data/
 │   ├── crypto/        # TOTP + QR + payload
 │   ├── db/            # Room: Friend, AppLimit, UnlockGrant
