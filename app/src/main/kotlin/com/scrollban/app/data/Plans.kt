@@ -12,10 +12,10 @@ data class Plan(val id: String, val title: String, val subtitle: String, val pri
 
 object Plans {
     val all = listOf(
-        Plan("monthly", "Mensual", "Cancela cuando quieras", "2,99 €/mes"),
-        Plan("yearly", "Anual", "1,67 € al mes · ahorras un 44 %", "19,99 €/año"),
-        Plan("lifetime", "De por vida", "Pagas una vez", "49,99 €"),
-        Plan("pack", "Pack Pacto", "El anual para ti y tu amigo", "29,99 €/año"),
+        Plan("monthly", "Mensual", "Cancela cuando quieras", "2,99 €/mes", "https://buy.stripe.com/test_8x2cMZ1w5afL92a0km7bW03"),
+        Plan("yearly", "Anual", "1,67 € al mes · ahorras un 44 %", "19,99 €/año", "https://buy.stripe.com/test_4gM00ddeN3Rndiq1oq7bW02"),
+        Plan("lifetime", "De por vida", "Pagas una vez", "49,99 €", "https://buy.stripe.com/test_7sYcMZb6F4VrguCaZ07bW01"),
+        Plan("pack", "Pack Pacto", "El anual para ti y tu amigo", "29,99 €/año", "https://buy.stripe.com/test_bJeaER6Qp5Zva6e4AC7bW00"),
     )
 
     /** El recomendado: sale destacado arriba y marcado al abrir la pantalla. */

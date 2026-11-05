@@ -49,3 +49,7 @@ Los enlaces `https://buy.stripe.com/…` son públicos y se pueden pegar en el c
 ## 5. Prueba
 
 Con los enlaces de modo de prueba: compra el anual con la tarjeta `4242 4242 4242 4242` (cualquier fecha futura y CVC), comprueba que `/scrollban/gracias` muestra la licencia y que la app la acepta. Después se crean los de modo real y se cambian los enlaces.
+
+## Estado (05-11-2026)
+
+Cuenta "ScrollBan" creada en Stripe. Los cuatro Payment Links de **modo de prueba** están en `data/Plans.kt` y las tres variables `SCROLLBAN_*` están en Vercel (Production), con la web ya redesplegada. Falta la compra de prueba completa y después repetirlo todo en modo real (productos, enlaces, webhook y variables con las claves `sk_live_`). La landing no lleva botones de compra a propósito: Pro se compra desde la app, porque sin la app la licencia no sirve.
