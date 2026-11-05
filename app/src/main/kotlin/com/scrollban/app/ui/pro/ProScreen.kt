@@ -1,5 +1,6 @@
 package com.scrollban.app.ui.pro
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
@@ -37,6 +38,9 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.graphics.toArgb
+import androidx.browser.customtabs.CustomTabColorSchemeParams
+import androidx.browser.customtabs.CustomTabsIntent
 import com.scrollban.app.Brand
 import com.scrollban.app.data.Plan
 import com.scrollban.app.data.Pro
@@ -135,7 +139,7 @@ fun ProScreen(feature: ProFeature, onClose: () -> Unit) {
             isPro -> PrimaryButton("Ya tienes Pro", {}, enabled = false)
             plan == null || plan.link.isEmpty() -> PrimaryButton("Muy pronto", {}, enabled = false)
             else -> PrimaryButton("Hazte Pro · ${plan.price}", {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Pro.checkoutUrl(context, plan.link))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                openCheckout(context, Pro.checkoutUrl(context, plan.link))
             })
         }
         if (isPro) {
@@ -165,6 +169,30 @@ fun ProScreen(feature: ProFeature, onClose: () -> Unit) {
         QuietButton("Ahora no", onClose, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
     if (showLicense) LicenseDialog(onDismiss = { showLicense = false }, onActivated = { showLicense = false })
+}
+
+/**
+ * Abre el pago de Stripe en una pestaña que se superpone a la app (Custom Tab), con los colores
+ * de ScrollBan. Al cerrarla se vuelve a la app, que recoge la licencia sola (Pro.claimPending).
+ * Si el móvil no tiene un navegador compatible, se abre el navegador normal.
+ */
+private fun openCheckout(context: Context, url: String) {
+    val uri = Uri.parse(url)
+    runCatching {
+        val colors = CustomTabColorSchemeParams.Builder()
+            .setToolbarColor(Sb.Tinta.toArgb())
+            .setNavigationBarColor(Sb.Tinta.toArgb())
+            .build()
+        CustomTabsIntent.Builder()
+            .setDefaultColorSchemeParams(colors)
+            .setShowTitle(true)
+            .setShareState(CustomTabsIntent.SHARE_STATE_OFF)
+            .setUrlBarHidingEnabled(true)
+            .build()
+            .launchUrl(context, uri)
+    }.onFailure {
+        context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+    }
 }
 
 @Composable

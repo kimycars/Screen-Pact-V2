@@ -114,6 +114,9 @@ dependencies {
     // WorkManager (periodic checks fallback)
     implementation("androidx.work:work-runtime-ktx:2.9.0")
 
+    // Pago de Pro en una pestaña dentro de la app (Custom Tab), sin salir a otro navegador.
+    implementation("androidx.browser:browser:1.8.0")
+
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
