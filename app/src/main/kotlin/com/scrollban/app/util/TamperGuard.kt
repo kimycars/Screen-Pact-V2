@@ -33,6 +33,8 @@ object TamperGuard {
     private const val KEY_REASON = "reason"
     private const val KEY_BEAT_UPTIME = "beat_uptime"
     private const val KEY_BEAT_BOOT = "beat_boot"
+    private const val KEY_STRICT_HINT = "strict_hint"
+    private const val KEY_STRICT_HINT_DONE = "strict_hint_done"
 
     /**
      * Hueco máximo entre latidos dentro del mismo arranque. Se mide con uptimeMillis, que no
@@ -49,6 +51,17 @@ object TamperGuard {
     fun flag(context: Context, reason: String) {
         if (isArmed(context)) prefs(context).edit().putString(KEY_REASON, reason).apply()
     }
+
+    /**
+     * Aviso del modo estricto (decisión de producto del 06-11-2026): la primera vez que se
+     * detecta una trampa guardada, la pestaña Hoy enseña una tarjeta que ofrece el modo estricto,
+     * una sola vez en la vida de la instalación. A quien ya tiene Pro no se le enseña.
+     */
+    fun strictHintPending(context: Context): Boolean =
+        prefs(context).getBoolean(KEY_STRICT_HINT, false) && !prefs(context).getBoolean(KEY_STRICT_HINT_DONE, false)
+
+    fun dismissStrictHint(context: Context) =
+        prefs(context).edit().putBoolean(KEY_STRICT_HINT_DONE, true).remove(KEY_STRICT_HINT).apply()
 
     /** Un amigo ha dado su código: se perdona la trampa guardada. */
     fun clear(context: Context) {
@@ -90,7 +103,7 @@ object TamperGuard {
                 boot != -1 && boot == lastBoot && uptime - lastUptime > MAX_GAP_MS -> REASON_SERVICE_STOPPED
                 else -> null
             }
-            if (newReason != null) editor.putString(KEY_REASON, newReason)
+            if (newReason != null) editor.putString(KEY_REASON, newReason).putBoolean(KEY_STRICT_HINT, true)
         }
         if (!armed && hasUsage && hasOverlay) editor.putBoolean(KEY_ARMED, true)
         editor.putLong(KEY_BEAT_UPTIME, uptime).putInt(KEY_BEAT_BOOT, boot).apply()

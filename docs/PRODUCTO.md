@@ -6,7 +6,7 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 
 | Tema | Decisión |
 |---|---|
-| Nombre | **ScrollBan**. El código y la web todavía dicen ScreenPact: el cambio se hace en el rediseño. |
+| Nombre | **ScrollBan**. Código, enlaces y web renombrados el 05-11-2026 (ver `CLAUDE.md`). |
 | Dominio | No se compra hasta que haya ingresos. La web sigue en kimycars.com mientras tanto. Si alguien registra scrollban.com, se usa scrollban.app o scrollban.net. |
 | Objetivo | Un proyecto real de portfolio con usuarios activos de verdad. Los ingresos son secundarios al principio. |
 | Posicionamiento | El reto de soltar el móvil con tus amigos o tu pareja. No es un bloqueador ni un candado. |
@@ -14,6 +14,7 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 | Esencia | Entre juego o reto social y recuperar tiempo real. |
 | Base del producto | La llave entre amigos: solo otra persona puede darte más tiempo. |
 | Funciones nuevas | Pactos de 2 que se pueden ampliar a grupo, retos con fecha, tiempo ganado del grupo y pacto mixto con iPhone. |
+| Gratis y Pro | Todo lo social es gratis; Pro vende control personal (más de 3 apps, horarios, modo estricto, historial, iconos). Sin anuncios. Decidido el 06-11-2026, ver sección 5. |
 | Servidor | Supabase, plan gratuito, en una cuenta nueva solo para ScrollBan (separada de Vestiarium). |
 | Gasto | Cero hasta que haya ingresos: ni Supabase Pro, ni Vercel Pro, ni dominio. |
 | Canal | Boca a boca (cada usuario invita al menos a otro) y colaboraciones con gente que ya habla a quien quiere usar menos el móvil. No depende de que Kimy haga contenido propio. |
@@ -149,22 +150,33 @@ Medición (decidido el 19-10-2026): estadísticas anónimas dentro de la app, en
 ### Principio
 Coste fijo cero. Solo se gasta cuando alguien paga.
 
-### Gratis y Pro (vigente desde la 1.0.0; se revisa en el rediseño)
+### Gratis y Pro (decidido el 06-11-2026)
 
 | | Gratis | Pro |
 |---|---|---|
-| Amigos emparejados | Ilimitados | Ilimitados |
+| Pactos, amigos y llaves | Ilimitados | Ilimitados |
+| Grupos (hasta 8) y ranking | Sí | Sí |
+| Retos con fecha y unirse a los de amigos | Sí | Sí |
+| Tiempo ganado (7 días y total), rachas y la semana en Hoy | Sí | Sí |
+| Pacto con iPhone | Sí | Sí |
+| Límite diario, pantalla de bloqueo y protecciones contra trampas | Sí | Sí |
 | Apps con límite | 3 | Ilimitadas |
-| Límite diario por app | Sí | Sí |
-| Pantalla de bloqueo y llave de amigo | Sí | Sí |
-| Protecciones básicas contra trampas | Sí | Sí |
-| Rachas y la semana en Hoy | Sí | Sí |
 | Horarios (por ejemplo, Instagram cerrado de 0:00 a 8:00) | No | Sí |
+| Modo estricto (desinstalar pide llave de amigo) | No | Sí |
 | Historial de 4 semanas, récords e insignias | No | Sí |
-| Modo estricto (impide desinstalar sin llave de amigo) | No | Sí |
 | Iconos alternativos | No | Sí |
 
-Por qué los amigos no se limitan: cada amigo es una instalación nueva. Cobrar por amigos frenaría el único canal de crecimiento. Por el mismo motivo, los grupos, los retos y el tiempo ganado básicos deberían ser gratis; qué parte va a Pro se decide en el rediseño.
+En qué se basa:
+- Todo lo que necesita a otra persona es gratis. Cada amigo es una instalación nueva y el boca a boca es el único canal de crecimiento; si el ranking o los grupos fueran de pago, el amigo que no paga no podría jugar.
+- El objetivo es tener usuarios activos; los ingresos van después. Ante la duda entre cobrar algo o que se use más, gana que se use más.
+- Pro vende lo que es solo para ti: más control, más fuerza y más datos sobre ti.
+- Sin anuncios. Diferencia frente a FriendLock y Snitch.
+- 3 apps gratis porque casi todo el mundo quiere limitar TikTok, Instagram y YouTube: con 3 la app se prueba de verdad. Se revisa con datos: si casi nadie pasa de 3, el límite no vende y se puede bajar.
+- El modo estricto es lo que más valor tiene en Pro. Por eso, la primera vez que se detecta una trampa (permisos quitados o servicio parado), la pestaña Hoy enseña una vez una tarjeta que lo ofrece (`TamperGuard.strictHintPending`). No se enseña Pro en la bienvenida.
+
+Contras asumidos: la conversión será baja al principio (estimación 1-3 % de los activos, por debajo del objetivo del 3-5 %, porque lo divertido es gratis); más usuarios en el ranking cargan más el plan gratuito de Supabase; los iconos casi no venden.
+
+Descartado: grupos o ranking de pago (frena el crecimiento), anuncios (rompe la marca), todo gratis con donaciones (Stripe ya está montado), 7 días de Pro al sellar el primer pacto (al acabar se apagan el modo estricto y los horarios en mitad de un reto; se puede probar con datos más adelante).
 
 ### Precio (decidido el 19-10-2026)
 
@@ -251,7 +263,7 @@ Kimy ya tiene cuenta de Supabase y de Stripe. Decidido:
 - Primero todo lo que funciona sin servidor; después lo que necesita Supabase.
 - Las tablas de Supabase las monta Claude desde el panel de Kimy en Chrome, con la URL del proyecto y la clave publishable (pública, va dentro de la app). La clave secreta nunca pasa por el chat.
 - Los productos y Payment Links de Stripe los crea Kimy siguiendo `docs/STRIPE.md` y pasa los cuatro enlaces.
-- Qué va en Gratis y qué en Pro con las funciones nuevas se decide cuando esté todo montado. Hasta entonces, todo lo nuevo está abierto.
+- Qué va en Gratis y qué en Pro: decidido el 06-11-2026 (sección 5).
 
 Hecho sin servidor (05-11-2026):
 - **Tiempo ganado en Hoy.** La primera vez que una app tiene límite se guarda su media diaria de los 7 días anteriores (tabla `baselines`). Cada día terminado se compara con esa media; es neto (un día peor que antes resta) y no cuenta el día de hoy. La tarjeta enseña lo recuperado en los últimos 7 días terminados, antes frente a ahora y el total. Lógica en `data/TimeWon.kt`. En las apps que ya tenían límite antes de esta versión, la media sale de días ya limitados y se queda corta.
@@ -302,8 +314,9 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
 - Servidor de grupos en Supabase y grupos de 3 o más: hecho el 05-11-2026; falta probarlo con dos móviles reales.
 - Pacto mixto con iPhone: hecho el 05-11-2026. Páginas web desplegadas el mismo día; falta probarlo con un iPhone real. Baja prioridad.
-- Política de privacidad y textos de la app con el nuevo reparto de datos.
-- Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
+- Política de privacidad con el nuevo reparto de datos: hecho el 06-11-2026.
+- Gratis y Pro con las funciones nuevas: decidido el 06-11-2026 (sección 5). Pack Pacto se mantiene.
+- Stripe en modo real: pasos en `docs/STRIPE.md`, sección «Pasar a modo real».
 - Confirmar el plan de Vercel de kimycars.com.
 - Comprobar App Store y cuentas de Instagram y TikTok para ScrollBan.
 - Stripe: productos y Payment Links (Kimy, guía en `docs/STRIPE.md`).

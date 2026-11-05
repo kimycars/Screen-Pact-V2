@@ -53,6 +53,8 @@ import com.scrollban.app.ui.common.Invite
 import com.scrollban.app.ui.components.ChipButton
 import com.scrollban.app.ui.components.IconAction
 import com.scrollban.app.ui.components.OutlineButton
+import com.scrollban.app.ui.components.QuietButton
+import com.scrollban.app.util.TamperGuard
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import com.scrollban.app.data.db.Friend
@@ -76,11 +78,13 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
     var streaks by remember { mutableStateOf(History.Streaks(0, 0, 0, 0)) }
     var week by remember { mutableStateOf<List<History.Day>>(emptyList()) }
     var timeWon by remember { mutableStateOf<TimeWon.Summary?>(null) }
+    var strictHint by remember { mutableStateOf(TamperGuard.strictHintPending(context)) }
     LaunchedEffect(Unit) {
         while (true) {
             streaks = History.streaks(db)
             week = History.days(db, 7)
             timeWon = TimeWon.summary(db)
+            strictHint = TamperGuard.strictHintPending(context)
             delay(30_000)
         }
     }
@@ -115,6 +119,15 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
                     Spacer(Modifier.height(Space.m))
                     PermissionCards(permissions, onlyMissing = true)
                 }
+            }
+        }
+
+        if (strictHint && !isPro) {
+            item {
+                StrictHintCard(
+                    onSee = { TamperGuard.dismissStrictHint(context); strictHint = false; onOpenPro(ProFeature.STRICT) },
+                    onDismiss = { TamperGuard.dismissStrictHint(context); strictHint = false }
+                )
             }
         }
 
@@ -183,6 +196,24 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
     }
 }
 
+
+/** Se enseña una vez, tras la primera trampa detectada (ver TamperGuard.strictHintPending). */
+@Composable
+private fun StrictHintCard(onSee: () -> Unit, onDismiss: () -> Unit) {
+    SbCard {
+        Text("Alguien intentó saltarse el pacto", style = MaterialTheme.typography.titleMedium)
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            "Si queréis ir más en serio, con el modo estricto desinstalar ${Brand.NAME} también pide la llave de un amigo.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Sb.TextoSuave
+        )
+        Spacer(Modifier.height(Space.m))
+        OutlineButton("Ver el modo estricto", onSee)
+        Spacer(Modifier.height(Space.xs))
+        QuietButton("Ahora no", onDismiss)
+    }
+}
 
 @Composable
 private fun NoPactCard(onPair: () -> Unit, onInvite: () -> Unit) {
