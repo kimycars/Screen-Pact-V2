@@ -31,6 +31,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import com.screenpact.app.data.FriendCodes
+import com.screenpact.app.data.Challenges
+import com.screenpact.app.data.db.Challenge
+import androidx.compose.runtime.LaunchedEffect
+import kotlinx.coroutines.delay
 import com.screenpact.app.data.db.AppDatabase
 import com.screenpact.app.data.db.Friend
 import com.screenpact.app.ui.common.FriendCodeDialog
@@ -63,13 +67,26 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
     val scope = rememberCoroutineScope()
     // Borrar amigos pide llave: si no, borrarlos todos dejaba los límites sin protección.
     var toDelete by remember { mutableStateOf<Friend?>(null) }
+    val limits by db.appLimitDao().observeAll().collectAsState(initial = emptyList())
+    val challenge by db.challengeDao().observeLatest().collectAsState(initial = null)
+    var progress by remember { mutableStateOf<Challenges.Progress?>(null) }
+    var creating by remember { mutableStateOf(false) }
+    var quitting by remember { mutableStateOf<Challenge?>(null) }
+    LaunchedEffect(challenge) {
+        val c = challenge
+        if (c == null) { progress = null; return@LaunchedEffect }
+        while (true) {
+            progress = Challenges.progress(db, c)
+            delay(30_000)
+        }
+    }
 
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = PaddingValues(Space.xl),
         verticalArrangement = Arrangement.spacedBy(Space.s)
     ) {
-        item { ScreenTitle("Amigos") }
+        item { ScreenTitle("Juntos") }
         item {
             Text(
                 "Cada pacto va en los dos sentidos: tú guardas su llave y tu amigo guarda la tuya.",
@@ -77,6 +94,14 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
                 color = Sp.TextoSuave,
                 modifier = Modifier.padding(top = Space.xxs, bottom = Space.s)
             )
+        }
+
+        // El reto va arriba: es lo que cambia cada día. Solo se mide en apps con límite.
+        val p = progress
+        if (p != null) {
+            item { ChallengeCard(p, onNew = { creating = true }, onQuit = { quitting = p.challenge }) }
+        } else if (limits.isNotEmpty()) {
+            item { NoChallengeCard(onStart = { creating = true }) }
         }
 
         if (friends.isEmpty()) {
@@ -106,6 +131,24 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit) {
             Spacer(Modifier.height(Space.xs))
             QuietButton("Invitar a un amigo", { Invite.share(context) }, modifier = Modifier.fillMaxWidth())
         }
+    }
+
+    if (creating && limits.isNotEmpty()) {
+        StartChallengeDialog(
+            limits = limits,
+            onDismiss = { creating = false },
+            onStart = { app, minutes, days ->
+                creating = false
+                scope.launch { Challenges.start(db, app.packageName, app.appName, minutes, days) }
+            }
+        )
+    }
+
+    quitting?.let { c ->
+        QuitChallengeDialog(c, onDismiss = { quitting = null }, onQuit = {
+            quitting = null
+            scope.launch { db.challengeDao().delete(c.id) }
+        })
     }
 
     toDelete?.let { f ->

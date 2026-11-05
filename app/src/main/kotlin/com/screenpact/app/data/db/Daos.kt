@@ -73,3 +73,25 @@ interface DayRecordDao {
     @Query("SELECT day FROM day_records GROUP BY day ORDER BY day DESC")
     suspend fun days(): List<String>
 }
+
+@Dao
+interface BaselineDao {
+    @Query("SELECT * FROM baselines")
+    suspend fun getAll(): List<Baseline>
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    suspend fun insert(baseline: Baseline)
+}
+
+@Dao
+interface ChallengeDao {
+    /** El reto más reciente (en curso o recién terminado). */
+    @Query("SELECT * FROM challenges ORDER BY createdAt DESC LIMIT 1")
+    fun observeLatest(): Flow<Challenge?>
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    suspend fun upsert(challenge: Challenge)
+
+    @Query("DELETE FROM challenges WHERE id = :id")
+    suspend fun delete(id: String)
+}

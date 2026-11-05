@@ -67,8 +67,8 @@ private data class Tab(val route: String, val label: String, val icon: ImageVect
 
 private val tabs = listOf(
     Tab(Routes.HOME, "Hoy", Icons.Default.Schedule),
+    Tab(Routes.FRIENDS, "Juntos", Icons.Default.People),
     Tab(Routes.LIMITS, "Límites", Icons.AutoMirrored.Filled.List),
-    Tab(Routes.FRIENDS, "Amigos", Icons.Default.People),
 )
 
 @Composable

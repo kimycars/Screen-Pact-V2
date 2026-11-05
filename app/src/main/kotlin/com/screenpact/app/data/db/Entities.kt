@@ -85,3 +85,30 @@ data class DayRecord(
     /** Veces que se usó una llave para abrir esta app ese día. */
     val unlocks: Int = 0
 )
+
+/**
+ * Cuánto usabas cada app antes de ponerle límite (media diaria de los 7 días anteriores). Es la
+ * vara de medir del tiempo ganado. Se mide una vez, la primera vez que la app tiene límite.
+ */
+@Entity(tableName = "baselines")
+data class Baseline(
+    @PrimaryKey val packageName: String,
+    val avgDailyMs: Long,
+    val measuredAt: Long = System.currentTimeMillis()
+)
+
+/**
+ * Reto con fecha: [days] días seguidos desde [startDay] (AAAA-MM-DD) usando [packageName] como
+ * mucho [dailyMinutes] al día (0 = sin la app). [id] es un UUID para poder compartirlo con el
+ * grupo cuando haya servidor. Solo hay un reto activo a la vez.
+ */
+@Entity(tableName = "challenges")
+data class Challenge(
+    @PrimaryKey val id: String,
+    val packageName: String,
+    val appName: String,
+    val dailyMinutes: Int,
+    val startDay: String,
+    val days: Int,
+    val createdAt: Long = System.currentTimeMillis()
+)

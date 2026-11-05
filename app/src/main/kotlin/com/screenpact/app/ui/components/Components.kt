@@ -129,6 +129,26 @@ fun ChipButton(text: String, onClick: () -> Unit, modifier: Modifier = Modifier)
     ) { Text(text, style = MaterialTheme.typography.labelMedium) }
 }
 
+/**
+ * Opción de un grupo pequeño (días de un reto, minutos…). Píldora amarilla si está elegida.
+ * Va dentro de un contenedor con `Modifier.selectableGroup()` para los lectores de pantalla.
+ */
+@Composable
+fun ChoiceChip(text: String, selected: Boolean, onSelect: () -> Unit, modifier: Modifier = Modifier) {
+    Box(
+        modifier
+            .heightIn(min = Sizes.chip)
+            .clip(Shapes.pill)
+            .background(if (selected) Sp.Llave else Sp.Tinta)
+            .border(BorderStroke(Strokes.hairline, if (selected) Sp.Llave else Sp.Borde), Shapes.pill)
+            .selectable(selected = selected, role = Role.RadioButton, onClick = onSelect)
+            .padding(horizontal = Space.m),
+        contentAlignment = Alignment.Center
+    ) {
+        Text(text, style = MaterialTheme.typography.labelMedium, color = if (selected) Sp.Tinta else Sp.Niebla)
+    }
+}
+
 @Composable
 fun SpCard(modifier: Modifier = Modifier, content: @Composable ColumnScope.() -> Unit) {
     Column(

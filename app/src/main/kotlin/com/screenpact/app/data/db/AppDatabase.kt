@@ -8,8 +8,8 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
-    entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class],
-    version = 5,
+    entities = [Friend::class, AppLimit::class, UnlockGrant::class, DayRecord::class, Baseline::class, Challenge::class],
+    version = 6,
     exportSchema = true
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -17,6 +17,8 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun appLimitDao(): AppLimitDao
     abstract fun unlockGrantDao(): UnlockGrantDao
     abstract fun dayRecordDao(): DayRecordDao
+    abstract fun baselineDao(): BaselineDao
+    abstract fun challengeDao(): ChallengeDao
 
     companion object {
         @Volatile private var INSTANCE: AppDatabase? = null
@@ -50,6 +52,23 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
+        /** v6: uso de antes del límite (tiempo ganado) y retos con fecha. */
+        val MIGRATION_5_6 = object : Migration(5, 6) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS baselines (" +
+                        "packageName TEXT NOT NULL, avgDailyMs INTEGER NOT NULL, measuredAt INTEGER NOT NULL, " +
+                        "PRIMARY KEY(packageName))"
+                )
+                db.execSQL(
+                    "CREATE TABLE IF NOT EXISTS challenges (" +
+                        "id TEXT NOT NULL, packageName TEXT NOT NULL, appName TEXT NOT NULL, " +
+                        "dailyMinutes INTEGER NOT NULL, startDay TEXT NOT NULL, days INTEGER NOT NULL, " +
+                        "createdAt INTEGER NOT NULL, PRIMARY KEY(id))"
+                )
+            }
+        }
+
         fun get(context: Context): AppDatabase {
             return INSTANCE ?: synchronized(this) {
                 INSTANCE ?: Room.databaseBuilder(
@@ -59,7 +78,7 @@ abstract class AppDatabase : RoomDatabase() {
                 )
                     // Cada cambio de estructura lleva su migración: actualizar la app NUNCA
                     // borra pactos ni límites. Solo se borra si se instala una versión más vieja.
-                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
+                    .addMigrations(MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5, MIGRATION_5_6)
                     .fallbackToDestructiveMigrationOnDowngrade()
                     .build().also { INSTANCE = it }
             }

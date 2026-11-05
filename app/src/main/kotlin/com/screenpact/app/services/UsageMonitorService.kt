@@ -23,6 +23,7 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import com.screenpact.app.data.History
+import com.screenpact.app.data.TimeWon
 import com.screenpact.app.data.Pro
 import com.screenpact.app.data.Schedules
 
@@ -77,7 +78,9 @@ class UsageMonitorService : Service() {
                     val snap = UsageStatsHelper.snapshot(this)
                     val current = snap.foreground
                     if (now - lastHistoryAt >= HISTORY_EVERY_MS) {
-                        History.recordToday(db, db.appLimitDao().getEnabled(), snap.todayMs)
+                        val enabled = db.appLimitDao().getEnabled()
+                        TimeWon.ensureBaselines(this, db, enabled)
+                        History.recordToday(db, enabled, snap.todayMs)
                         lastHistoryAt = now
                     }
                     if (current != null && current != packageName) {

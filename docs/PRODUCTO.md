@@ -245,6 +245,22 @@ Tipografías: Bricolage Grotesque (titulares y cifras), Figtree (texto e interfa
 - Orden: primero identidad y pantallas con lo que funciona sin servidor (tiempo ganado propio y retos de dos); mientras, Kimy crea la cuenta de Supabase; después grupos y ranking.
 - La web (landing, página del pacto y privacidad) se rehace después de la app.
 
+## Construcción en tandas (Kimy, 05-11-2026)
+
+Kimy ya tiene cuenta de Supabase y de Stripe. Decidido:
+- Primero todo lo que funciona sin servidor; después lo que necesita Supabase.
+- Las tablas de Supabase las monta Claude desde el panel de Kimy en Chrome, con la URL del proyecto y la clave publishable (pública, va dentro de la app). La clave secreta nunca pasa por el chat.
+- Los productos y Payment Links de Stripe los crea Kimy siguiendo `docs/STRIPE.md` y pasa los cuatro enlaces.
+- Qué va en Gratis y qué en Pro con las funciones nuevas se decide cuando esté todo montado. Hasta entonces, todo lo nuevo está abierto.
+
+Hecho sin servidor (05-11-2026):
+- **Tiempo ganado en Hoy.** La primera vez que una app tiene límite se guarda su media diaria de los 7 días anteriores (tabla `baselines`). Cada día terminado se compara con esa media; es neto (un día peor que antes resta) y no cuenta el día de hoy. La tarjeta enseña lo recuperado en los últimos 7 días terminados, antes frente a ahora y el total. Lógica en `data/TimeWon.kt`. En las apps que ya tenían límite antes de esta versión, la media sale de días ya limitados y se queda corta.
+- **Retos con fecha** (pestaña Juntos). Una app con límite, un tope al día (nada, 15 o 30 min) y 3, 7 o 14 días. Empieza hoy si hoy aún vas dentro del tope; si no, mañana. Se mide con el registro diario de las rachas, con 1 minuto de margen. No bloquea nada por sí mismo. Se puede dejar sin llave (no afloja ningún límite). El resultado se comparte por el chat. Cada reto lleva un UUID para poder subirlo al grupo cuando haya servidor. Lógica en `data/Challenges.kt`.
+- **Amigos pasa a llamarse Juntos** y va en medio de la barra: Hoy, Juntos, Límites.
+- Base de datos v6 (tablas `baselines` y `challenges`, con su migración).
+
+Siguiente tanda (con Supabase): identidad anónima, cada pacto como grupo de 2, subir minutos diarios, ranking, retos compartidos y tiempo ganado juntos. Después, grupos de 3 o más y pacto mixto con iPhone.
+
 ## 9. Pendientes
 
 - Rediseño: nombre en la app y en la web, funciones nuevas, pantallas y, si hace falta, identidad visual.
@@ -253,7 +269,7 @@ Tipografías: Bricolage Grotesque (titulares y cifras), Figtree (texto e interfa
 - Revisar qué va en Gratis y qué en Pro con las funciones nuevas, y el Pack Pacto.
 - Confirmar el plan de Vercel de kimycars.com.
 - Comprobar App Store y cuentas de Instagram y TikTok para Scrollban.
-- Stripe: productos y Payment Links (Kimy).
+- Stripe: productos y Payment Links (Kimy, guía en `docs/STRIPE.md`).
 - Copia de la carpeta `Documents\claves` (Kimy).
 
 ---

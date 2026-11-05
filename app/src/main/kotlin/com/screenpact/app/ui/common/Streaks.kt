@@ -97,29 +97,38 @@ private fun describe(state: DayState): String = when (state) {
 @Composable
 fun DayToken(day: History.Day, modifier: Modifier = Modifier) {
     val today = day.key == History.dayKey()
+    val look = when (day.state) {
+        DayState.CLEAN -> TokenLook(fill = Sp.Pacto, border = null, icon = Icons.Default.Lock, tint = Sp.Tinta)
+        DayState.LIMIT -> TokenLook(fill = null, border = Sp.Pacto, icon = Icons.Default.Lock, tint = Sp.Pacto)
+        DayState.KEY -> TokenLook(fill = Sp.Llave, border = null, icon = Icons.Default.Key, tint = Sp.Tinta)
+        DayState.EMPTY -> TokenLook(fill = null, border = if (today) Sp.TextoSuave else Sp.Borde, icon = null, tint = Sp.TextoSuave)
+    }
+    DayCircle(day.key, look, describe(day.state), modifier)
+}
+
+/**
+ * Círculo de un día con su letra encima. Pieza común de la tira de la racha y de los retos:
+ * [look] dice el relleno, el borde y el icono; [description] es lo que lee el lector de pantalla.
+ */
+@Composable
+fun DayCircle(dayKey: String, look: TokenLook, description: String, modifier: Modifier = Modifier) {
+    val today = dayKey == History.dayKey()
     Column(
         modifier.semantics(mergeDescendants = true) {
-            contentDescription = (if (today) "Hoy" else dayLetter(day.key)) + ": " + describe(day.state)
+            contentDescription = (if (today) "Hoy" else dayLetter(dayKey)) + ": " + description
         },
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            dayLetter(day.key),
+            dayLetter(dayKey),
             style = MaterialTheme.typography.labelSmall,
             color = if (today) Sp.Niebla else Sp.TextoSuave,
             modifier = Modifier.clearAndSetSemantics { }
         )
         Spacer(Modifier.height(Space.xxs))
-        val base = Modifier.size(Sizes.dayToken).clip(Shapes.pill)
-        val look = when (day.state) {
-            DayState.CLEAN -> TokenLook(fill = Sp.Pacto, border = null, icon = Icons.Default.Lock, tint = Sp.Tinta)
-            DayState.LIMIT -> TokenLook(fill = null, border = Sp.Pacto, icon = Icons.Default.Lock, tint = Sp.Pacto)
-            DayState.KEY -> TokenLook(fill = Sp.Llave, border = null, icon = Icons.Default.Key, tint = Sp.Tinta)
-            DayState.EMPTY -> TokenLook(fill = null, border = if (today) Sp.TextoSuave else Sp.Borde, icon = null, tint = Sp.TextoSuave)
-        }
         val (fill, border, icon, tint) = look
         Box(
-            base
+            Modifier.size(Sizes.dayToken).clip(Shapes.pill)
                 .then(if (fill != null) Modifier.background(fill) else Modifier)
                 .then(if (border != null) Modifier.border(BorderStroke(Strokes.bold, border), Shapes.pill) else Modifier),
             contentAlignment = Alignment.Center
@@ -129,7 +138,7 @@ fun DayToken(day: History.Day, modifier: Modifier = Modifier) {
     }
 }
 
-private data class TokenLook(val fill: Color?, val border: Color?, val icon: ImageVector?, val tint: Color)
+data class TokenLook(val fill: Color?, val border: Color?, val icon: ImageVector?, val tint: Color)
 
 /** Los últimos 7 días en fila, de lunes… al día de hoy a la derecha. */
 @Composable

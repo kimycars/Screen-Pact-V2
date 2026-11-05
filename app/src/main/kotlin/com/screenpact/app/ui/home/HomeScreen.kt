@@ -45,6 +45,8 @@ import java.util.Date
 import java.util.Locale
 import com.screenpact.app.ui.theme.Space
 import com.screenpact.app.data.History
+import com.screenpact.app.data.TimeWon
+import com.screenpact.app.ui.common.TimeWonCard
 import com.screenpact.app.data.rememberIsPro
 import com.screenpact.app.ui.pro.ProFeature
 import com.screenpact.app.ui.common.Invite
@@ -73,10 +75,12 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
     val isPro = rememberIsPro()
     var streaks by remember { mutableStateOf(History.Streaks(0, 0, 0, 0)) }
     var week by remember { mutableStateOf<List<History.Day>>(emptyList()) }
+    var timeWon by remember { mutableStateOf<TimeWon.Summary?>(null) }
     LaunchedEffect(Unit) {
         while (true) {
             streaks = History.streaks(db)
             week = History.days(db, 7)
+            timeWon = TimeWon.summary(db)
             delay(30_000)
         }
     }
@@ -119,6 +123,7 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
         if (keeper == null) item { NoPactCard(onPair) { Invite.share(context) } }
 
         if (l.isNotEmpty()) {
+            timeWon?.let { tw -> item { TimeWonCard(tw) } }
             item {
                 StreakCard(
                     streaks = streaks,

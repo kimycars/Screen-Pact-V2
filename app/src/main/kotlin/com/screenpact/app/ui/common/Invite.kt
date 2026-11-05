@@ -13,13 +13,25 @@ object Invite {
     private const val URL = "https://www.kimycars.com/screenpact"
 
     fun share(context: Context) {
-        val text = "¿Hacemos un pacto? Con ${Brand.NAME} tú guardas mi llave y yo la tuya: " +
-            "si me paso con el móvil, solo tú puedes darme más tiempo. Descárgala aquí: $URL"
+        shareText(
+            context,
+            "¿Hacemos un pacto? Con ${Brand.NAME} tú guardas mi llave y yo la tuya: " +
+                "si me paso con el móvil, solo tú puedes darme más tiempo. Descárgala aquí: $URL",
+            "Invitar a un amigo"
+        )
+    }
+
+    /** Comparte un logro (un reto, el tiempo ganado) con el enlace para descargar la app. */
+    fun shareAchievement(context: Context, text: String) =
+        shareText(context, "$text Con ${Brand.NAME}: $URL", "Compartir")
+
+    /** Abre el menú de compartir de Android con [text]. Única forma de compartir texto en la app. */
+    fun shareText(context: Context, text: String, title: String) {
         val send = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
             putExtra(Intent.EXTRA_TEXT, text)
         }
-        context.startActivity(Intent.createChooser(send, "Invitar a un amigo").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        context.startActivity(Intent.createChooser(send, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
     }
 
     /** Manda una invitación al pacto (o la respuesta a una) por la app que elija la persona. */
@@ -28,11 +40,6 @@ object Invite {
             "Sellemos un pacto en ${Brand.NAME}: tú guardas mi llave y yo la tuya. Abre este enlace en tu móvil: ${payload.link()}"
         else
             "Aquí va mi respuesta para cerrar nuestro pacto en ${Brand.NAME}. Ábrela en tu móvil: ${payload.link()}"
-        val send = Intent(Intent.ACTION_SEND).apply {
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TEXT, text)
-        }
-        val title = if (payload.replyTo == null) "Mandar invitación" else "Mandar respuesta"
-        context.startActivity(Intent.createChooser(send, title).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+        shareText(context, text, if (payload.replyTo == null) "Mandar invitación" else "Mandar respuesta")
     }
 }
