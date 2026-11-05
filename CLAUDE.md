@@ -35,7 +35,7 @@ Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: de
 
 ## Commit y despliegue (Kimy, 05-11-2026)
 
-Commit y push a GitHub (`origin main`) cada vez que se termina algo, sin preguntar. Lo que se ejecuta en Supabase se guarda también en `supabase/schema.sql` en el mismo commit.
+Commit y push a GitHub (`origin main`) cada vez que se termina algo, sin preguntar. Mientras ScrollBan esté en pruebas y sin usuarios, lo de ScrollBan en la web de kimycars (`scrollban/`, `api/scrollban-*`, `lib/scrollban-*`) también se despliega sin esperar a Kimy (`npx vercel --prod --yes` en `Documentsweb kimy cars`; Kimy, 05-11-2026). Lo que se ejecuta en Supabase se guarda también en `supabase/schema.sql` en el mismo commit.
 
 ## Compilar
 
