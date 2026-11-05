@@ -38,6 +38,13 @@ import java.util.concurrent.TimeUnit
  * Licencia = base64url(JSON {lid, plan, exp, iat}) + "." + base64url(firma DER).
  * exp = 0 → de por vida. Las suscripciones caducan; unos días antes, la app pide la renovada al
  * servidor mandando solo el id de licencia (lid). Si se cancela la suscripción, deja de renovarse.
+ *
+ * Compra sin depender de la redirección: al pulsar comprar, la app genera una referencia
+ * aleatoria (checkoutUrl) que viaja a Stripe como client_reference_id. El servidor guarda las
+ * licencias de ese pago bajo esa referencia y la app las recoge sola al volver (claimPending),
+ * aunque la página de gracias no llegue a abrirse por falta de cobertura. La referencia solo la
+ * conocen este móvil y Stripe. Del Pack Pacto, la segunda licencia queda guardada para dársela
+ * al amigo (gifts).
  */
 object Pro {
 
@@ -48,6 +55,9 @@ object Pro {
     private const val KEY_TOKEN = "token"
     private const val KEY_DEV = "dev_pro"
     private const val WORK = "screenpact-license"
+    private const val KEY_PENDING = "pending_refs"
+    private const val KEY_GIFTS = "gifts"
+    private const val PENDING_MS = 30L * 24 * 60 * 60_000L
 
     /** Margen tras la fecha de fin: si un día no hay conexión para renovar, no se pierde Pro. */
     private const val GRACE_MS = 3L * 24 * 60 * 60_000L
@@ -86,6 +96,65 @@ object Pro {
         prefs(context).edit().putString(KEY_TOKEN, token.trim()).apply()
         if (l.exp != 0L) scheduleRenewal(context)
         return true
+    }
+
+    /** Enlace de pago con una referencia nueva para recoger la licencia sin la página de gracias. */
+    fun checkoutUrl(context: Context, link: String): String {
+        val bytes = ByteArray(18).also { java.security.SecureRandom().nextBytes(it) }
+        val ref = Base64.encodeToString(bytes, Base64.URL_SAFE or Base64.NO_WRAP or Base64.NO_PADDING)
+        val now = System.currentTimeMillis()
+        savePending(context, pending(context, now) + (ref to now))
+        return link + (if ('?' in link) "&" else "?") + "client_reference_id=" + ref
+    }
+
+    fun hasPending(context: Context): Boolean = pending(context, System.currentTimeMillis()).isNotEmpty()
+
+    /** Licencias del Pack Pacto que aún hay que dar al amigo. */
+    fun gifts(context: Context): List<String> =
+        prefs(context).getString(KEY_GIFTS, "").orEmpty().split(" ").filter { parse(it) != null }
+
+    fun removeGift(context: Context, token: String) =
+        prefs(context).edit().putString(KEY_GIFTS, gifts(context).filter { it != token }.joinToString(" ")).apply()
+
+    private fun pending(context: Context, now: Long): List<Pair<String, Long>> =
+        prefs(context).getString(KEY_PENDING, "").orEmpty().split(",").mapNotNull { e ->
+            val (ref, at) = e.split(":").takeIf { it.size == 2 } ?: return@mapNotNull null
+            at.toLongOrNull()?.takeIf { now - it < PENDING_MS }?.let { ref to it }
+        }
+
+    private fun savePending(context: Context, list: List<Pair<String, Long>>) =
+        prefs(context).edit().putString(KEY_PENDING, list.joinToString(",") { "${it.first}:${it.second}" }).apply()
+
+    /**
+     * Pregunta al servidor por las compras hechas desde este móvil que aún no han llegado.
+     * Devuelve true si ha activado alguna licencia.
+     */
+    suspend fun claimPending(context: Context): Boolean = withContext(Dispatchers.IO) {
+        val now = System.currentTimeMillis()
+        var activated = false
+        val left = pending(context, now).filter { (ref, _) ->
+            val tokens = runCatching {
+                val url = URL(ENDPOINT + "?ref=" + URLEncoder.encode(ref, "UTF-8"))
+                val conn = (url.openConnection() as HttpURLConnection).apply { connectTimeout = 15_000; readTimeout = 15_000 }
+                val ok = conn.responseCode == 200
+                val body = if (ok) conn.inputStream.bufferedReader().use { it.readText() } else ""
+                conn.disconnect()
+                if (!ok) return@runCatching null
+                val arr = JSONObject(body).getJSONArray("licenses")
+                (0 until arr.length()).map { arr.getJSONObject(it).getString("token") }.filter { parse(it) != null }
+            }.getOrNull()
+            if (tokens.isNullOrEmpty()) return@filter true // aún no ha llegado: se vuelve a preguntar
+            val extra = if (!isPro(context, now) && activate(context, tokens.first())) {
+                activated = true
+                tokens.drop(1)
+            } else tokens
+            if (extra.isNotEmpty()) {
+                prefs(context).edit().putString(KEY_GIFTS, (gifts(context) + extra).distinct().joinToString(" ")).apply()
+            }
+            false
+        }
+        savePending(context, left)
+        activated
     }
 
     /** Solo en la versión de pruebas: activa Pro sin pagar para poder probar sus funciones. */

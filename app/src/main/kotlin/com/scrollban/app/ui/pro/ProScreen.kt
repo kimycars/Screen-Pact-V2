@@ -37,7 +37,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.withStyle
+import com.scrollban.app.Brand
 import com.scrollban.app.data.Plan
+import com.scrollban.app.data.Pro
+import com.scrollban.app.ui.common.Invite
+import com.scrollban.app.ui.components.OutlineButton
 import com.scrollban.app.data.Plans
 import com.scrollban.app.data.rememberIsPro
 import com.scrollban.app.ui.common.LicenseDialog
@@ -131,8 +135,22 @@ fun ProScreen(feature: ProFeature, onClose: () -> Unit) {
             isPro -> PrimaryButton("Ya tienes Pro", {}, enabled = false)
             plan == null || plan.link.isEmpty() -> PrimaryButton("Muy pronto", {}, enabled = false)
             else -> PrimaryButton("Hazte Pro · ${plan.price}", {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(plan.link)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
+                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(Pro.checkoutUrl(context, plan.link))).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
             })
+        }
+        if (isPro) {
+            Pro.gifts(context).firstOrNull()?.let { gift ->
+                Spacer(Modifier.height(Space.m))
+                Text("La licencia de tu amigo está lista. Mándasela y que la pegue en Pro, \"Tengo un código de licencia\".", style = MaterialTheme.typography.bodyMedium, color = Sb.TextoSuave)
+                Spacer(Modifier.height(Space.xs))
+                OutlineButton("Mandar su licencia", {
+                    Invite.shareText(
+                        context,
+                        "Aquí tienes tu licencia de ${Brand.NAME} Pro (Pack Pacto). En ${Brand.NAME}, ve a Pro, pulsa \"Tengo un código de licencia\" y pega esto:\n\n$gift",
+                        "Mandar su licencia"
+                    )
+                }, modifier = Modifier.fillMaxWidth())
+            }
         }
         if (plan != null && plan.id != "lifetime" && !isPro) {
             Spacer(Modifier.height(Space.xs))

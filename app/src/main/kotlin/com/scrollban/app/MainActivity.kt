@@ -6,6 +6,10 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.material3.Surface
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import com.scrollban.app.data.AppIcons
 import com.scrollban.app.data.Pro
 import com.scrollban.app.ui.friends.IncomingPact
@@ -20,6 +24,25 @@ class MainActivity : ComponentActivity() {
         setContent {
             ScrollBanTheme {
                 Surface { MainNav() }
+            }
+        }
+    }
+
+    private var claiming: Job? = null
+
+    // Al volver de pagar en Stripe se recoge la licencia aunque la página de gracias no se haya
+    // abierto. El aviso de Stripe puede tardar unos segundos, así que se pregunta varias veces.
+    override fun onResume() {
+        super.onResume()
+        if (!Pro.hasPending(this) || claiming?.isActive == true) return
+        claiming = lifecycleScope.launch {
+            repeat(10) {
+                if (Pro.claimPending(this@MainActivity)) {
+                    Toast.makeText(this@MainActivity, "Ya tienes ${Brand.NAME} Pro. ¡Gracias!", Toast.LENGTH_LONG).show()
+                    return@launch
+                }
+                if (!Pro.hasPending(this@MainActivity)) return@launch
+                delay(3_000)
             }
         }
     }
