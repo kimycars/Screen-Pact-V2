@@ -1,4 +1,4 @@
--- Scrollban: servidor de grupos en Supabase.
+-- ScrollBan: servidor de grupos en Supabase.
 --
 -- Qué guarda: por persona (identidad anónima, sin correo), los minutos de cada día por app con
 -- límite, su límite, las llaves usadas y su media de antes; y sus retos con fecha. Lo ve solo

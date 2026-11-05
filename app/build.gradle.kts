@@ -7,7 +7,7 @@ plugins {
 }
 
 android {
-    namespace = "com.screenpact.app"
+    namespace = "com.scrollban.app"
     compileSdk = 34
 
     defaultConfig {
@@ -141,7 +141,7 @@ val checkDesignTokens by tasks.registering {
             .toList()
         if (offenders.isNotEmpty()) {
             throw GradleException(
-                "Valores de diseño escritos a mano. Usa los tokens de ui/theme (Sp, Space, Sizes, Strokes, Shapes, TextStyles):\n" +
+                "Valores de diseño escritos a mano. Usa los tokens de ui/theme (Sb, Space, Sizes, Strokes, Shapes, TextStyles):\n" +
                     offenders.joinToString("\n")
             )
         }

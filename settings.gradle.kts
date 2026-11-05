@@ -14,5 +14,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "ScreenPact"
+rootProject.name = "ScrollBan"
 include(":app")
