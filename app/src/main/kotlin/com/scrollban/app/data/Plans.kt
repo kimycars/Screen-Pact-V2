@@ -16,12 +16,12 @@ import com.scrollban.app.BuildConfig
 data class Plan(val id: String, val title: String, val subtitle: String, val price: String, val link: String = "")
 
 object Plans {
-    /** Payment Links del modo real. Vacíos hasta crearlos: el botón sale como "Muy pronto". */
+    /** Payment Links del modo real. Si uno queda vacío, su botón sale como "Muy pronto". */
     private val LIVE_LINKS = mapOf(
-        "monthly" to "",
-        "yearly" to "",
-        "lifetime" to "",
-        "pack" to "",
+        "monthly" to "https://buy.stripe.com/6oU5kw1Iu47hehQ6jD9IQ02",
+        "yearly" to "https://buy.stripe.com/cNi14g5YK0V5flU23n9IQ00",
+        "lifetime" to "https://buy.stripe.com/cNi6oA9aWeLVb5E5fz9IQ01",
+        "pack" to "https://buy.stripe.com/6oUfZa3QC0V5c9IbDX9IQ03",
     )
 
     /** Payment Links del modo de prueba, solo para la versión de pruebas. */

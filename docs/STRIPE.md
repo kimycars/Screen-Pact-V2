@@ -74,6 +74,12 @@ Pasos (los hace Kimy en Stripe y en Vercel; las claves no pasan por el chat):
 8. **Pasar los cuatro enlaces reales** (`https://buy.stripe.com/…`, sin `test_`). Van en `LIVE_LINKS` de `data/Plans.kt`.
 9. **Compra real de comprobación.** Con la versión que se publica, comprar el mensual con una tarjeta propia, comprobar que llega la licencia y el aviso de Telegram sin «[modo prueba]», y después devolver el pago y cancelar la suscripción desde Stripe. La licencia sigue valiendo hasta su fecha de fin.
 
+### Estado del paso a real (06-11-2026)
+
+Hecho: productos, marca y Payment Links copiados al modo real (Stripe ofrece copiarlos, con metadatos y redirección revisados por Kimy); webhook real creado y su secreto puesto en `SCROLLBAN_STRIPE_WEBHOOK_SECRET`; enlaces reales en `LIVE_LINKS`; web redesplegada. Kimy borró el secreto del webhook de prueba y no creó las variables `_TEST_`: las compras de prueba de la versión debug ya no dan licencia (si se quiere volver a probar, se crean esas dos variables con un webhook de prueba nuevo).
+
+Falta: la clave restringida real (Suscripciones, lectura) en `SCROLLBAN_STRIPE_SECRET_KEY`, que ahora sigue siendo la de prueba. Mientras tanto, las suscripciones reales no crean licencia (el webhook no puede leer la suscripción y Stripe reintenta hasta 3 días); el pago de por vida sí funciona. Después: portal de clientes en real, redesplegar y la compra real de comprobación.
+
 ## Pago dentro de la app (05-11-2026)
 
 El pago se abre en una Custom Tab (pestaña del navegador superpuesta a la app, con los colores de ScrollBan), no con el pago "integrado" de Stripe ni con su SDK nativo. Motivo: con los Payment Links no hace falta otra función en Vercel (el plan Hobby ya está en el límite de 12), Stripe sigue encargándose de la verificación del banco y de Google Pay, y la app recoge la licencia sola al cerrar la pestaña. Si algún día se quiere la hoja de pago nativa (PaymentSheet del SDK de Stripe), habrá que crear los pagos desde el servidor en vez de con Payment Links. En Play Store, Google obliga a usar su sistema de pagos para Pro de todos modos.
