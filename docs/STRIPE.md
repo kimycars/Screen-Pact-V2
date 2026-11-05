@@ -4,6 +4,12 @@ Lo hace Kimy en su panel de Stripe (decidido el 05-11-2026). Primero en **modo d
 
 El cobro ya está programado en kimycars.com: `api/scrollban-stripe-webhook.js` crea la licencia cuando llega el pago y `scrollban/gracias` se la entrega a la persona. La app solo necesita los cuatro enlaces de pago.
 
+## 0. Cuenta nueva de ScrollBan
+
+En el mismo inicio de sesión que Vestiarium: menú de la cuenta (arriba a la izquierda) → Nueva cuenta → nombre "ScrollBan". Web de la empresa: `https://www.kimycars.com/scrollban`. Descriptor del extracto bancario: `SCROLLBAN`. Así los cobros, las claves y los webhooks no se mezclan con Vestiarium ni con el cobro de webs de clientes.
+
+Conviene activar el portal de clientes (Configuración → Facturación → Portal de clientes) para que quien tenga una suscripción pueda cancelarla sola.
+
 ## 1. Cuatro productos con su precio
 
 | Producto | Precio | Tipo | Metadato obligatorio |
