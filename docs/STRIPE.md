@@ -78,7 +78,7 @@ Pasos (los hace Kimy en Stripe y en Vercel; las claves no pasan por el chat):
 
 Hecho: productos, marca y Payment Links copiados al modo real (Stripe ofrece copiarlos, con metadatos y redirección revisados por Kimy); webhook real creado y su secreto puesto en `SCROLLBAN_STRIPE_WEBHOOK_SECRET`; enlaces reales en `LIVE_LINKS`; web redesplegada. Kimy borró el secreto del webhook de prueba y no creó las variables `_TEST_`: las compras de prueba de la versión debug ya no dan licencia (si se quiere volver a probar, se crean esas dos variables con un webhook de prueba nuevo).
 
-Falta: la clave restringida real (Suscripciones, lectura) en `SCROLLBAN_STRIPE_SECRET_KEY`, que ahora sigue siendo la de prueba. Mientras tanto, las suscripciones reales no crean licencia (el webhook no puede leer la suscripción y Stripe reintenta hasta 3 días); el pago de por vida sí funciona. Portal de clientes en real configurado el 06-11-2026 (cancelar al final del periodo, sin cambio de plan). Después de la clave: redesplegar y la compra real de comprobación.
+Clave restringida real puesta por Kimy en `SCROLLBAN_STRIPE_SECRET_KEY` y web redesplegada el 09-11-2026. Portal de clientes en real configurado el 06-11-2026 (cancelar al final del periodo, sin cambio de plan). Falta la compra real de comprobación con el APK release; hasta entonces no está probado que la clave funcione.
 
 ## Pago dentro de la app (05-11-2026)
 
