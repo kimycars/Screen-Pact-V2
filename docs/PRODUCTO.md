@@ -18,6 +18,7 @@ Documento vivo. El 28-10-2026 se replanteó la estrategia entera: nuevo nombre, 
 | Servidor | Supabase, plan gratuito, en una cuenta nueva solo para ScrollBan (separada de Vestiarium). |
 | Gasto | Cero hasta que haya ingresos: ni Supabase Pro, ni Vercel Pro, ni dominio. |
 | Canal | Boca a boca (cada usuario invita al menos a otro) y colaboraciones con gente que ya habla a quien quiere usar menos el móvil. No depende de que Kimy haga contenido propio. |
+| Distribución | APK (web, Uptodown, Zapstore). Google Play fuera hasta nuevo aviso porque exige publicar un domicilio (09-11-2026). Plan en `docs/LANZAMIENTO.md`. |
 | Plataformas | Android. No hay recursos para una app de iPhone; los amigos con iPhone entran por el pacto mixto. |
 
 ---
@@ -202,8 +203,8 @@ Riesgo conocido: el plan Hobby de Vercel solo permite uso personal no comercial.
 
 ## 6. Plataformas y orden de lanzamiento
 
-1. **Zapstore y APK en la web (lanzamiento).** Sin revisión de Google.
-2. **Play Store (cuando haya tracción).** 25 $ una vez. Habrá que justificar ante Google el acceso de uso y la superposición de pantalla: bienestar digital elegido por el propio usuario.
+1. **APK en la web, Uptodown y Zapstore (lanzamiento).** Sin revisión de Google. Plan completo en `docs/LANZAMIENTO.md`.
+2. **Play Store: fuera hasta nuevo aviso (Kimy, 09-11-2026).** Exige publicar un domicilio y Kimy solo tiene el de su casa. Si se retoma: 25 $ una vez y habrá que justificar ante Google el acceso de uso y la superposición de pantalla.
 3. **iOS: sin app propia.** Apple exige su API de Tiempo de uso, un Mac y 99 $ al año. Los amigos con iPhone entran con el pacto mixto (Tiempo de uso de Apple con un código que guarda su amigo de Android).
 
 ---

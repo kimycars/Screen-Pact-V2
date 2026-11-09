@@ -1,109 +1,94 @@
-# ScreenPact: plan de lanzamiento
+# ScrollBan: plan de lanzamiento
 
-> Desfasado desde el 28-10-2026: la app pasa a llamarse Scrollban y cambian el posicionamiento y las funciones (ver `docs/PRODUCTO.md`, sección 0). Las fechas y fases de abajo se rehacen después del rediseño.
+Rehecho el 09-11-2026. Sustituye al plan de la etapa ScreenPact (queda en el historial de git). Las fechas son orientativas: lo único que lleva calendario es lo que depende de otras personas.
 
-Preparado el 19-10-2026. Fechas orientativas: se ajustan cuando Kimy fije el día del lanzamiento.
+## Decisión de distribución (Kimy, 09-11-2026)
 
-## La idea en una frase
+Google Play queda fuera hasta nuevo aviso. Quien vende en la UE se declara comerciante y su dirección sale en la ficha, y Kimy no tiene más dirección que la de su casa. ScrollBan se distribuye como APK.
 
-Lanzar gratis en Android en noviembre para aprender con usuarios reales, y guardar el gran empujón (con Pro ya a la venta) para enero, cuando medio mundo se propone usar menos el móvil.
+Ventaja: Pro se sigue cobrando con Stripe, sin la comisión ni la obligación de usar el sistema de pagos de Google.
 
-Por qué así:
-- **Pro todavía no existe:** faltan el cobro y sus funciones (horarios, rachas, modo estricto). Lanzar sin cobrar no es un problema; lanzar sin saber si la gente sella pactos, sí.
-- **Enero es la fecha de los propósitos de Año Nuevo.** Es cuando más gente busca dejar el móvil. Llegar con la app probada, testimonios reales y Pro listo multiplica cada esfuerzo.
-- **El crecimiento es de boca a boca por diseño:** cada persona necesita a un amigo. Lo que más importa al principio es que el primer pacto funcione sin fallos, no el alcance.
+Si algún día se vuelve a Play: una dirección virtual o un apartado postal podrían resolver lo del domicilio. Falta comprobar que Google los acepta.
 
-## Compromisos que ya tenemos
+## Dónde se descarga
 
-- **Código WOB2026** (en kimycars.com/wob): a quien se apuntó por esa página le prometimos **acceso anticipado** y **la primera función de pago gratis para siempre**. Las altas con `source: "wob"` entran las primeras en la beta, y cuando salga Pro reciben gratis la primera función de pago (propuesta: horarios). Hay que guardar esa lista aparte.
-- **Lista de espera:** a todos se les dijo "te aviso el día que se pueda descargar". Un solo correo, sin newsletters.
+| Sitio | Para qué | Estado |
+|---|---|---|
+| `kimycars.com/scrollban` (APK directo) | Canal principal; a él apuntan todos los enlaces | Falta el botón y el fichero |
+| Uptodown | Tienda de APK de empresa española, con consola de desarrolladores gratuita | Falta comprobar sus requisitos dentro de la consola |
+| Zapstore | Público pequeño, pero Kimy ya lo usa con Vestiarium | Pendiente |
+
+Product Hunt, G2 y los directorios de SaaS o IA no encajan (app de consumo, en español y sin tienda oficial). De directorios, solo AlternativeTo, como alternativa a Opal y a StayFree.
+
+## El problema real: instalar un APK
+
+Cada paso es un sitio donde se pierde gente: descargar, aviso del navegador, permitir orígenes desconocidos, aviso de Play Protect, instalar y, en Android 13 o superior, «Permitir ajustes restringidos» antes de poder dar los permisos que la app necesita.
+
+Respuesta: **instalar con el amigo delante.** ScrollBan necesita a otra persona, así que el momento natural es en persona. Quien ya la tiene se la pasa por Quick Share o enseña el QR de descarga, le ayuda con los permisos y sellan el pacto por QR en ese momento (en persona no hay espera de 24 h). Toda la comunicación empuja a esto: «instaládla juntos».
+
+Objeción esperada, «¿por qué no está en Play?». Respuesta honesta y corta en la web: lo hace un chaval de 17 años solo y Play obliga a publicar la dirección de casa. Además, la huella de la firma publicada para comprobar que el APK es el bueno.
+
+## Riesgo: verificación de desarrolladores de Android (2027)
+
+Google exige desde el 30-09-2026 en Brasil, Indonesia, Singapur y Tailandia que las apps vengan de un desarrollador verificado, y lo extenderá a todo el mundo en 2027. No hay fecha para España.
+
+Sin verificar, instalar o actualizar pedirá activar el modo desarrollador, reiniciar y esperar un día: para este público equivale a no instalar. Con desarrollador verificado, la persona no nota ningún cambio.
+
+Salida prevista: cuenta Full Distribution en la Android Developer Console, sin publicar en Play. Cuesta 25 $ una vez y pide documento de identidad y justificante de domicilio. Se registra `com.scrollban.app` con la huella de la firma.
+
+Sin confirmar en la documentación de Google: si esa dirección se hace pública y si hay edad mínima. La cuenta gratuita limitada no sirve (entre 20 y 50 dispositivos; la documentación se contradice). Hacerlo antes de que llegue a España, con los primeros ingresos.
 
 ## Fases
 
-### Fase 0 · Preparar (20 oct – 1 nov)
+### 0. Dejarlo listo (ahora)
 
-| Tarea | Quién | Estado |
-|---|---|---|
-| Probar la versión nueva con un amigo en dos móviles reales: pacto, límite, bloqueo, llave, desbloqueo | Kimy | Pendiente |
-| Probar en al menos otra marca (Samsung o Pixel), sobre todo los permisos | Kimy, con un amigo | Pendiente |
-| Desplegar la landing y la pestaña de estadísticas en /admin | Sesión de kimycars | Prompt preparado |
-| Arreglar `gradlew`, crear la clave de firma fija y compilar la versión 1.0.0 de release | Claude | Pendiente |
-| Botón "Invitar a un amigo" en Amigos y al final de la bienvenida: comparte el enlace de la landing | Claude | Pendiente |
-| Página de descarga de la beta (APK + instrucciones de instalación paso a paso, con los ajustes restringidos explicados) | Claude | Pendiente |
-| Canal de la beta: grupo de Telegram para dudas y fallos | Kimy | Pendiente |
-| Cuentas @screenpact en TikTok e Instagram (comprobar que el nombre está libre) | Kimy | Pendiente |
+Código y web (horas, Claude):
+- Aviso de versión nueva dentro de la app. Sin Play no hay actualizaciones automáticas: hoy, un fallo publicado se queda para siempre. Es una conexión nueva, así que necesita el visto bueno de Kimy y una línea en la política de privacidad.
+- La landing pasa de «Apúntame» a «Descargar». Se corrige la pregunta frecuente de dónde se descarga.
+- Página `/scrollban/instalar`: pasos con capturas, ajustes restringidos, marcas conflictivas y huella de la firma.
+- La página del pacto a distancia lleva a la descarga directa y explica que hay que volver al enlace.
+- APK release 1.0.0 subido a la web.
 
-### Fase 1 · Beta cerrada (2 – 15 nov)
+Kimy:
+- Compra real de comprobación (ver `docs/STRIPE.md`).
+- Prueba en dos móviles reales, con al menos una marca distinta (Samsung o Xiaomi).
+- Cuentas de ScrollBan en Instagram y TikTok.
+- Grupo de Telegram para la beta.
 
-- **Quién:** 10-15 parejas (20-30 personas). Por orden: amigos de Kimy, las altas de /wob (compromiso WOB2026) y las altas de la landing.
-- **Cómo:** mensaje personal con el enlace a la página de la beta y al grupo de Telegram. Mejor parejas que ya se conozcan, porque una persona sola no puede usar la app.
-- **Qué se mide** (pestaña ScreenPact en /admin, con quien active las estadísticas):
-  - Cuántos terminan la bienvenida.
-  - Cuántos sellan un pacto y ponen un límite el mismo día (activación).
-  - Cuántos pactos siguen activos a los 7 días.
-  - En qué marcas fallan los permisos.
-- **Qué se recoge:**
-  - 3 testimonios con nombre y foto, con permiso para usarlos.
-  - Capturas y una grabación de pantalla reales.
-  - La lista de fallos.
-- **Para pasar a la siguiente fase:** más del 50 % de los beta testers con un pacto activo a los 7 días y ningún fallo grave abierto.
+### 1. Beta con gente conocida (unas 2 semanas)
 
-### Fase 2 · Lanzamiento suave en Android (semana del 16 nov)
+10-15 parejas o grupos que se conozcan. Mensaje personal, sin publicar nada. Kimy instala con los primeros en persona y apunta dónde se atascan.
 
-Día de lanzamiento propuesto: **martes 17 de noviembre**.
+Pasa de fase si más del 50 % tiene un pacto activo a los 7 días y no queda ningún fallo grave abierto. Se recogen testimonios con permiso y una grabación de pantalla real.
 
-- **Dónde se descarga:**
-  - **Zapstore:** se publica con la cuenta de nostr de Kimy; se encarga de las actualizaciones automáticas.
-  - **Descarga directa desde kimycars.com/screenpact.**
-  - **Uptodown:** tienda de APK muy usada en España y Latinoamérica, que acepta subidas de desarrolladores. Es la más cercana a nuestro público y no exige Google Play.
-- **El día del lanzamiento:**
-  - El botón principal de la landing pasa de "Apúntame" a "Descargar".
-  - Correo único a la lista de espera.
-  - Publicaciones de Kimy en Instagram, X y Telegram, y en nostr.
-  - Mensaje a la comunidad de WOB.
-- **Esa semana:**
-  - Ficha en AlternativeTo como alternativa a Opal, StayFree y Bienestar Digital.
-  - Una publicación honesta en Reddit (r/nosurf, r/digitalminimalism) contando cómo funciona y pidiendo opiniones, no votos.
-- **Prensa:** contactar con 3-5 medios de Android en español (Xataka Android, Andro4all, El Androide Libre, Hipertextual). El ángulo con más gancho: un chaval de 17 años de Madrid que hizo la app porque el móvil le robaba horas, y que funciona sin cuenta.
+### 2. Lanzamiento suave (principios de diciembre)
 
-### Fase 3 · Pro y "Reto de enero" (diciembre – enero)
+Descarga abierta, Uptodown, Zapstore, AlternativeTo y una publicación honesta en Reddit (r/nosurf, r/digitalminimalism), pidiendo opiniones y no votos. Publicaciones de Kimy en sus redes.
 
-- **Hasta mediados de diciembre:** Pro listo, con cobro con Stripe, licencia en la app, horarios y rachas. Se activa el límite de 3 apps del plan gratis.
-- **Antes de Navidad:** enviar la ficha a Google Play (25 $). La revisión de los permisos puede tardar.
-- **Del 26 de diciembre al 31 de enero, campaña "Reto de enero: 31 días con tu guardián":**
-  - Cada persona elige un amigo guardián y una app.
-  - Contenido diario en TikTok e Instagram.
-  - Los testimonios de la beta, en la landing.
-- **Descuento de lanzamiento de Pro** solo para quien estaba en la beta o en la lista de espera. Y la función gratis prometida a WOB2026.
+### 3. Reto de enero (el empujón grande)
 
-### Fase 4 · Después
+En enero mucha gente se propone usar menos el móvil. «Enero sin scroll»: un reto con fecha, con la función de retos que ya existe, para hacer con tu grupo.
 
-- Google Play cuando la retención a 7 días se mantenga.
-- iPhone cuando Pro pague los 99 $/año de Apple. Ese será un nuevo lanzamiento con mensaje propio: da igual qué móvil tenga tu amigo.
+- Colaboraciones con quien ya le habla a este público; es el canal elegido en `docs/PRODUCTO.md`.
+- Prensa de Android y tecnología en español. Ángulo: un chaval de 17 años que hace la app porque el móvil le robaba horas.
 
-## Contenido para redes
+## Qué se mide
 
-Cuatro formatos que encajan con el público de 18 a 30 años:
+Con las estadísticas anónimas y el panel de `/admin`:
+- Bienvenidas completadas.
+- Pactos sellados (objetivo 40 % de los que instalan).
+- Pactos activos a los 7 días (objetivo 30 %).
+- Fallos de permisos por marca.
+- Compras de Pro.
 
-1. **La pantalla amarilla en acción:** alguien en mitad de TikTok, salta el bloqueo y tiene que pedirle la llave a su amigo. Gracia y vergüenza a partes iguales.
-2. **"Le doy la llave de mi TikTok a…"** mi madre, mi pareja, mi compañero de piso. Formato de reto, fácil de copiar.
-3. **Hecho por un chaval de 17 años:** Kimy contando por qué la hizo y cómo, mostrando su propio uso de pantalla antes y después.
-4. **Diario del reto de 30 días:** una pareja de amigos contando cada día cómo va.
+El objetivo de 500 instalaciones en 90 días se fijó pensando en una tienda. Con APK será más difícil; se revisa con los datos de la beta.
 
-El vídeo demo de la landing (`marketing/demo-video`) sirve como base para los primeros vídeos.
+## Lo que no se hace
 
-## Métricas y objetivos (90 días desde el lanzamiento suave)
+- Anuncios de pago: gasto cero hasta que haya ingresos.
+- Abrir la descarga antes de que la instalación esté probada en dos marcas.
+- Pedir valoraciones en directorios sin usuarios reales.
 
-| Métrica | Objetivo | Dónde se ve |
-|---|---|---|
-| Descargas | 500 | Zapstore, Uptodown, contador de la web |
-| De quienes instalan, cuántos sellan un pacto | 40 % | /admin, pestaña ScreenPact |
-| Pactos activos a 7 días | 30 % | /admin |
-| Compran Pro (desde enero) | 3-5 % de los activos | Stripe |
+## Pendiente legal
 
-## Decisiones pendientes de Kimy
-
-1. Fecha del lanzamiento suave (propuesta: martes 17 de noviembre).
-2. Quiénes son las 10-15 parejas de la beta.
-3. Si se abren cuentas propias @screenpact o se usa solo la de Kimy al principio (propuesta: propias, porque el contenido de producto no siempre encaja en la marca personal).
-4. Qué función de Pro es "la primera de pago" que se regala a WOB2026 (propuesta: horarios).
+Antes de abrir las ventas al público hay que aclarar quién figura como titular y qué domicilio aparece. El aviso legal de kimycars.com solo dice «Kimy», y la ley española de servicios de internet (LSSI) pide nombre, domicilio y NIF a quien vende por una web. Es el mismo problema de la dirección que con Play, y conviene consultarlo con alguien que sepa (gestoría) junto con el titular de la cuenta de Stripe.

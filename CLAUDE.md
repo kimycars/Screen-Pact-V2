@@ -5,7 +5,7 @@ solo ellos pueden darte más tiempo. El 28-10-2026 cambiaron el nombre (ScreenPa
 el posicionamiento y las funciones previstas (grupos, retos, tiempo ganado, pacto mixto con iPhone,
 servidor en Supabase). El 05-11-2026 se renombró todo a ScrollBan (se escribe así, con B mayúscula; en direcciones e identificadores, `scrollban`): paquete `com.scrollban.app`, enlaces `scrollban://` y web `kimycars.com/scrollban`. Los enlaces antiguos (`screenpact://`, `/screenpact/…`) se siguen aceptando y la web redirige. Quedan con el nombre viejo a propósito, porque cambiarlos borraría datos o rompería pactos: los nombres de almacenamiento de la app (`screenpact.db`, `screenpact_*`), la etiqueta `screenpact-unlock:` de `PactKeys` y `pacto-ios.js`, las rutas del Blob (`sp-stats/`, `sp-licenses/`…), los ficheros de `Documents\claves` y la carpeta local del repo. Ver `Brand.kt`.
 Antes de tocar producto, marca o precios, lee `docs/PRODUCTO.md` (sección 0: decisiones vigentes).
-`docs/screenpact-resumen.html` y `docs/LANZAMIENTO.md` son de la etapa ScreenPact y están desfasados.
+`docs/screenpact-resumen.html` es de la etapa ScreenPact y está desfasado. El plan de lanzamiento vigente (solo APK, sin Google Play) está en `docs/LANZAMIENTO.md`.
 
 ## Sistema de diseño: nada escrito a mano
 
