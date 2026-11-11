@@ -92,3 +92,9 @@ El objetivo de 500 instalaciones en 90 días se fijó pensando en una tienda. Co
 ## Pendiente legal
 
 Antes de abrir las ventas al público hay que aclarar quién figura como titular y qué domicilio aparece. El aviso legal de kimycars.com solo dice «Kimy», y la ley española de servicios de internet (LSSI) pide nombre, domicilio y NIF a quien vende por una web. Es el mismo problema de la dirección que con Play, y conviene consultarlo con alguien que sepa (gestoría) junto con el titular de la cuenta de Stripe.
+
+## Estado del código (11-11-2026)
+
+Hecho: aviso de versión nueva en la app (`data/Updates.kt`, tarjeta en Hoy; lee `kimycars.com/scrollban/version.json`), `util/Links.kt` para abrir enlaces, y la página `scrollban/instalar/` escrita en la web (sin desplegar).
+
+Falta: CSS de `.install`, `.install-qr` y `.fingerprint` en `scrollban.css` (subir a `?v=9`); `version.json` y el APK en `scrollban/scrollban.apk`, con cabeceras en `vercel.json` (tipo APK, sin caché); landing (botones a `/scrollban/instalar`, quitar la lista de espera, preguntas de descarga, iPhone y datos, lista de Gratis); enlace de la página del pacto a `/scrollban/instalar`; política de privacidad y `CLAUDE.md` con la nueva conexión de actualizaciones; compilar el release 1.0.0, desplegar y comprobar.

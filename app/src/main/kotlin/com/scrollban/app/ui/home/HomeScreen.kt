@@ -55,6 +55,8 @@ import com.scrollban.app.ui.components.IconAction
 import com.scrollban.app.ui.components.OutlineButton
 import com.scrollban.app.ui.components.QuietButton
 import com.scrollban.app.util.TamperGuard
+import com.scrollban.app.util.openUrl
+import com.scrollban.app.data.Updates
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import com.scrollban.app.data.db.Friend
@@ -79,6 +81,11 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
     var week by remember { mutableStateOf<List<History.Day>>(emptyList()) }
     var timeWon by remember { mutableStateOf<TimeWon.Summary?>(null) }
     var strictHint by remember { mutableStateOf(TamperGuard.strictHintPending(context)) }
+    var update by remember { mutableStateOf(Updates.pending(context)) }
+    LaunchedEffect(Unit) {
+        Updates.check(context)
+        update = Updates.pending(context)
+    }
     LaunchedEffect(Unit) {
         while (true) {
             streaks = History.streaks(db)
@@ -119,6 +126,16 @@ fun HomeScreen(onPair: () -> Unit, onAddApps: () -> Unit, onOpenSettings: () -> 
                     Spacer(Modifier.height(Space.m))
                     PermissionCards(permissions, onlyMissing = true)
                 }
+            }
+        }
+
+        update?.let { latest ->
+            item {
+                UpdateCard(
+                    latest,
+                    onDownload = { openUrl(context, latest.url) },
+                    onDismiss = { Updates.dismiss(context, latest); update = null }
+                )
             }
         }
 
@@ -196,6 +213,27 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
     }
 }
 
+
+/** Hay un APK más nuevo en la web (ver data/Updates.kt). */
+@Composable
+private fun UpdateCard(latest: Updates.Latest, onDownload: () -> Unit, onDismiss: () -> Unit) {
+    SbCard {
+        Text(
+            if (latest.name.isNotBlank()) "Hay una versión nueva: ${latest.name}" else "Hay una versión nueva",
+            style = MaterialTheme.typography.titleMedium
+        )
+        Spacer(Modifier.height(Space.xxs))
+        Text(
+            "Descárgala e instálala encima de esta. Tus pactos, límites y llaves se quedan como están.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Sb.TextoSuave
+        )
+        Spacer(Modifier.height(Space.m))
+        PrimaryButton("Descargar", onDownload)
+        Spacer(Modifier.height(Space.xs))
+        QuietButton("Ahora no", onDismiss)
+    }
+}
 
 /** Se enseña una vez, tras la primera trampa detectada (ver TamperGuard.strictHintPending). */
 @Composable

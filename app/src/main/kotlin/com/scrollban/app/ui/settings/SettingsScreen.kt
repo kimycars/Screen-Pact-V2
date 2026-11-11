@@ -1,8 +1,6 @@
 package com.scrollban.app.ui.settings
 
 import com.scrollban.app.Brand
-import android.content.Intent
-import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -29,6 +27,7 @@ import com.scrollban.app.data.AppIcons
 import com.scrollban.app.data.Plans
 import com.scrollban.app.data.Pro
 import com.scrollban.app.data.StrictMode
+import com.scrollban.app.util.openUrl
 import com.scrollban.app.data.rememberIsPro
 import com.scrollban.app.ui.common.FriendCodeDialog
 import com.scrollban.app.ui.common.LicenseDialog
@@ -164,9 +163,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
         item { StatsConsentCard() }
 
         item {
-            QuietButton("Privacidad y condiciones", {
-                context.startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(PRIVACY_URL)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-            })
+            QuietButton("Privacidad y condiciones", { openUrl(context, PRIVACY_URL) })
         }
         item { Text("${Brand.NAME} ${BuildConfig.VERSION_NAME}", style = MaterialTheme.typography.bodySmall, color = Sb.TextoSuave) }
     }

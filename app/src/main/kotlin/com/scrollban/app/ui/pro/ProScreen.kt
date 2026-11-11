@@ -1,7 +1,6 @@
 package com.scrollban.app.ui.pro
 
 import android.content.Context
-import android.content.Intent
 import android.net.Uri
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
@@ -44,6 +43,7 @@ import androidx.browser.customtabs.CustomTabsIntent
 import com.scrollban.app.Brand
 import com.scrollban.app.data.Plan
 import com.scrollban.app.data.Pro
+import com.scrollban.app.util.openUrl
 import com.scrollban.app.ui.common.Invite
 import com.scrollban.app.ui.components.OutlineButton
 import com.scrollban.app.data.Plans
@@ -190,9 +190,7 @@ private fun openCheckout(context: Context, url: String) {
             .setUrlBarHidingEnabled(true)
             .build()
             .launchUrl(context, uri)
-    }.onFailure {
-        context.startActivity(Intent(Intent.ACTION_VIEW, uri).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
-    }
+    }.onFailure { openUrl(context, url) }
 }
 
 @Composable
