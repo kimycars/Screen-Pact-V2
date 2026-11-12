@@ -93,8 +93,16 @@ El objetivo de 500 instalaciones en 90 días se fijó pensando en una tienda. Co
 
 Antes de abrir las ventas al público hay que aclarar quién figura como titular y qué domicilio aparece. El aviso legal de kimycars.com solo dice «Kimy», y la ley española de servicios de internet (LSSI) pide nombre, domicilio y NIF a quien vende por una web. Es el mismo problema de la dirección que con Play, y conviene consultarlo con alguien que sepa (gestoría) junto con el titular de la cuenta de Stripe.
 
-## Estado del código (11-11-2026)
+## Estado del código (12-11-2026)
 
-Hecho: aviso de versión nueva en la app (`data/Updates.kt`, tarjeta en Hoy; lee `kimycars.com/scrollban/version.json`), `util/Links.kt` para abrir enlaces, y la página `scrollban/instalar/` escrita en la web (sin desplegar).
+Fase 0 de código terminada y desplegada:
+- Aviso de versión nueva en la app (`data/Updates.kt`, tarjeta en Hoy), probado en el emulador: sale con una versión más nueva, «Ahora no» la quita y la lectura real de `version.json` funciona.
+- APK release 1.0.0 en `kimycars.com/scrollban/scrollban.apk` (firma comprobada, se descarga como ScrollBan.apk, sin caché) y `scrollban/version.json`.
+- Página `kimycars.com/scrollban/instalar`: paso a paso, por qué no está en Play, actualizaciones, huella de la firma, QR si se abre desde el ordenador.
+- Landing: botones «Descargar», sin lista de espera, preguntas de descarga, iPhone y datos al día, grupos y ranking en Gratis.
+- Página del pacto a distancia: lleva a instalar.
+- Política de privacidad con el aviso de versión nueva (12-11-2026).
 
-Falta: CSS de `.install`, `.install-qr` y `.fingerprint` en `scrollban.css` (subir a `?v=9`); `version.json` y el APK en `scrollban/scrollban.apk`, con cabeceras en `vercel.json` (tipo APK, sin caché); landing (botones a `/scrollban/instalar`, quitar la lista de espera, preguntas de descarga, iPhone y datos, lista de Gratis); enlace de la página del pacto a `/scrollban/instalar`; política de privacidad y `CLAUDE.md` con la nueva conexión de actualizaciones; compilar el release 1.0.0, desplegar y comprobar.
+Cómo publicar una versión nueva: ver la regla en `CLAUDE.md` (Privacidad, aviso de versión nueva).
+
+Queda de Kimy: compra real de comprobación, prueba con dos móviles de marcas distintas, Uptodown y Zapstore, cuentas de redes, grupo de Telegram y la consulta legal.
