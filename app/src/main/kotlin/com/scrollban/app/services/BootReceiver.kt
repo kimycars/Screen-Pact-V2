@@ -3,6 +3,7 @@ package com.scrollban.app.services
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.scrollban.app.data.SelfUpdate
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent?) {
@@ -11,6 +12,7 @@ class BootReceiver : BroadcastReceiver() {
             // Tras actualizar la app el servicio muere; sin esto el hueco contaría como trampa.
             intent?.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
             UsageMonitorService.start(context)
+            if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) SelfUpdate.notifyUpdated(context)
         }
     }
 }

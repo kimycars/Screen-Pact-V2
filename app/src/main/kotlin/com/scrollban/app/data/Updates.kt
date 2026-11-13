@@ -23,11 +23,14 @@ object Updates {
     private const val KEY_CODE = "latest_code"
     private const val KEY_NAME = "latest_name"
     private const val KEY_URL = "latest_url"
+    private const val KEY_APK = "latest_apk"
     private const val KEY_DISMISSED = "dismissed_code"
     private const val CHECK_EVERY_MS = 24 * 60 * 60_000L
     const val DEFAULT_URL = "https://www.kimycars.com/scrollban/instalar"
+    const val DEFAULT_APK = "https://www.kimycars.com/scrollban/scrollban.apk"
 
-    data class Latest(val code: Int, val name: String, val url: String)
+    /** [url]: página de instalar (plan B). [apk]: el archivo que descarga SelfUpdate. */
+    data class Latest(val code: Int, val name: String, val url: String, val apk: String)
 
     private fun prefs(context: Context) = context.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
 
@@ -36,7 +39,7 @@ object Updates {
         val p = prefs(context)
         val code = p.getInt(KEY_CODE, 0)
         if (code <= BuildConfig.VERSION_CODE || code == p.getInt(KEY_DISMISSED, 0)) return null
-        return Latest(code, p.getString(KEY_NAME, "").orEmpty(), p.getString(KEY_URL, null) ?: DEFAULT_URL)
+        return Latest(code, p.getString(KEY_NAME, "").orEmpty(), p.getString(KEY_URL, null) ?: DEFAULT_URL, p.getString(KEY_APK, null) ?: DEFAULT_APK)
     }
 
     /** "Ahora no": no se vuelve a avisar de esta versión, sí de la siguiente. */
@@ -58,11 +61,13 @@ object Updates {
             conn.disconnect()
             val json = JSONObject(body ?: return@runCatching)
             val url = json.optString("url").takeIf { it.startsWith("https://www.kimycars.com/") } ?: DEFAULT_URL
+            val apk = json.optString("apk").takeIf { it.startsWith("https://www.kimycars.com/") } ?: DEFAULT_APK
             p.edit()
                 .putLong(KEY_CHECKED, now)
                 .putInt(KEY_CODE, json.getInt("versionCode"))
                 .putString(KEY_NAME, json.optString("versionName"))
                 .putString(KEY_URL, url)
+                .putString(KEY_APK, apk)
                 .apply()
         }
     }

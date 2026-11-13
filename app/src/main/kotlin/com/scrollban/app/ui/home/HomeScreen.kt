@@ -57,6 +57,15 @@ import com.scrollban.app.ui.components.QuietButton
 import com.scrollban.app.util.TamperGuard
 import com.scrollban.app.util.openUrl
 import com.scrollban.app.data.Updates
+import com.scrollban.app.data.SelfUpdate
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Settings
 import com.scrollban.app.data.db.Friend
@@ -214,9 +223,26 @@ private fun UsageRow(limit: AppLimit, usedMs: Long) {
 }
 
 
-/** Hay un APK más nuevo en la web (ver data/Updates.kt). */
+/**
+ * Hay un APK más nuevo en la web (data/Updates.kt). "Actualizar" lo descarga y lo instala desde
+ * aquí (data/SelfUpdate.kt); si no se puede, ofrece la página de instalar.
+ */
 @Composable
 private fun UpdateCard(latest: Updates.Latest, onDownload: () -> Unit, onDismiss: () -> Unit) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val state by SelfUpdate.state.collectAsState()
+    // Al terminar, Android cierra la app y solo una notificación puede invitar a abrirla: en
+    // Android 13 o más se pide el permiso al pulsar Actualizar (si lo niega, actualiza igual).
+    val askNotifications = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
+        scope.launch { SelfUpdate.start(context, latest) }
+    }
+    val update: () -> Unit = {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) askNotifications.launch(Manifest.permission.POST_NOTIFICATIONS)
+        else scope.launch { SelfUpdate.start(context, latest) }
+    }
     SbCard {
         Text(
             if (latest.name.isNotBlank()) "Hay una versión nueva: ${latest.name}" else "Hay una versión nueva",
@@ -224,14 +250,35 @@ private fun UpdateCard(latest: Updates.Latest, onDownload: () -> Unit, onDismiss
         )
         Spacer(Modifier.height(Space.xxs))
         Text(
-            "Descárgala e instálala encima de esta. Tus pactos, límites y llaves se quedan como están.",
+            when (state) {
+                SelfUpdate.State.NeedsPermission -> "Android te pide permitir que ${Brand.NAME} instale su actualización. Actívalo, vuelve y pulsa Actualizar."
+                SelfUpdate.State.Installing -> "Confirma en la ventana de Android. La app se cerrará y te avisará para abrirla."
+                SelfUpdate.State.Failed -> "No se ha podido actualizar desde aquí. Descárgala desde la web e instálala encima."
+                else -> "Se instala encima de esta. Tus pactos, límites y llaves se quedan como están."
+            },
             style = MaterialTheme.typography.bodySmall,
             color = Sb.TextoSuave
         )
         Spacer(Modifier.height(Space.m))
-        PrimaryButton("Descargar", onDownload)
-        Spacer(Modifier.height(Space.xs))
-        QuietButton("Ahora no", onDismiss)
+        when (val s = state) {
+            is SelfUpdate.State.Downloading -> {
+                Text("Descargando… ${(s.fraction * 100).toInt()} %", style = MaterialTheme.typography.bodyMedium)
+                Spacer(Modifier.height(Space.xs))
+                UsageBar(s.fraction, Sb.Llave)
+            }
+            SelfUpdate.State.NeedsPermission -> {
+                PrimaryButton("Dar permiso", { SelfUpdate.openInstallPermission(context) })
+                Spacer(Modifier.height(Space.xs))
+                OutlineButton("Actualizar", update)
+            }
+            SelfUpdate.State.Installing -> OutlineButton("Volver a intentarlo", update)
+            SelfUpdate.State.Failed -> PrimaryButton("Descargar desde la web", onDownload)
+            SelfUpdate.State.Idle -> {
+                PrimaryButton("Actualizar", update)
+                Spacer(Modifier.height(Space.xs))
+                QuietButton("Ahora no", onDismiss)
+            }
+        }
     }
 }
 
