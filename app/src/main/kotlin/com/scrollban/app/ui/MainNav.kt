@@ -26,7 +26,11 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.navigation.compose.NavHost
+import com.scrollban.app.ui.theme.Motion
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
@@ -92,7 +96,15 @@ fun MainNav() {
     }
 
     Column(Modifier.fillMaxSize()) {
-        NavHost(navController = nav, startDestination = Routes.ONBOARD, modifier = Modifier.weight(1f)) {
+        NavHost(
+            navController = nav,
+            startDestination = Routes.ONBOARD,
+            modifier = Modifier.weight(1f),
+            enterTransition = { fadeIn(tween(Motion.SCREEN_MS)) },
+            exitTransition = { fadeOut(tween(Motion.SCREEN_MS)) },
+            popEnterTransition = { fadeIn(tween(Motion.SCREEN_MS)) },
+            popExitTransition = { fadeOut(tween(Motion.SCREEN_MS)) },
+        ) {
             composable(Routes.ONBOARD) {
                 OnboardingScreen(
                     onFinished = { pairNow ->

@@ -14,6 +14,14 @@ import androidx.compose.ui.unit.sp
  */
 
 /** Espaciado: márgenes, separaciones y huecos. Escala cerrada; no hay valores intermedios. */
+/**
+ * Duraciones de animación. El cambio de pantalla es corto a propósito: la transición por defecto
+ * de Navigation (700 ms de fundido) hacía que la app pareciera lenta.
+ */
+object Motion {
+    const val SCREEN_MS = 120
+}
+
 object Space {
     val xxs = 4.dp
     val xs = 8.dp

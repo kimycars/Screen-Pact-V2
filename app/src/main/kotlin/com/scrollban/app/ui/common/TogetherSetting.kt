@@ -25,7 +25,9 @@ import kotlinx.coroutines.launch
 
 /**
  * Interruptor del ranking con amigos en Ajustes. Encenderlo sube tus minutos; apagarlo borra del
- * servidor todo lo tuyo. Las dos cosas necesitan conexión: si falla, el interruptor no cambia.
+ * servidor todo lo tuyo. Las dos cosas necesitan conexión. El interruptor cambia al momento y la
+ * conexión se hace detrás; si falla, vuelve a su sitio y lo dice. Mientras tanto ignora más toques
+ * (sin ponerse gris, que daba sensación de app parada).
  */
 @Composable
 fun TogetherSettingCard() {
@@ -50,8 +52,11 @@ fun TogetherSettingCard() {
                 }
             }
             Spacer(Modifier.width(Space.s))
-            SbSwitch(checked = enabled, enabled = !busy, onCheckedChange = { on ->
+            SbSwitch(checked = enabled, onCheckedChange = { on ->
+                if (busy) return@SbSwitch
                 busy = true
+                failed = false
+                enabled = on
                 scope.launch {
                     val ok = runCatching { if (on) Together.enable(context) else Together.disable(context) }.isSuccess
                     busy = false
