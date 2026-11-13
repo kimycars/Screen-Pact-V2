@@ -161,8 +161,12 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember:
         if (friends.any { !it.ios }) {
             if (!togetherOn) {
                 item {
-                    TogetherOffCard(busy = enabling, error = enableFailed, onEnable = {
+                    // Se enciende al momento y la conexión va detrás; si falla, vuelve atrás y lo dice.
+                    TogetherOffCard(error = enableFailed, onEnable = {
+                        if (enabling) return@TogetherOffCard
                         enabling = true
+                        enableFailed = false
+                        togetherOn = true
                         scope.launch {
                             val ok = runCatching { Together.enable(context) }.isSuccess
                             enabling = false

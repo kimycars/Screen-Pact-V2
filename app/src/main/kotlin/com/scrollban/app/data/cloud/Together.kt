@@ -61,6 +61,12 @@ object Together {
 
     fun isEnabled(context: Context): Boolean = prefs(context).getBoolean(KEY_ENABLED, false)
 
+    /**
+     * Enciende Juntos sin esperar a la red (bienvenida): la primera subida la hace el servicio en
+     * el siguiente minuto (maybeSync). Es la persona quien lo elige; nunca se enciende solo.
+     */
+    fun turnOn(context: Context) = prefs(context).edit().putBoolean(KEY_ENABLED, true).apply()
+
     /** Enciende Juntos y hace la primera subida. Lanza excepción si no hay conexión. */
     suspend fun enable(context: Context) {
         prefs(context).edit().putBoolean(KEY_ENABLED, true).apply()

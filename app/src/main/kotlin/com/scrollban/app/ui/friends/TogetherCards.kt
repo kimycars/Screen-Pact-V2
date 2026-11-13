@@ -33,7 +33,7 @@ import com.scrollban.app.ui.theme.Space
  * [error]: el último intento falló (sin conexión).
  */
 @Composable
-fun TogetherOffCard(busy: Boolean, error: Boolean, onEnable: () -> Unit) {
+fun TogetherOffCard(error: Boolean, onEnable: () -> Unit) {
     SbCard {
         StepLine(
             "Ranking con tus amigos",
@@ -52,7 +52,7 @@ fun TogetherOffCard(busy: Boolean, error: Boolean, onEnable: () -> Unit) {
             Text("No se ha podido conectar. Mira tu conexión y vuelve a probar.", style = MaterialTheme.typography.bodySmall, color = Sb.Llave)
         }
         Spacer(Modifier.height(Space.m))
-        PrimaryButton(if (busy) "Activando…" else "Activar el ranking", onEnable, enabled = !busy)
+        PrimaryButton("Activar el ranking", onEnable)
     }
 }
 

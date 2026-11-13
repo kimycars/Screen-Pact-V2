@@ -54,6 +54,7 @@ import com.scrollban.app.ui.theme.Space
 import com.scrollban.app.ui.theme.Sizes
 import com.scrollban.app.ui.theme.Shapes
 import com.scrollban.app.ui.common.StatsConsentCard
+import com.scrollban.app.data.cloud.Together
 import com.scrollban.app.data.Stats
 import com.scrollban.app.ui.common.Invite
 import com.scrollban.app.ui.components.OutlineButton
@@ -96,6 +97,10 @@ fun OnboardingScreen(onFinished: (pairNow: Boolean) -> Unit) {
         0 -> WelcomeStep(onStart = { step = 1 })
         1 -> NameStep(name = name, onName = { name = it }, onNext = { step = 2 })
         2 -> PermissionsStep(onDone = { step = 3 })
+        3 -> RankingStep(
+            onEnable = { Together.turnOn(context); step = 4 },
+            onSkip = { step = 4 }
+        )
         else -> FirstPactStep(onPair = { finish(true) }, onLater = { finish(false) })
     }
 }
@@ -177,6 +182,39 @@ private fun PermissionsStep(onDone: () -> Unit) {
         StatsConsentCard(onByDefault = true)
         Spacer(Modifier.height(Space.xxl))
         PrimaryButton("Siguiente", onDone, enabled = state.requiredOk)
+    }
+}
+
+/**
+ * El ranking se ofrece en la bienvenida para que lo vea todo el mundo, no solo quien entra en
+ * Ajustes. Va apagado hasta que la persona pulsa Activar: es su consentimiento (política de
+ * privacidad), así que no se puede encender por defecto.
+ */
+@Composable
+private fun RankingStep(onEnable: () -> Unit, onSkip: () -> Unit) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(horizontal = Space.xl)
+            .padding(top = Space.huge, bottom = Space.xl)
+    ) {
+        Text("Ranking con tus amigos", style = MaterialTheme.typography.headlineLarge)
+        Spacer(Modifier.height(Space.s))
+        Text(
+            "Mira quién usa menos el móvil cada semana, cuánto tiempo habéis recuperado juntos y cómo vais en vuestros retos.",
+            style = MaterialTheme.typography.bodyLarge,
+            color = Sb.TextoSuave
+        )
+        Spacer(Modifier.height(Space.m))
+        Text(
+            "Para verlo, tus minutos en las apps con límite se guardan en el servidor de ${Brand.NAME} y solo los ve la gente con la que tienes pacto. Sin correo ni cuenta. Si lo apagas en Ajustes, se borra todo.",
+            style = MaterialTheme.typography.bodySmall,
+            color = Sb.TextoSuave
+        )
+        Spacer(Modifier.weight(1f))
+        PrimaryButton("Activar el ranking", onEnable)
+        Spacer(Modifier.height(Space.xs))
+        QuietButton("Ahora no", onSkip, modifier = Modifier.align(Alignment.CenterHorizontally))
     }
 }
 
