@@ -83,3 +83,9 @@ Clave restringida real puesta por Kimy en `SCROLLBAN_STRIPE_SECRET_KEY` y web re
 ## Pago dentro de la app (05-11-2026)
 
 El pago se abre en una Custom Tab (pestaña del navegador superpuesta a la app, con los colores de ScrollBan), no con el pago "integrado" de Stripe ni con su SDK nativo. Motivo: con los Payment Links no hace falta otra función en Vercel (el plan Hobby ya está en el límite de 12), Stripe sigue encargándose de la verificación del banco y de Google Pay, y la app recoge la licencia sola al cerrar la pestaña. Si algún día se quiere la hoja de pago nativa (PaymentSheet del SDK de Stripe), habrá que crear los pagos desde el servidor en vez de con Payment Links. En Play Store, Google obliga a usar su sistema de pagos para Pro de todos modos.
+
+## Licencias dadas a mano
+
+Se firman en el PC con la clave privada de `Documents\claves` (misma función `signLicense` de la web) y no pasan por Stripe ni por el Blob.
+
+- 13-11-2026: de por vida para Kimy (`lic_0883246498f7c18354626a4d`). El texto está en `Documents\claves\licencia-pro-kimy.txt`, fuera de git.
