@@ -106,3 +106,17 @@ Fase 0 de código terminada y desplegada:
 Cómo publicar una versión nueva: ver la regla en `CLAUDE.md` (Privacidad, aviso de versión nueva).
 
 Queda de Kimy: compra real de comprobación, prueba con dos móviles de marcas distintas, Uptodown y Zapstore, cuentas de redes, grupo de Telegram y la consulta legal.
+
+## Idea en marcha: Empantallados (18-11-2026)
+
+Empantallados (plataforma para padres sobre educación digital, de Fomento de Centros de Enseñanza) grabó una docuserie con Kimy en su colegio. En el preestreno contaron que tienen un premio de Orange y acuerdos con Orange y la Universidad Villanueva (dicho por ellos, sin comprobar).
+
+Plan acordado con Kimy:
+1. Correo corto: agradecer la docuserie, presentar ScrollBan y ofrecer que su equipo la pruebe. Sin precio.
+2. Su equipo la usa dos o tres semanas con Pro regalado. Las licencias se firman a mano como la de Kimy (ver `docs/STRIPE.md`) mientras no haya códigos canjeables.
+3. Si les convence: piloto de un trimestre en 2 o 3 colegios de su red, con resultados medidos (ideal con Villanueva). Se presenta como programa, no como pack de licencias. Rango orientativo de 1.000 a 3.000 euros, o gratis a cambio de visibilidad.
+
+Decisiones:
+- Kimy no va a los colegios. La instalación se explica con un vídeo grabado en el emulador (más un trozo grabado en su Xiaomi para los ajustes restringidos) y una ficha para el profesor. El vídeo va también en `/scrollban/instalar`.
+- Antes del piloto en colegios: códigos de licencia canjeables, etiqueta de programa en las estadísticas (dato nuevo, pasa por la política de privacidad), autorización de los padres para menores de 14 y resolver quién factura.
+- Límite a contar desde el principio: ScrollBan solo funciona en Android; con iPhone solo se hace la otra mitad del pacto.
