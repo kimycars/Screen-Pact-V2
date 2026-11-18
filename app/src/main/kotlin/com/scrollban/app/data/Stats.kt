@@ -81,6 +81,16 @@ object Stats {
         p.edit().putInt("n_" + event.key, p.getInt("n_" + event.key, 0) + 1).apply()
     }
 
+    /**
+     * La versión de pruebas y el emulador no mandan nada: son las pruebas de Kimy y ensuciaban el
+     * panel (18-11-2026). Las instalaciones internas que ya habían mandado se filtran en el servidor
+     * (lib/scrollban-internos.js de la web).
+     */
+    private fun isTestDevice(): Boolean = BuildConfig.DEBUG ||
+        Build.FINGERPRINT.startsWith("generic") || Build.FINGERPRINT.contains("emulator") ||
+        Build.HARDWARE.contains("ranchu") || Build.HARDWARE.contains("goldfish") ||
+        Build.MODEL.contains("sdk_gphone") || Build.PRODUCT.contains("sdk_gphone")
+
     private fun statsId(context: Context): String {
         val p = prefs(context)
         return p.getString(KEY_ID, null) ?: UUID.randomUUID().toString().also { p.edit().putString(KEY_ID, it).apply() }
@@ -89,6 +99,7 @@ object Stats {
     /** Envía el informe del día. Devuelve true si el servidor lo aceptó (y entonces pone los contadores a cero). */
     internal suspend fun send(context: Context): Boolean = withContext(Dispatchers.IO) {
         if (!isEnabled(context)) return@withContext true
+        if (isTestDevice()) return@withContext true
         val db = AppDatabase.get(context)
         val limits = db.appLimitDao().getEnabled()
         val p = prefs(context)
