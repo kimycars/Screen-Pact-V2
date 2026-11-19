@@ -120,3 +120,5 @@ Decisiones:
 - Kimy no va a los colegios. La instalación se explica con un vídeo grabado en el emulador (más un trozo grabado en su Xiaomi para los ajustes restringidos) y una ficha para el profesor. El vídeo va también en `/scrollban/instalar`.
 - Antes del piloto en colegios: códigos de licencia canjeables, etiqueta de programa en las estadísticas (dato nuevo, pasa por la política de privacidad), autorización de los padres para menores de 14 y resolver quién factura.
 - Límite a contar desde el principio: ScrollBan solo funciona en Android; con iPhone solo se hace la otra mitad del pacto.
+
+Estado (19-11-2026): correo enviado. Les interesa, pero no podrán probarla hasta después de Navidad. Su móvil de empresa es un iPhone, así que harán falta un Android (de alguien del equipo o de un hijo) y el iPhone como quien da las llaves. Se les mandan ya dos licencias de por vida (no caducan). En enero, si no han escrito, Kimy les pregunta qué tal.

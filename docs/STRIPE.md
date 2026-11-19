@@ -89,3 +89,4 @@ El pago se abre en una Custom Tab (pestaña del navegador superpuesta a la app, 
 Se firman en el PC con la clave privada de `Documents\claves` (misma función `signLicense` de la web) y no pasan por Stripe ni por el Blob.
 
 - 13-11-2026: de por vida para Kimy (`lic_0883246498f7c18354626a4d`). El texto está en `Documents\claves\licencia-pro-kimy.txt`, fuera de git.
+- 19-11-2026: dos de por vida para Empantallados (`lic_4cd01687b006934df0707b0a` y `lic_73faa52e72fcbf252fe5789b`), para que su equipo pruebe la app (lo probarán después de Navidad). El texto está en `Documents\claves\licencia-pro-empantallados-1.txt` y `-2.txt`.
