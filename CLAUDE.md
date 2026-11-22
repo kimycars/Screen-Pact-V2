@@ -48,3 +48,7 @@ export JAVA_HOME="/c/Program Files/Eclipse Adoptium/jdk-17.0.18.8-hotspot"
 
 - El release se firma con la clave fija de `C:\Users\Usuario\Documents\claves\screenpact-release.jks` (contraseñas en `screenpact-keystore.properties`, en la misma carpeta, fuera del repo). Perder esa clave = no poder actualizar la app nunca más: hay que tener copia de la carpeta `claves`.
 - Instala siempre APK compilados en este PC: los de GitHub Actions se firman con una clave aleatoria y no se pueden actualizar encima.
+
+## Norte (panel de proyectos de Kimy, 22-11-2026)
+
+Cada correo preparado (con destinatario, asunto y cuerpo completos), cada decisión que espera a Kimy y cada entrega terminada que tenga que revisar se deja también en su bandeja de Norte (`norte_dejar`), además del `.md` si lo hay. Las tareas de ScrollBan en Norte se mantienen al día con `norte_tarea`. Nunca se ponen licencias ni claves en el cuerpo: se pone la ruta del fichero.
