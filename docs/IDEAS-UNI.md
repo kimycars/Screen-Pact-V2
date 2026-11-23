@@ -10,8 +10,8 @@ Formato de cada nota:
 ### AAAA-MM-DD · Asignatura, sesión
 - Concepto: ...
 - En ScreenPact: ...
-- Pregunta para decidir: ...
 - Estado: pendiente
+- Estado: descartada (23-11-2026: Kimy no las recuerda y se cierran; si sale algo de clase, se apunta de nuevo)
 ```
 
 ---
@@ -20,16 +20,16 @@ Formato de cada nota:
 - Concepto: en el DAFO, fortalezas y debilidades son internas, y oportunidades y amenazas son externas. Las debilidades se comparan con los competidores, no en abstracto.
 - En ScreenPact: hacer un DAFO propio frente a Opal, PeerPause y ScreenZen. Por ejemplo: fortaleza "sin cuenta y en Android"; amenaza "que Opal saque versión Android".
 - Pregunta para decidir: ¿qué ventaja de ScreenPact es difícil de copiar y cuál copiaría Opal en un mes?
-- Estado: pendiente
+- Estado: descartada (23-11-2026: Kimy no las recuerda y se cierran; si sale algo de clase, se apunta de nuevo)
 
 ### 2026-10-10 · Administración, práctica 01 (caso automoción)
 - Concepto: el riesgo de depender de un solo proveedor o de que cambie una regla de la que dependes (riesgo regulatorio).
 - En ScreenPact: la app depende de los permisos de Android (acceso de uso, mostrarse encima de otras apps) y de las reglas de Google Play. Si Google los restringe, el producto deja de funcionar.
 - Pregunta para decidir: ¿hay un plan B si Google Play rechaza los permisos? ¿Zapstore y la APK bastan como canal?
-- Estado: pendiente
+- Estado: descartada (23-11-2026: Kimy no las recuerda y se cierran; si sale algo de clase, se apunta de nuevo)
 
 ### 2026-10-10 · Administración, práctica 01 (DAFO de Vestiarium)
 - Concepto: una fortaleza solo lo es frente a la competencia (Grant). Al hacer el DAFO de Vestiarium, Kimy vio que Acloset (8 M de usuarios) ya hace casi todo lo que hace Vestiarium.
 - En ScreenPact: confirmar a menudo que sigue sin existir una app equivalente en Android (Opal, PeerPause...). Si sale una, la ventaja de "por fin en Android" desaparece.
 - Pregunta para decidir: si Opal saca versión Android mañana, ¿qué te quedaría como diferencia (sin cuenta, pago único, privacidad)? ¿Basta?
-- Estado: pendiente
+- Estado: descartada (23-11-2026: Kimy no las recuerda y se cierran; si sale algo de clase, se apunta de nuevo)
