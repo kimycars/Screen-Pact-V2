@@ -203,14 +203,14 @@ fun Avatar(name: String, size: Dp = Sizes.avatar, color: Color = Sb.Llave, photo
         // Foto de perfil si la hay (Juntos); si no, la inicial.
         if (photo != null) {
             Image(photo, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size))
-            return@Box
+        } else {
+            Text(
+                name.trim().take(1).uppercase().ifEmpty { "?" },
+                fontFamily = Bricolage,
+                fontSize = (size.value * TextStyles.avatarRatio).sp,
+                color = Sb.Tinta
+            )
         }
-        Text(
-            name.trim().take(1).uppercase().ifEmpty { "?" },
-            fontFamily = Bricolage,
-            fontSize = (size.value * TextStyles.avatarRatio).sp,
-            color = Sb.Tinta
-        )
     }
 }
 
