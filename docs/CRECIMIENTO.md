@@ -1,13 +1,16 @@
 # ScrollBan: estrategia de crecimiento sin redes sociales
 
-Propuesta del 23-11-2026, pendiente de que Kimy la apruebe.
+Propuesta del 23-11-2026, aprobada por Kimy el mismo día con los cambios de abajo.
 
 ## Decisiones de Kimy (23-11-2026)
 
 - No hay fase beta ni se llama beta: la app se abre a todo el mundo en cuanto esté pulida.
 - Sin cuentas propias en Instagram ni TikTok: con KimyCars y Vestiarium no funcionó y ScrollBan tiene aún menos que enseñar.
 - Idea de Kimy: dar un mes de Pro a cambio de rellenar una encuesta.
-- Descartados por ahora: gestoría, copia de seguridad de `Documents\claves` y cambio de plan de Vercel. La compra real de Stripe la lleva Kimy. Uptodown y Zapstore, al terminar el pulido.
+- Gestoría, copia de seguridad de `Documents\claves` y plan de Vercel: ya hechos (Kimy, 23-11-2026). La compra real de Stripe la lleva Kimy.
+- Prioridad: las colaboraciones, por encima de intentar llegar por internet. Uptodown, AlternativeTo y Zapstore van al final y con poco esfuerzo: con Vestiarium, estar en muchos directorios no trajo a nadie.
+- Con sus amigos, de momento solo uno se la instala con él. El frente 1 se queda en ese pacto y en lo que salga.
+- Aprobados la encuesta con mes de Pro y el reto «Enero sin scroll».
 
 ## De qué depende todo
 
