@@ -1,5 +1,6 @@
 package com.scrollban.app.ui.friends
 
+import com.scrollban.app.ui.common.rememberFriendPhoto
 import com.scrollban.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -179,14 +180,15 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember:
             } else if (b != null) {
                 item {
                     // Los amigos con iPhone no tienen la app, así que no salen en el ranking.
-                    val others = friends.filter { !it.ios }.map { f -> f.name to b.friends[f.id] } +
-                        groupOnlyMembers(b).map { m -> m.name to b.people[m.uid] }
+                    val others = friends.filter { !it.ios }.map { f -> Triple(f.name, b.friends[f.id], b.friendUids[f.id]) } +
+                        groupOnlyMembers(b).map { m -> Triple(m.name, b.people[m.uid], m.uid) }
                     val rows = listOf(RankRow("Tú", true, b.me.weekUsedMs().takeIf { b.me.hasData }, TimeWon.summaryOf(b.me.records, b.me.baselines).wonMs)) +
-                        others.map { (name, person) ->
+                        others.map { (name, person, uid) ->
                             RankRow(
                                 name, false,
                                 person?.takeIf { it.hasData }?.weekUsedMs(),
-                                person?.let { TimeWon.summaryOf(it.records, it.baselines).wonMs } ?: 0L
+                                person?.let { TimeWon.summaryOf(it.records, it.baselines).wonMs } ?: 0L,
+                                uid
                             )
                         }
                     val people = listOf(b.me) + b.people.values
@@ -359,13 +361,14 @@ fun FriendsScreen(onAdd: () -> Unit, onOpenFriend: (Long) -> Unit, onOpenMember:
  */
 @Composable
 private fun FriendCard(friend: Friend, waitMs: Long, onGiveKey: () -> Unit, onBreak: () -> Unit) {
+    val photo = rememberFriendPhoto(friend.id)
     SbCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (waitMs > 0) {
                 val done = 1f - waitMs.toFloat() / FriendCodes.NEW_FRIEND_COOLDOWN_MS
-                UsageRing(done, Sb.Llave, size = Sizes.medal) { Avatar(friend.name, size = Sizes.appIconLarge) }
+                UsageRing(done, Sb.Llave, size = Sizes.medal) { Avatar(friend.name, size = Sizes.appIconLarge, photo = photo) }
             } else {
-                Avatar(friend.name, size = Sizes.medal)
+                Avatar(friend.name, size = Sizes.medal, photo = photo)
             }
             Spacer(Modifier.width(Space.m))
             Column(Modifier.weight(1f)) {

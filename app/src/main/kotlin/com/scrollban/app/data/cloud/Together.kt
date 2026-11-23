@@ -78,6 +78,7 @@ object Together {
         if (Cloud.hasSession(context)) Cloud.rpc(context, "delete_my_data")
         Cloud.forget(context)
         prefs(context).edit().clear().apply()
+        Photos.forgetOthers(context)
     }
 
     /** Id del grupo y secreto del pacto con [friend], iguales en los dos móviles. */
@@ -126,6 +127,8 @@ object Together {
         // Tu nombre, cifrado para el resto de cada grupo de 3 o más.
         // Al entrar, y en cada subida forzada por si ha cambiado el nombre.
         db.pactGroupDao().getAll().filter { it.id in joined && (force || it.id !in before) }.forEach { setProfile(context, it) }
+        // Tu foto, cifrada para cada grupo. Si falla, no frena la subida de los minutos.
+        runCatching { Photos.upload(context, joined) }
 
         val names = db.appLimitDao().observeAll().first().associate { it.packageName to it.appName }
         val baselines = db.baselineDao().getAll().associate { it.packageName to it.avgDailyMs }
@@ -289,9 +292,11 @@ object Together {
 
         // Por grupo: (id del miembro, su nombre cifrado si es un grupo de 3 o más).
         val membersByGroup = HashMap<String, MutableList<Pair<String, String?>>>()
+        val photos = ArrayList<Photos.Seen>()
         json.getJSONArray("members").forEachObject { o ->
             val box = if (o.isNull("p")) null else o.getString("p")
             membersByGroup.getOrPut(o.getString("g")) { mutableListOf() } += o.getString("u") to box
+            if (o.getString("u") != me) photos += Photos.Seen(o.getString("g"), o.getString("u"), if (o.isNull("ph")) null else o.optLong("ph"))
         }
 
         val db = AppDatabase.get(context)
@@ -315,6 +320,16 @@ object Together {
             }
         }
         val people = (friendUids.values + groups.values.flatten().map { it.uid }).toSet().associateWith { person(it) }
+
+        // Fotos de perfil: se bajan solo las que han cambiado. Si falla, se ven las de antes.
+        val pairByGroup = allFriends.filter { !it.ios }.associateBy { groupOf(it).first }
+        val bigByGroup = db.pactGroupDao().getAll().associateBy { it.id }
+        runCatching {
+            Photos.download(context, photos, friendUids) { group, box ->
+                pairByGroup[group]?.let { GroupKeys.openPhotoFromFriend(it, box) }
+                    ?: bigByGroup[group]?.let { GroupKeys.openPhotoFromGroup(it.secret, box) }
+            }
+        }
 
         // Invitaciones: solo valen las de un amigo con pacto y que se abren con la clave de ese pacto.
         val invites = ArrayList<GroupInvite>()

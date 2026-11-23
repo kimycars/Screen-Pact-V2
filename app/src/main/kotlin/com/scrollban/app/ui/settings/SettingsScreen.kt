@@ -1,5 +1,6 @@
 package com.scrollban.app.ui.settings
 
+import com.scrollban.app.ui.common.OwnPhotoCard
 import com.scrollban.app.Brand
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -159,6 +160,7 @@ fun SettingsScreen(onBack: () -> Unit, onOpenPro: (ProFeature) -> Unit) {
             }
         }
 
+        item { OwnPhotoCard() }
         item { TogetherSettingCard() }
         item { StatsConsentCard() }
 

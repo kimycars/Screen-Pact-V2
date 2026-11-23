@@ -44,27 +44,45 @@ object GroupKeys {
 
     fun openFromFriend(friend: Friend, box: String): String? = open(pactKey(friend), box)
 
+    /**
+     * Foto de perfil (JPEG) cifrada para un grupo de 3 o más ([secret]) o para el amigo de un
+     * pacto. Clave propia de la foto, distinta de la del nombre y de la de las invitaciones.
+     */
+    fun sealPhotoForGroup(secret: ByteArray, jpeg: ByteArray): String = sealBytes(hmac(secret, PHOTO), jpeg)
+
+    fun openPhotoFromGroup(secret: ByteArray, box: String): ByteArray? = openBytes(hmac(secret, PHOTO), box)
+
+    fun sealPhotoForFriend(friend: Friend, jpeg: ByteArray): String = sealBytes(hmac(pactKey(friend), PHOTO), jpeg)
+
+    fun openPhotoFromFriend(friend: Friend, box: String): ByteArray? = openBytes(hmac(pactKey(friend), PHOTO), box)
+
+    private val PHOTO = "scrollban-photo".toByteArray()
+
     private fun pactKey(friend: Friend): ByteArray {
         // Un móvil tiene (mía, suya) y el otro (suya, mía): ordenadas, son las mismas.
         val (a, b) = listOf(friend.verifyKey, friend.generateKey).sortedBy { Base64.getEncoder().encodeToString(it) }
         return hmac(a + b, "scrollban-box".toByteArray())
     }
 
-    private fun seal(key: ByteArray, text: String): String {
+    private fun seal(key: ByteArray, text: String): String = sealBytes(key, text.toByteArray(Charsets.UTF_8))
+
+    private fun sealBytes(key: ByteArray, data: ByteArray): String {
         val iv = ByteArray(IV_BYTES).also { SecureRandom().nextBytes(it) }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
             init(Cipher.ENCRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(TAG_BITS, iv))
         }
-        return PactKeys.b64(iv + cipher.doFinal(text.toByteArray(Charsets.UTF_8)))
+        return PactKeys.b64(iv + cipher.doFinal(data))
     }
 
     /** Null si la caja está dañada o no es para esta clave. */
-    private fun open(key: ByteArray, box: String): String? = runCatching {
+    private fun open(key: ByteArray, box: String): String? = openBytes(key, box)?.let { String(it, Charsets.UTF_8) }
+
+    private fun openBytes(key: ByteArray, box: String): ByteArray? = runCatching {
         val bytes = PactKeys.unb64(box)
         val cipher = Cipher.getInstance("AES/GCM/NoPadding").apply {
             init(Cipher.DECRYPT_MODE, SecretKeySpec(key, "AES"), GCMParameterSpec(TAG_BITS, bytes, 0, IV_BYTES))
         }
-        String(cipher.doFinal(bytes, IV_BYTES, bytes.size - IV_BYTES), Charsets.UTF_8)
+        cipher.doFinal(bytes, IV_BYTES, bytes.size - IV_BYTES)
     }.getOrNull()
 
     private fun hmac(key: ByteArray, data: ByteArray): ByteArray =

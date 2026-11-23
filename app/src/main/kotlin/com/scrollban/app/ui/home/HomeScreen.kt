@@ -1,5 +1,6 @@
 package com.scrollban.app.ui.home
 
+import com.scrollban.app.ui.common.rememberFriendPhoto
 import com.scrollban.app.Brand
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -321,7 +322,7 @@ private fun NoPactCard(onPair: () -> Unit, onInvite: () -> Unit) {
 private fun PactCard(keeper: Friend, others: Int) {
     SbCard {
         Row(verticalAlignment = Alignment.CenterVertically) {
-            Avatar(keeper.name)
+            Avatar(keeper.name, photo = rememberFriendPhoto(keeper.id))
             Spacer(Modifier.width(Space.m))
             Column(Modifier.weight(1f)) {
                 Text(

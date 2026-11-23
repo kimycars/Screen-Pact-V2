@@ -4,7 +4,8 @@
 -- límite, su límite, las llaves usadas y su media de antes; y sus retos con fecha. Lo ve solo
 -- la gente con la que comparte grupo. Cada pacto es un grupo de 2; además hay grupos de 3 o más.
 -- Qué NO guarda en claro: nombres, llaves ni nada que permita desbloquear. En los grupos de 3 o
--- más, cada miembro sube su nombre cifrado con el secreto del grupo (profile) y las invitaciones
+-- más, cada miembro sube su nombre cifrado con el secreto del grupo (profile); la foto de perfil,
+-- si la persona la elige, sube cifrada en cada grupo (photo); y las invitaciones
 -- llevan el secreto cifrado con la clave del pacto entre quien invita y quien recibe (box). El
 -- servidor no tiene ninguna de esas claves.
 --
@@ -32,6 +33,10 @@ create table if not exists public.group_members (
 create index if not exists group_members_user_idx on public.group_members(user_id);
 -- Nombre del miembro cifrado para el resto del grupo (solo en grupos de 3 o más).
 alter table public.group_members add column if not exists profile text check (char_length(profile) <= 600);
+-- Foto de perfil del miembro, cifrada para el resto del grupo (pactos y grupos de 3 o más), y
+-- cuándo cambió (la app solo la baja cuando cambia). El servidor no puede abrirla.
+alter table public.group_members add column if not exists photo text check (char_length(photo) <= 40000);
+alter table public.group_members add column if not exists photo_at timestamptz;
 
 -- Invitación a un grupo de 3 o más: el secreto del grupo cifrado para quien la recibe.
 create table if not exists public.group_invites (
@@ -118,6 +123,35 @@ as $$
 begin
   if auth.uid() is null then raise exception 'not signed in'; end if;
   update group_members set profile = p_profile where group_id = p_group and user_id = auth.uid();
+end;
+$$;
+
+-- Guarda (o quita, con null) la foto cifrada del que llama en un grupo suyo.
+create or replace function public.set_photo(p_group uuid, p_photo text)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  update group_members set photo = p_photo, photo_at = case when p_photo is null then null else now() end
+  where group_id = p_group and user_id = auth.uid();
+end;
+$$;
+
+-- La foto cifrada de p_user en p_group, solo si el que llama también está en ese grupo.
+create or replace function public.member_photo(p_group uuid, p_user uuid)
+returns text
+language plpgsql
+stable
+security definer
+set search_path = public
+as $$
+begin
+  if auth.uid() is null then raise exception 'not signed in'; end if;
+  if not exists (select 1 from group_members where group_id = p_group and user_id = auth.uid()) then return null; end if;
+  return (select photo from group_members where group_id = p_group and user_id = p_user);
 end;
 $$;
 
@@ -235,7 +269,8 @@ begin
     )
     select jsonb_build_object(
       'me', v_uid,
-      'members', coalesce((select jsonb_agg(jsonb_build_object('g', m.group_id, 'u', m.user_id, 'p', gm.profile))
+      'members', coalesce((select jsonb_agg(jsonb_build_object('g', m.group_id, 'u', m.user_id, 'p', gm.profile,
+          'ph', (extract(epoch from gm.photo_at) * 1000)::bigint))
         from members m join group_members gm on gm.group_id = m.group_id and gm.user_id = m.user_id), '[]'::jsonb),
       'invites', coalesce((select jsonb_agg(jsonb_build_object('g', i.group_id, 'from', i.from_user, 'box', i.box))
         from group_invites i where i.to_user = v_uid), '[]'::jsonb),
@@ -273,7 +308,7 @@ $$;
 
 revoke all on function public.join_group(uuid, text), public.leave_group(uuid), public.push_usage(jsonb, jsonb),
   public.my_board(int), public.delete_my_data(), public.set_profile(uuid, text), public.invite_to_group(uuid, uuid, text),
-  public.decline_invite(uuid) from public, anon;
+  public.decline_invite(uuid), public.set_photo(uuid, text), public.member_photo(uuid, uuid) from public, anon;
 grant execute on function public.join_group(uuid, text), public.leave_group(uuid), public.push_usage(jsonb, jsonb),
   public.my_board(int), public.delete_my_data(), public.set_profile(uuid, text), public.invite_to_group(uuid, uuid, text),
-  public.decline_invite(uuid) to authenticated;
+  public.decline_invite(uuid), public.set_photo(uuid, text), public.member_photo(uuid, uuid) to authenticated;

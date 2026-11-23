@@ -1,5 +1,7 @@
 package com.scrollban.app.ui.friends
 
+import com.scrollban.app.ui.common.rememberPersonPhoto
+import com.scrollban.app.ui.common.rememberOwnPhoto
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.Row
@@ -57,7 +59,7 @@ fun TogetherOffCard(error: Boolean, onEnable: () -> Unit) {
 }
 
 /** Una fila del ranking: quién, cuánto ha usado en 7 días y cuánto ha recuperado. */
-data class RankRow(val name: String, val isMe: Boolean, val usedMs: Long?, val wonMs: Long)
+data class RankRow(val name: String, val isMe: Boolean, val usedMs: Long?, val wonMs: Long, val uid: String? = null)
 
 /**
  * El ranking de la semana: ordenado de menos a más uso. Quien aún no ha encendido el ranking va
@@ -115,7 +117,7 @@ private fun RankLine(position: Int?, r: RankRow) {
             color = if (position == 1) Sb.Pacto else Sb.TextoSuave,
             modifier = Modifier.widthIn(min = Space.xl)
         )
-        Avatar(name, size = Sizes.avatar, color = if (r.isMe) Sb.Pacto else Sb.Llave)
+        Avatar(name, size = Sizes.avatar, color = if (r.isMe) Sb.Pacto else Sb.Llave, photo = if (r.isMe) rememberOwnPhoto() else rememberPersonPhoto(r.uid))
         Spacer(Modifier.width(Space.s))
         Column(Modifier.weight(1f)) {
             Text(name, style = MaterialTheme.typography.titleMedium)

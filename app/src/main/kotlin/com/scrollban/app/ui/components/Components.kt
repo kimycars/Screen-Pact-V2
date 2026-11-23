@@ -1,5 +1,9 @@
 package com.scrollban.app.ui.components
 
+import androidx.compose.ui.layout.ContentScale
+
+import androidx.compose.ui.graphics.ImageBitmap
+
 import com.scrollban.app.Brand
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
@@ -191,11 +195,16 @@ fun LogoTile(size: Dp) {
 
 /** Inicial del amigo en un círculo. */
 @Composable
-fun Avatar(name: String, size: Dp = Sizes.avatar, color: Color = Sb.Llave) {
+fun Avatar(name: String, size: Dp = Sizes.avatar, color: Color = Sb.Llave, photo: ImageBitmap? = null) {
     Box(
         Modifier.size(size).clip(Shapes.pill).background(color),
         contentAlignment = Alignment.Center
     ) {
+        // Foto de perfil si la hay (Juntos); si no, la inicial.
+        if (photo != null) {
+            Image(photo, contentDescription = null, contentScale = ContentScale.Crop, modifier = Modifier.size(size))
+            return@Box
+        }
         Text(
             name.trim().take(1).uppercase().ifEmpty { "?" },
             fontFamily = Bricolage,

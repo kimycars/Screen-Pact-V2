@@ -1,5 +1,6 @@
 package com.scrollban.app.ui.friends
 
+import com.scrollban.app.ui.common.rememberPersonPhoto
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -113,7 +114,7 @@ fun GroupCard(
         }
         members.forEach { m ->
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Avatar(m.name, size = Sizes.avatar)
+                Avatar(m.name, size = Sizes.avatar, photo = rememberPersonPhoto(m.uid))
                 Spacer(Modifier.width(Space.s))
                 Text(m.name, style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f))
                 // Con pacto vale la llave del pacto. Si no, hace falta su id cifrado: aparece en cuanto su móvil sube algo.
