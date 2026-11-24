@@ -327,6 +327,9 @@ Cuarta tanda: pacto mixto con iPhone (hecho el 05-11-2026; la app está lista y 
 
 ## 10. Lo técnico que sigue valiendo
 
+### SDK de Android (24-11-2026)
+Desde el 24-11-2026 ScrollBan compila solo con el SDK de `C:\Users\Usuario\AppData\Local\Android\Sdk`, el mismo que usan Vestiarium, el emulador y adb. La ruta está en `sdk.dir` de `local.properties`, que no va a git, y se escribe con barras normales: `C\:/Users/Usuario/AppData/Local/Android/Sdk`. Se le instalaron `platforms;android-34` y `build-tools;34.0.0`. `C:\Android\Sdk` ya no se usa. Probado: debug y release compilan, y el release sale firmado con la misma huella.
+
 ### Protecciones (01-10-2026)
 - El uso solo cuenta con la pantalla encendida y el móvil desbloqueado.
 - No se puede emparejar con uno mismo.
